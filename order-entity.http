@@ -1,0 +1,72 @@
+@urlPrefix = http://localhost:9000
+@orderId = cart-1
+@skuId = sku-1
+
+### ship order
+
+PUT {{urlPrefix}}/order/{{orderId}}/ship
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}"
+}
+
+### release order
+
+PUT {{urlPrefix}}/order/{{orderId}}/release
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}"
+}
+
+### ship order skue item
+
+PUT {{urlPrefix}}/order/{{orderId}}/sku/ship
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "skuId": "{{skuId}}"
+}
+
+### release order sku item
+
+PUT {{urlPrefix}}/order/{{orderId}}/sku/release
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "skuId": "{{skuId}}"
+}
+
+### deliver order
+
+PUT {{urlPrefix}}/order/{{orderId}}/deliver
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}"
+}
+
+### return order
+
+PUT {{urlPrefix}}/order/{{orderId}}/return
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}"
+}
+
+### cancel order
+
+PUT {{urlPrefix}}/order/{{orderId}}/cancel
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}"
+}
+
+### get
+
+GET {{urlPrefix}}/order/{{orderId}}

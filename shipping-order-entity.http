@@ -1,0 +1,22 @@
+@urlPrefix = http://localhost:9000
+@orderId = cart-1
+@skuId = sku-2
+@orderSkuItemId = 1a24df69-e13b-4755-bc6f-ba5d7bae62f8
+@readyToShipAt = 2023-01-22T00:00:00.000Z
+
+### get shipping order
+
+GET {{urlPrefix}}/shipping-order/{{orderId}}
+
+### ready to ship order sku item
+
+PUT {{urlPrefix}}/shipping-order/{{orderId}}/ready-to-ship-order-sku-item
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "orderSkuItemId": "{{orderSkuItemId}}",
+  "skuId": "{{skuId}}",
+  "stockSkuItemId": "stock-sku-item-2",
+  "readyToShipAt": "{{$localDatetime iso8601}}"
+}
