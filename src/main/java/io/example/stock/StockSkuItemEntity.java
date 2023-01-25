@@ -1,22 +1,117 @@
 package io.example.stock;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.springsdk.annotations.EntityKey;
 import kalix.springsdk.annotations.EntityType;
+import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("stockSkuItemId")
 @EntityType("stockSkuItem")
 @RequestMapping("/stock-sku-item/{stockSkuItemId}")
 public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(StockSkuItemEntity.class);
+  private final String entityId;
+
+  public StockSkuItemEntity(EventSourcedEntityContext context) {
+    this.entityId = context.entityId();
+  }
+
+  @PostMapping("/create")
+  Effect<String> create(@RequestBody CreateStockSkuItemCommand command) {
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    if (currentState().isEmpty()) {
+      return effects()
+          .emitEvents(currentState().eventsFor(command))
+          .thenReply(__ -> "OK");
+    }
+    return effects().reply("OK");
+  }
+
+  @PutMapping("/order-requests-join-to-stock")
+  Effect<String> orderRequestsJoinToStock(@RequestBody OrderRequestsJoinToStockCommand command) {
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    return effects()
+        .emitEvent(currentState().eventFor(command))
+        .thenReply(__ -> "OK");
+  }
+
+  @PutMapping("/order-requests-join-to-stock-rejected")
+  Effect<String> orderRequestsJoinToStockRejected(@RequestBody OrderRequestsJoinToStockRejectedCommand command) {
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    return effects()
+        .emitEvent(currentState().eventFor(command))
+        .thenReply(__ -> "OK");
+  }
+
+  @PutMapping("/stock-requests-join-to-order-accepted")
+  Effect<String> stockRequestsJoinToOrderAccepted(@RequestBody StockRequestsJoinToOrderAcceptedCommand command) {
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    return effects()
+        .emitEvent(currentState().eventsFor(command))
+        .thenReply(__ -> "OK");
+  }
+
+  @PutMapping("/stock-requests-join-to-order-rejected")
+  Effect<String> stockRequestsJoinToOrderRejected(@RequestBody StockRequestsJoinToOrderRejectedCommand command) {
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    return effects()
+        .emitEvent(currentState().eventFor(command))
+        .thenReply(__ -> "OK");
+  }
+
+  @GetMapping
+  Effect<State> get() {
+    log.info("EntityId: {}\nState: {}", entityId, currentState());
+    return effects().reply(currentState());
+  }
+
+  @EventHandler
+  public State on(CreatedStockSkuItemEvent event) {
+    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(StockRequestedJoinToOrderEvent event) {
+    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(OrderRequestedJoinToStockAcceptedEvent event) {
+    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(OrderRequestedJoinToStockRejectedEvent event) {
+    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(StockRequestedJoinToOrderAcceptedEvent event) {
+    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(StockRequestedJoinToOrderRejectedEvent event) {
+    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
 
   public record State(
       String stockSkuItemId,
@@ -36,11 +131,9 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
     }
 
     List<?> eventsFor(CreateStockSkuItemCommand command) {
-      var events = new ArrayList<>();
-      events.add(new CreatedStockSkuItemEvent(command.stockSkuItemId, command.skuId, command.skuName, command.stockOrderId));
-      events.add(new StockRequestedJoinToOrderEvent(command.stockSkuItemId, command.skuId, command.stockOrderId));
-
-      return events;
+      return List.of(
+          new CreatedStockSkuItemEvent(command.stockSkuItemId, command.skuId, command.skuName, command.stockOrderId),
+          new StockRequestedJoinToOrderEvent(command.stockSkuItemId, command.skuId, command.stockOrderId));
     }
 
     Object eventFor(OrderRequestsJoinToStockCommand command) {
@@ -59,11 +152,9 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
       if (orderSkuItemId == null) {
         return List.of((new StockRequestedJoinToOrderAcceptedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId, command.readyToShipAt)));
       } else {
-        var events = new ArrayList<>();
-        events.add(new StockRequestedJoinToOrderEvent(command.stockSkuItemId, command.skuId, command.stockOrderId));
-        events.add(new StockRequestedJoinToOrderRejectedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId));
-
-        return events;
+        return List.of(
+            new StockRequestedJoinToOrderEvent(command.stockSkuItemId, command.skuId, command.stockOrderId),
+            new StockRequestedJoinToOrderRejectedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId));
       }
     }
 
@@ -73,6 +164,10 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
 
     State on(CreatedStockSkuItemEvent event) {
       return new State(event.stockSkuItemId, event.skuId, event.skuName, null, null, event.stockOrderId, null);
+    }
+
+    State on(StockRequestedJoinToOrderEvent event) {
+      return this;
     }
 
     State on(OrderRequestedJoinToStockAcceptedEvent event) {

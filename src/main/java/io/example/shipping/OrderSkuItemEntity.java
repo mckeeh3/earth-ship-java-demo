@@ -1,7 +1,6 @@
 package io.example.shipping;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -156,22 +155,20 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
     }
 
     List<?> eventsFor(CreateOrderSkuItemCommand command) {
-      var events = new ArrayList<>();
-      events.add(new CreatedOrderSkuItemEvent(command.orderSkuItemId, command.customerId, command.orderId, command.skuId, command.skuName, command.orderedAt));
-      events.add(new OrderRequestedJoinToStockEvent(command.orderSkuItemId, command.orderId, command.skuId));
-
-      return events;
+      return List.of(
+          new CreatedOrderSkuItemEvent(command.orderSkuItemId, command.customerId, command.orderId, command.skuId, command.skuName, command.orderedAt),
+          new OrderRequestedJoinToStockEvent(command.orderSkuItemId, command.orderId, command.skuId));
     }
 
     List<?> eventsFor(OrderRequestedJoinToStockAcceptedCommand command) {
-      var events = new ArrayList<>();
       if (this.stockSkuItemId != null) {
-        events.add(new OrderRequestedJoinToStockAcceptedEvent(command.orderSkuItemId, command.orderId, command.skuId, command.stockSkuItemId, command.stockOrderId, Instant.now()));
+        return List.of(
+            new OrderRequestedJoinToStockAcceptedEvent(command.orderSkuItemId, command.orderId, command.skuId, command.stockSkuItemId, command.stockOrderId, Instant.now()));
       } else {
-        events.add(new OrderRequestedJoinToStockEvent(command.orderSkuItemId, command.orderId, command.skuId));
-        events.add(new OrderRequestedJoinToStockRejectedEvent(command.orderSkuItemId, command.orderId, command.skuId, command.stockSkuItemId, command.stockOrderId));
+        return List.of(
+            new OrderRequestedJoinToStockEvent(command.orderSkuItemId, command.orderId, command.skuId),
+            new OrderRequestedJoinToStockRejectedEvent(command.orderSkuItemId, command.orderId, command.skuId, command.stockSkuItemId, command.stockOrderId));
       }
-      return events;
     }
 
     OrderRequestedJoinToStockEvent eventFor(OrderRequestedJoinToStockRejectedCommand command) {
@@ -219,7 +216,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
     }
 
     State on(BackOrderedSkuItemEvent event) {
-      return new State(customerId, orderId, orderSkuItemId, skuId, skuName, stockSkuItemId, stockOrderId, orderedAt, null, event.backOrderedAt);
+      return new State(customerId, orderId, orderSkuItemId, skuId, skuName, null, null, orderedAt, null, event.backOrderedAt);
     }
   }
 
