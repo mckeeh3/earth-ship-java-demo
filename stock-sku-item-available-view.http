@@ -1,0 +1,6 @@
+@urlPrefix = http://localhost:9000
+@skuId = sku-1
+
+### query for available stock sku items
+
+GET {{urlPrefix}}/stock-sku-items-available/{{skuId}}
