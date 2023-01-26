@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import io.example.Validator2;
+import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -39,7 +39,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   @PutMapping("/items/add")
   public Effect<String> addLineItem(@RequestBody AddLineItemCommand command) {
     log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
-    return Validator2.<Effect<String>>start()
+    return Validator.<Effect<String>>start()
         .isNotNull(currentState().checkedOutAt(), "Cannot add item to checked out cart")
         .isNotNull(currentState().deletedAt(), "Cannot add item to deleted cart")
         .isEmpty(command.customerId(), "Cannot add item to cart without customer id")
@@ -55,7 +55,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   @PutMapping("/items/{sku_id}/change")
   public Effect<String> changeLineItem(@RequestBody ChangeLineItemCommand command) {
     log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
-    return Validator2.<Effect<String>>start()
+    return Validator.<Effect<String>>start()
         .isNull(currentState().findLineItem(command.skuId), "Item not found in cart")
         .isEmpty(currentState().lineItems, "Cannot change item in empty cart")
         .isNotNull(currentState().checkedOutAt(), "Cannot change item in checked out cart")
@@ -71,7 +71,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   @PutMapping("/items/{sku_id}/remove")
   public Effect<String> removeLineItem(@RequestBody RemoveLineItemCommand command) {
     log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
-    return Validator2.<Effect<String>>start()
+    return Validator.<Effect<String>>start()
         .isNotNull(currentState().checkedOutAt(), "Cannot remove item from checked out cart")
         .isNotNull(currentState().deletedAt(), "Cannot remove item from deleted cart")
         .isEmpty(command.skuId(), "Cannot remove item from cart without sku id")
@@ -84,7 +84,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   @PutMapping("/checkout")
   public Effect<String> checkout(@RequestBody CheckoutCommand command) {
     log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
-    return Validator2.<Effect<String>>start()
+    return Validator.<Effect<String>>start()
         .isNotNull(currentState().deletedAt(), "Cannot checkout deleted cart")
         .isEmpty(currentState().lineItems, "Cannot checkout empty cart")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
@@ -96,7 +96,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   @DeleteMapping("/delete")
   public Effect<String> delete(@RequestBody DeleteCommand command) {
     log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
-    return Validator2.<Effect<String>>start()
+    return Validator.<Effect<String>>start()
         .isNotNull(currentState().checkedOutAt(), "Cannot delete checked out cart")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
@@ -107,7 +107,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   @GetMapping()
   public Effect<State> get() {
     log.info("EntityId: {}\nState {}\nGetShoppingCart", entityId, currentState());
-    return Validator2.<Effect<State>>start()
+    return Validator.<Effect<State>>start()
         .isTrue(currentState().isEmpty(), "Shopping cart is not found")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects().reply(currentState()));

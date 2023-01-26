@@ -5,11 +5,10 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import kalix.javasdk.eventsourcedentity.EventSourcedEntity.Effect;
+public record Validator<T>(List<String> reasons, Function<String, T> error) {
 
-public record Validator<T>(List<String> reasons) {
   public static <T> Validator<T> start() {
-    return new Validator<T>(List.of());
+    return new Validator<T>(List.of(), null);
   }
 
   public Validator<T> isTrue(boolean test, String reason) {
@@ -28,7 +27,7 @@ public record Validator<T>(List<String> reasons) {
     return test == null || test.isEmpty() ? addError(reason) : this;
   }
 
-  public Validator<T> notEmpty(String test, String reason) {
+  public Validator<T> isNotEmpty(String test, String reason) {
     return test != null && !test.isEmpty() ? addError(reason) : this;
   }
 
@@ -36,22 +35,32 @@ public record Validator<T>(List<String> reasons) {
     return test == null || test.isEmpty() ? addError(reason) : this;
   }
 
-  public Validator<T> ltEqZero(int test, String reason) {
+  public Validator<T> isLtEqZero(int test, String reason) {
     return test <= 0 ? addError(reason) : this;
+  }
+
+  public Validator<T> isGtLimit(int test, int limit, String reason) {
+    return test > limit ? addError(reason) : this;
   }
 
   private Validator<T> addError(String message) {
     var newReasons = new ArrayList<String>(reasons);
     newReasons.add(message);
-    return new Validator<T>(newReasons);
+    return new Validator<T>(newReasons, error);
   }
 
-  public Effect<T> ifErrorOrElse(Function<String, Effect<T>> error, Supplier<Effect<T>> process) {
-    if (reasons.size() > 0) {
-      var message = reasons.stream().reduce("", (a, b) -> "%s\n%s".formatted(a, b));
-      return error.apply(message);
-    } else {
-      return process.get();
+  public ErrorOrSuccess<T> onError(Function<String, T> error) {
+    var message = reasons.stream().reduce("", (a, b) -> "%s\n%s".formatted(a, b));
+    return new ErrorOrSuccess<T>(message, error);
+  }
+
+  public record ErrorOrSuccess<T>(String errorMessage, Function<String, T> error) {
+    public T onSuccess(Supplier<T> success) {
+      if (errorMessage == null || errorMessage.isEmpty()) {
+        return success.get();
+      } else {
+        return error.apply(errorMessage);
+      }
     }
   }
 }

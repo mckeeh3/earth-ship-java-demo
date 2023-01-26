@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import io.example.Validator2;
+import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -39,7 +39,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
   @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateStockOrderCommand command) {
     log.info("EntityID: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
-    return Validator2.<Effect<String>>start()
+    return Validator.<Effect<String>>start()
         .isNotEmpty(currentState().stockOrderId(), "StockOrder already exists")
         .isLtEqZero(command.orderItemsTotal(), "OrderItemsTotal must be greater than 0")
         .isGtLimit(generateBatchSize, 1_000, "OrderItemsTotal must be less than or equal to 1_000")
@@ -71,7 +71,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
   @GetMapping
   public Effect<State> get() {
     log.info("EntityID: {}\nState: {}\nGetStockOrder", entityId, currentState());
-    return Validator2.<Effect<State>>start()
+    return Validator.<Effect<State>>start()
         .isEmpty(currentState().stockOrderId(), "StockOrder does not exist")
         .onError(errorMessages -> effects().error(errorMessages))
         .onSuccess(() -> effects().reply(currentState()));

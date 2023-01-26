@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
+import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.springsdk.annotations.EntityKey;
@@ -85,11 +86,10 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
   @GetMapping
   public Effect<State> get() {
     log.info("EntityId: {}\nState: {}\nGetOrderSkuItem", entityId, currentState());
-    return Validator.<State>start()
+    return Validator.<Effect<State>>start()
         .isTrue(currentState().isEmpty(), "OrderSkuItem not found")
-        .ifErrorOrElse(
-            errorMessage -> effects().error(errorMessage),
-            () -> effects().reply(currentState()));
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
+        .onSuccess(() -> effects().reply(currentState()));
   }
 
   @EventHandler
