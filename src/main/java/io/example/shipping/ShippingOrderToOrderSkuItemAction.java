@@ -30,7 +30,8 @@ public class ShippingOrderToOrderSkuItemAction extends Action {
         .map(command -> {
           var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId());
           var returnType = String.class;
-          return kalixClient.post(path, command, returnType).execute();
+          var deferredCall = kalixClient.post(path, command, returnType);
+          return deferredCall.execute();
         })
         .toList();
 

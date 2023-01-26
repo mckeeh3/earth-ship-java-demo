@@ -7,6 +7,7 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,7 +37,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
     return State.emptyState();
   }
 
-  @PutMapping("/create")
+  @PostMapping("/create")
   public Effect<String> create(@RequestBody CreateStockOrderCommand command) {
     log.info("EntityID: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
@@ -123,10 +124,13 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
     GeneratedStockSkuItemIdsEvent eventFor(GenerateStockSkuItemIdsCommand command) {
       var limit = Math.min(orderItemsCreated + generateBatchSize, orderItemsTotal);
-      var stockSkuItemIds = IntStream.range(orderItemsCreated, limit)
-          .mapToObj(i -> StockSkuItemId.of(command.stockOrderId(), orderItemsTotal, i))
+      var generateCommands = IntStream.range(orderItemsCreated, limit)
+          .mapToObj(i -> {
+            var stockSkuItemId = StockSkuItemId.of(stockOrderId, orderItemsTotal, i);
+            return new GenerateStockSkuItem(stockSkuItemId, skuId, skuName, stockOrderId);
+          })
           .toList();
-      return new GeneratedStockSkuItemIdsEvent(command.stockOrderId(), stockSkuItemIds);
+      return new GeneratedStockSkuItemIdsEvent(command.stockOrderId(), generateCommands);
     }
 
     State on(CreatedStockOrderEvent event) {
@@ -159,7 +163,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
           skuId,
           skuName,
           orderItemsTotal,
-          orderItemsCreated + event.stockSkuItemIds().size(),
+          orderItemsCreated + event.generateStockSkuItems().size(),
           orderItemsOrdered,
           orderItemsAvailable,
           orderReceivedAt);
@@ -176,5 +180,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
   public record GenerateStockSkuItemIdsCommand(String stockOrderId) {}
 
-  public record GeneratedStockSkuItemIdsEvent(String stockOrderId, List<StockSkuItemId> stockSkuItemIds) {}
+  public record GeneratedStockSkuItemIdsEvent(String stockOrderId, List<GenerateStockSkuItem> generateStockSkuItems) {}
+
+  public record GenerateStockSkuItem(StockSkuItemId stockSkuItemId, String skuId, String skuName, String stockOrderId) {}
 }

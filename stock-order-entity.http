@@ -3,10 +3,12 @@
 @skuId = sku-1
 @skuName = sku-name-1
 @orderItemsTotal = 10
+@orderItemsOrdered = 5
+@orderItemsAvailable = 5
 
 ### Create a new stock order
 
-PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/create
+POST {{urlPrefix}}/stock-order/{{stockOrderId}}/create
 Content-Type: application/json
 
 {
@@ -26,6 +28,26 @@ Content-Type: application/json
   "skuId": "",
   "skuName": "",
   "orderItemsTotal": 0
+}
+
+### Update a stock order
+
+PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/update
+Content-Type: application/json
+
+{
+  "stockOrderId": "{{stockOrderId}}",
+  "orderItemsOrdered": {{orderItemsOrdered}},
+  "orderItemsAvailable": {{orderItemsAvailable}}
+}
+
+### Generate stock sku items
+
+PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/generate-stock-sku-item-ids
+Content-Type: application/json
+
+{
+  "stockOrderId": "{{stockOrderId}}"
 }
 
 ### Get a stock order
