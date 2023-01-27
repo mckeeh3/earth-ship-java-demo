@@ -3,7 +3,6 @@ package io.example.shipping;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
