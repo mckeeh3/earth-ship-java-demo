@@ -35,28 +35,28 @@ public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedV
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.CreatedOrderSkuItemEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(event.orderSkuItemId(), event.orderId(), event.skuId(), Instant.EPOCH));
+        .updateState(new OrderSkuItemRow(event.orderSkuItemId(), event.skuId(), Instant.EPOCH));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().orderId, viewState().skuId(), Instant.EPOCH));
+        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), Instant.EPOCH));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().orderId, viewState().skuId(), Instant.EPOCH));
+        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), Instant.EPOCH));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().orderId, viewState().skuId(), event.backOrderedAt()));
+        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), event.backOrderedAt()));
   }
 
-  public record OrderSkuItemRow(String orderSkuItemId, String orderId, String skuId, Instant backOrderedAt) {}
+  public record OrderSkuItemRow(OrderSkuItemId orderSkuItemId, String skuId, Instant backOrderedAt) {}
 
   public record OrderSkuItemRows(List<OrderSkuItemRow> orderSkuItemRows) {}
 }

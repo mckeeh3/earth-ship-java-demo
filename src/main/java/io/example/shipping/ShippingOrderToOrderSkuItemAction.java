@@ -46,7 +46,6 @@ public class ShippingOrderToOrderSkuItemAction extends Action {
         .map(orderSkuItem -> new CreateOrderSkuItemCommand(
             orderSkuItem.orderSkuItemId(),
             orderSkuItem.customerId(),
-            orderSkuItem.orderId(),
             orderSkuItem.skuId(),
             orderSkuItem.skuName(),
             orderSkuItem.orderedAt()));

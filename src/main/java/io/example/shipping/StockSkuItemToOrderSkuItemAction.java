@@ -69,7 +69,6 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     var path = "/order-sku-item/%s/stock-requests-join-to-order".formatted(orderSkuItemRow.orderSkuItemId());
     var command = new OrderSkuItemEntity.StockRequestsJoinToOrderCommand(
         orderSkuItemRow.orderSkuItemId(),
-        orderSkuItemRow.orderId(),
         event.skuId(),
         event.stockSkuItemId());
     var returnType = String.class;
@@ -82,7 +81,6 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     var path = "/order-sku-item/%s/stock-requests-join-to-order-rejected".formatted(event.orderSkuItemId());
     var command = new OrderSkuItemEntity.StockRequestsJoinToOrderRejectedCommand(
         event.orderSkuItemId(),
-        event.orderId(),
         event.skuId(),
         event.stockSkuItemId());
     var returnType = String.class;
@@ -95,7 +93,6 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     var path = "/order-sku-item/%s/order-requests-join-to-stock-accepted".formatted(event.orderSkuItemId());
     var command = new OrderSkuItemEntity.OrderRequestsJoinToStockAcceptedCommand(
         event.orderSkuItemId(),
-        event.orderId(),
         event.skuId(),
         event.stockSkuItemId());
     var returnType = String.class;
@@ -108,7 +105,6 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     var path = "/order-sku-item/%s/order-requests-join-to-stock-rejected".formatted(event.orderSkuItemId());
     var command = new OrderSkuItemEntity.OrderRequestsJoinToStockRejectedCommand(
         event.orderSkuItemId(),
-        event.orderId(),
         event.skuId(),
         event.stockSkuItemId());
     var returnType = String.class;

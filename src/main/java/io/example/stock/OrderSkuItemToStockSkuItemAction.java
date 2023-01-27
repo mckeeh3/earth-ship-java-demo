@@ -64,7 +64,6 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     var command = new StockSkuItemEntity.OrderRequestsJoinToStockCommand(
         stockSkuItemRow.stockSkuItemId(),
         event.skuId(),
-        event.orderId(),
         event.orderSkuItemId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
@@ -76,7 +75,6 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     var path = "/order-sku-item/%s/back-order-order-sku-item".formatted(event.orderSkuItemId());
     var command = new OrderSkuItemEntity.BackOrderSkuItemCommand(
         event.orderSkuItemId(),
-        event.orderId(),
         event.skuId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
@@ -89,7 +87,6 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     var command = new StockSkuItemEntity.OrderRequestsJoinToStockRejectedCommand(
         event.stockSkuItemId(),
         event.skuId(),
-        event.orderId(),
         event.orderSkuItemId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
@@ -102,7 +99,6 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     var command = new StockSkuItemEntity.StockRequestsJoinToOrderAcceptedCommand(
         event.stockSkuItemId(),
         event.skuId(),
-        event.orderId(),
         event.orderSkuItemId(),
         event.readyToShipAt());
     var returnType = String.class;
@@ -116,7 +112,6 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     var command = new StockSkuItemEntity.StockRequestsJoinToOrderRejectedCommand(
         event.stockSkuItemId(),
         event.skuId(),
-        event.orderId(),
         event.orderSkuItemId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);

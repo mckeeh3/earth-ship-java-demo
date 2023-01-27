@@ -249,9 +249,8 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
     private List<OrderSkuItem> toOrderSkuItems(CreateOrderCommand command, OrderItem orderItem) {
       return IntStream.range(0, orderItem.quantity())
           .mapToObj(j -> new OrderSkuItem(
+              OrderSkuItemId.of(command.orderId),
               command.customerId(),
-              command.orderId(),
-              UUID.randomUUID().toString(),
               orderItem.skuId(),
               orderItem.skuName(),
               null,
@@ -282,9 +281,8 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       return orderSkuItems.stream()
           .map(i -> i.orderSkuItemId().equals(event.orderSkuItemId)
               ? new OrderSkuItem(
-                  i.customerId(),
-                  i.orderId(),
                   i.orderSkuItemId(),
+                  i.customerId(),
                   i.skuId(),
                   i.skuName(),
                   event.stockSkuItemId(),
@@ -316,9 +314,8 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       return orderSkuItems.stream()
           .map(i -> i.orderSkuItemId().equals(event.orderSkuItemId)
               ? new OrderSkuItem(
-                  i.customerId(),
-                  i.orderId(),
                   i.orderSkuItemId(),
+                  i.customerId(),
                   i.skuId(),
                   i.skuName(),
                   i.stockSkuItemId(),
@@ -337,9 +334,8 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       List<OrderSkuItem> orderSkuItems) {}
 
   public record OrderSkuItem(
+      OrderSkuItemId orderSkuItemId,
       String customerId,
-      String orderId,
-      String orderSkuItemId,
       String skuId,
       String skuName,
       String stockSkuItemId,
