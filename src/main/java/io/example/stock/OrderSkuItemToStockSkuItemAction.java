@@ -83,7 +83,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
   }
 
   private Effect<String> orderRequestsJoinToStockRejected(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
-    var path = "/order-sku-item/%s/order-requests-join-to-stock-accepted".formatted(event.orderSkuItemId());
+    var path = "/stock-sku-item/%s/order-requests-join-to-stock-rejected".formatted(event.stockSkuItemId().toEntityId());
     var command = new StockSkuItemEntity.OrderRequestsJoinToStockRejectedCommand(
         event.stockSkuItemId(),
         event.skuId(),
@@ -97,7 +97,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
   }
 
   private Effect<String> stockRequestsJoinToOrderAccepted(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
-    var path = "/order-sku-item/%s/order-requests-join-to-stock-rejected".formatted(event.orderSkuItemId());
+    var path = "/stock-sku-item/%s/stock-requests-join-to-order-accepted".formatted(event.stockSkuItemId().toEntityId());
     var command = new StockSkuItemEntity.StockRequestsJoinToOrderAcceptedCommand(
         event.stockSkuItemId(),
         event.skuId(),
@@ -112,7 +112,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
   }
 
   private CompletionStage<String> StockRequestedJoinToOrderRejectedEvent(OrderSkuItemEntity.StockRequestedJoinToOrderRejectedEvent event) {
-    var path = "/order-sku-item/%s/stock-requests-join-to-order-rejected".formatted(event.orderSkuItemId());
+    var path = "/stock-sku-item/%s/stock-requests-join-to-order-rejected".formatted(event.stockSkuItemId().toEntityId());
     var command = new StockSkuItemEntity.StockRequestsJoinToOrderRejectedCommand(
         event.stockSkuItemId(),
         event.skuId(),
