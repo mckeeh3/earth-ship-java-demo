@@ -22,7 +22,7 @@ public class StockOrderToStockSkuItemAction extends Action {
     log.info("Event: {}", event);
 
     var results = event.generateStockSkuItems().stream()
-        .map(id -> new StockSkuItemEntity.CreateStockSkuItemCommand(id.stockSkuItemId(), id.skuId(), id.skuName(), id.stockOrderId()))
+        .map(id -> new StockSkuItemEntity.CreateStockSkuItemCommand(id.stockSkuItemId(), id.skuId(), id.skuName()))
         .map(command -> {
           var path = "/stock-sku-item/%s/create".formatted(command.stockSkuItemId().toEntityId());
           var returnType = String.class;

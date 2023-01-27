@@ -43,30 +43,29 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
 
   private CompletionStage<String> queryAvailableStockSkuItems(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event) {
     var path = "/stock-sku-items-available/%s".formatted(event.skuId());
-    var returnType = stockSkuItemsAvailableView.StockSkuItems.class;
+    var returnType = StockSkuItemsAvailableView.StockSkuItemRows.class;
     return kalixClient.get(path, returnType)
         .execute()
         .thenCompose(queryReply -> onAvailableStockSkuItems(event, queryReply));
   }
 
-  private CompletionStage<String> onAvailableStockSkuItems(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event, stockSkuItemsAvailableView.StockSkuItems queryReply) {
-    var count = queryReply.stockSkuItems().size();
+  private CompletionStage<String> onAvailableStockSkuItems(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event, StockSkuItemsAvailableView.StockSkuItemRows queryReply) {
+    var count = queryReply.stockSkuItemRows().size();
     if (count > 0) {
-      return orderRequestsJoinToStock(event, queryReply.stockSkuItems().get(random.nextInt(count)));
+      return orderRequestsJoinToStock(event, queryReply.stockSkuItemRows().get(random.nextInt(count)));
     } else {
       log.info("No stock available, skuId: {}, back-ordering order sku item: {}", event.skuId(), event.orderSkuItemId());
       return backOrderOrderSkuItem(event);
     }
   }
 
-  private CompletionStage<String> orderRequestsJoinToStock(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event, stockSkuItemsAvailableView.StockSkuItemRow stockSkuItemRow) {
+  private CompletionStage<String> orderRequestsJoinToStock(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event, StockSkuItemsAvailableView.StockSkuItemRow stockSkuItemRow) {
     var path = "/stock-sku-item/%s/order-requests-join-to-stock".formatted(stockSkuItemRow.stockSkuItemId().toEntityId());
     var command = new StockSkuItemEntity.OrderRequestsJoinToStockCommand(
         stockSkuItemRow.stockSkuItemId(),
         event.skuId(),
         event.orderId(),
-        event.orderSkuItemId(),
-        stockSkuItemRow.stockOrderId());
+        event.orderSkuItemId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 
@@ -74,8 +73,11 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
   }
 
   private CompletionStage<String> backOrderOrderSkuItem(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event) {
-    var path = "/order-sku-item/%s/back-order-requested".formatted(event.orderSkuItemId());
-    var command = new OrderSkuItemEntity.BackOrderSkuItemCommand(event.orderSkuItemId(), event.orderId(), event.skuId());
+    var path = "/order-sku-item/%s/back-order-order-sku-item".formatted(event.orderSkuItemId());
+    var command = new OrderSkuItemEntity.BackOrderSkuItemCommand(
+        event.orderSkuItemId(),
+        event.orderId(),
+        event.skuId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 
@@ -88,8 +90,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
         event.stockSkuItemId(),
         event.skuId(),
         event.orderId(),
-        event.orderSkuItemId(),
-        event.stockOrderId());
+        event.orderSkuItemId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 
@@ -103,7 +104,6 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
         event.skuId(),
         event.orderId(),
         event.orderSkuItemId(),
-        event.stockOrderId(),
         event.readyToShipAt());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
@@ -117,8 +117,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
         event.stockSkuItemId(),
         event.skuId(),
         event.orderId(),
-        event.orderSkuItemId(),
-        event.stockOrderId());
+        event.orderSkuItemId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 

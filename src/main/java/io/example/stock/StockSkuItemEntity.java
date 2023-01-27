@@ -124,11 +124,10 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
       String skuName,
       String orderId,
       String orderSkuItemId,
-      String stockOrderId,
       Instant readyToShipAt) {
 
     static State emptyState() {
-      return new State(null, null, null, null, null, null, null);
+      return new State(null, null, null, null, null, null);
     }
 
     boolean isEmpty() {
@@ -137,38 +136,75 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
 
     List<?> eventsFor(CreateStockSkuItemCommand command) {
       return List.of(
-          new CreatedStockSkuItemEvent(command.stockSkuItemId, command.skuId, command.skuName, command.stockOrderId),
-          new StockRequestedJoinToOrderEvent(command.stockSkuItemId, command.skuId, command.stockOrderId));
+          new CreatedStockSkuItemEvent(
+              command.stockSkuItemId,
+              command.skuId,
+              command.skuName),
+          new StockRequestedJoinToOrderEvent(
+              command.stockSkuItemId,
+              command.skuId));
     }
 
     Object eventFor(OrderRequestsJoinToStockCommand command) {
       if (orderSkuItemId == null || orderSkuItemId.equals(command.orderSkuItemId)) {
-        return new OrderRequestedJoinToStockAcceptedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId);
+        return new OrderRequestedJoinToStockAcceptedEvent(
+            command.stockSkuItemId,
+            command.skuId,
+            command.orderId,
+            command.orderSkuItemId,
+            Instant.now());
       } else {
-        return new OrderRequestedJoinToStockRejectedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId);
+        return new OrderRequestedJoinToStockRejectedEvent(
+            command.stockSkuItemId,
+            command.skuId,
+            command.orderId,
+            command.orderSkuItemId);
       }
     }
 
     OrderRequestedJoinToStockRejectedEvent eventFor(OrderRequestsJoinToStockRejectedCommand command) {
-      return new OrderRequestedJoinToStockRejectedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId);
+      return new OrderRequestedJoinToStockRejectedEvent(
+          command.stockSkuItemId,
+          command.skuId,
+          command.orderId,
+          command.orderSkuItemId);
     }
 
     List<?> eventsFor(StockRequestsJoinToOrderAcceptedCommand command) {
       if (orderSkuItemId == null) {
-        return List.of((new StockRequestedJoinToOrderAcceptedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId, command.readyToShipAt)));
+        return List.of((new StockRequestedJoinToOrderAcceptedEvent(
+            command.stockSkuItemId,
+            command.skuId,
+            command.orderId,
+            command.orderSkuItemId,
+            command.readyToShipAt)));
       } else {
         return List.of(
-            new StockRequestedJoinToOrderEvent(command.stockSkuItemId, command.skuId, command.stockOrderId),
-            new StockRequestedJoinToOrderRejectedEvent(command.stockSkuItemId, command.skuId, command.orderId, command.orderSkuItemId, command.stockOrderId));
+            new StockRequestedJoinToOrderEvent(
+                command.stockSkuItemId,
+                command.skuId),
+            new StockRequestedJoinToOrderRejectedEvent(
+                command.stockSkuItemId,
+                command.skuId,
+                command.orderId,
+                command.orderSkuItemId));
       }
     }
 
     StockRequestedJoinToOrderEvent eventFor(StockRequestsJoinToOrderRejectedCommand command) {
-      return new StockRequestedJoinToOrderEvent(command.stockSkuItemId, command.skuId, command.stockOrderId);
+      return new StockRequestedJoinToOrderEvent(
+          command.stockSkuItemId,
+          command.skuId);
     }
 
     State on(CreatedStockSkuItemEvent event) {
-      return new State(event.stockSkuItemId, event.skuId, event.skuName, null, null, event.stockOrderId, null);
+      return new State(
+          event.stockSkuItemId,
+          event.skuId,
+          event.skuName,
+          null,
+          null,
+          null);
     }
 
     State on(StockRequestedJoinToOrderEvent event) {
@@ -176,41 +212,71 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
     }
 
     State on(OrderRequestedJoinToStockAcceptedEvent event) {
-      return new State(stockSkuItemId, skuId, skuName, event.orderId, event.orderSkuItemId, stockOrderId, null);
+      return new State(
+          stockSkuItemId,
+          skuId,
+          skuName,
+          event.orderId,
+          event.orderSkuItemId,
+          event.readyToShipAt);
     }
 
     State on(OrderRequestedJoinToStockRejectedEvent event) {
-      return new State(stockSkuItemId, skuId, skuName, null, null, stockOrderId, null);
+      if (event.orderSkuItemId.equals(orderSkuItemId) && event.orderId.equals(orderId)) {
+        return new State(
+            stockSkuItemId,
+            skuId,
+            skuName,
+            null,
+            null,
+            null);
+      }
+      return this;
     }
 
     State on(StockRequestedJoinToOrderAcceptedEvent event) {
-      return new State(stockSkuItemId, skuId, skuName, event.orderId, event.orderSkuItemId, stockOrderId, event.readyToShipAt);
+      return new State(
+          stockSkuItemId,
+          skuId,
+          skuName,
+          event.orderId,
+          event.orderSkuItemId,
+          event.readyToShipAt);
     }
 
     State on(StockRequestedJoinToOrderRejectedEvent event) {
-      return new State(stockSkuItemId, skuId, skuName, null, null, stockOrderId, null);
+      if (event.orderSkuItemId.equals(orderSkuItemId) && event.orderId.equals(orderId)) {
+        return new State(
+            stockSkuItemId,
+            skuId,
+            skuName,
+            null,
+            null,
+            null);
+      }
+      return this;
     }
   }
 
-  public record CreateStockSkuItemCommand(StockSkuItemId stockSkuItemId, String skuId, String skuName, String stockOrderId) {}
+  public record CreateStockSkuItemCommand(StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
 
-  public record CreatedStockSkuItemEvent(StockSkuItemId stockSkuItemId, String skuId, String skuName, String stockOrderId) {}
+  public record CreatedStockSkuItemEvent(StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
 
-  public record StockRequestedJoinToOrderEvent(StockSkuItemId stockSkuItemId, String skuId, String stockOrderId) {}
+  public record StockRequestedJoinToOrderEvent(StockSkuItemId stockSkuItemId, String skuId) {}
 
-  public record OrderRequestsJoinToStockCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId) {}
+  public record OrderRequestsJoinToStockCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId) {}
 
-  public record OrderRequestedJoinToStockAcceptedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId) {}
+  public record OrderRequestedJoinToStockAcceptedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, Instant readyToShipAt) {}
 
-  public record OrderRequestsJoinToStockRejectedCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId) {}
+  public record OrderRequestsJoinToStockRejectedCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId) {}
 
-  public record OrderRequestedJoinToStockRejectedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId) {}
+  public record OrderRequestedJoinToStockRejectedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId) {}
 
-  public record StockRequestsJoinToOrderAcceptedCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId, Instant readyToShipAt) {}
+  public record StockRequestsJoinToOrderAcceptedCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, Instant readyToShipAt) {}
 
-  public record StockRequestedJoinToOrderAcceptedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId, Instant readyToShipAt) {}
+  public record StockRequestedJoinToOrderAcceptedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, Instant readyToShipAt) {}
 
-  public record StockRequestsJoinToOrderRejectedCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId) {}
+  public record StockRequestsJoinToOrderRejectedCommand(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId) {}
 
-  public record StockRequestedJoinToOrderRejectedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId, String stockOrderId) {}
+  public record StockRequestedJoinToOrderRejectedEvent(StockSkuItemId stockSkuItemId, String skuId, String orderId, String orderSkuItemId) {}
 }
