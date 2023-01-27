@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
+import io.example.stock.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -140,7 +141,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
       String orderSkuItemId,
       String skuId,
       String skuName,
-      String stockSkuItemId,
+      StockSkuItemId stockSkuItemId,
       String stockOrderId,
       Instant orderedAt,
       Instant readyToShipAt,
@@ -177,7 +178,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
 
     Object eventFor(StockRequestsJoinToOrderCommand command) {
       if (stockSkuItemId == null || stockSkuItemId.equals(command.stockSkuItemId)) {
-        return new StockRequestedJoinToOrderAcceptedEvent(command.orderSkuItemId, command.orderId, command.skuId, command.stockSkuItemId, command.stockOrderId);
+        return new StockRequestedJoinToOrderAcceptedEvent(command.orderSkuItemId, command.orderId, command.skuId, command.stockSkuItemId, command.stockOrderId, Instant.now());
       } else {
         return new StockRequestedJoinToOrderRejectedEvent(command.orderSkuItemId, command.orderId, command.skuId, command.stockSkuItemId, command.stockOrderId);
       }
@@ -208,7 +209,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
     }
 
     State on(StockRequestedJoinToOrderAcceptedEvent event) {
-      return new State(customerId, orderId, orderSkuItemId, skuId, skuName, event.stockSkuItemId, event.stockOrderId, orderedAt, Instant.now(), null);
+      return new State(customerId, orderId, orderSkuItemId, skuId, skuName, event.stockSkuItemId, event.stockOrderId, orderedAt, event.readyToShipAt, null);
     }
 
     State on(StockRequestedJoinToOrderRejectedEvent event) {
@@ -226,21 +227,21 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
 
   public record OrderRequestedJoinToStockEvent(String orderSkuItemId, String orderId, String skuId) {}
 
-  public record OrderRequestedJoinToStockAcceptedCommand(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId) {}
+  public record OrderRequestedJoinToStockAcceptedCommand(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId) {}
 
-  public record OrderRequestedJoinToStockAcceptedEvent(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId, Instant readyToShipAt) {}
+  public record OrderRequestedJoinToStockAcceptedEvent(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId, Instant readyToShipAt) {}
 
-  public record OrderRequestedJoinToStockRejectedCommand(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId) {}
+  public record OrderRequestedJoinToStockRejectedCommand(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId) {}
 
-  public record OrderRequestedJoinToStockRejectedEvent(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId) {}
+  public record OrderRequestedJoinToStockRejectedEvent(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId) {}
 
-  public record StockRequestsJoinToOrderCommand(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId) {}
+  public record StockRequestsJoinToOrderCommand(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId) {}
 
-  public record StockRequestedJoinToOrderAcceptedEvent(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId) {}
+  public record StockRequestedJoinToOrderAcceptedEvent(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId, Instant readyToShipAt) {}
 
-  public record StockRequestsJoinToOrderRejectedCommand(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId) {}
+  public record StockRequestsJoinToOrderRejectedCommand(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId) {}
 
-  public record StockRequestedJoinToOrderRejectedEvent(String orderSkuItemId, String orderId, String skuId, String stockSkuItemId, String stockOrderId) {}
+  public record StockRequestedJoinToOrderRejectedEvent(String orderSkuItemId, String orderId, String skuId, StockSkuItemId stockSkuItemId, String stockOrderId) {}
 
   public record BackOrderSkuItemCommand(String orderSkuItemId, String orderId, String skuId) {}
 

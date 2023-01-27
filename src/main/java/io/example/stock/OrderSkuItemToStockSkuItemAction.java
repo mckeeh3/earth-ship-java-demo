@@ -7,8 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.example.shipping.OrderSkuItemEntity;
-import io.example.shipping.OrderSkuItemEntity.OrderRequestedJoinToStockEvent;
-import io.example.stock.stockSkuItemsAvailableView.StockSkuItemRow;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
@@ -28,7 +26,22 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     return effects().asyncReply(queryAvailableStockSkuItems(event));
   }
 
-  private CompletionStage<String> queryAvailableStockSkuItems(OrderRequestedJoinToStockEvent event) {
+  public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
+    log.info("Event: {}", event);
+    return orderRequestsJoinToStockRejected(event);
+  }
+
+  public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
+    log.info("Event: {}", event);
+    return stockRequestsJoinToOrderAccepted(event);
+  }
+
+  public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderRejectedEvent event) {
+    log.info("Event: {}", event);
+    return effects().asyncReply(StockRequestedJoinToOrderRejectedEvent(event));
+  }
+
+  private CompletionStage<String> queryAvailableStockSkuItems(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event) {
     var path = "/stock-sku-items-available/%s".formatted(event.skuId());
     var returnType = stockSkuItemsAvailableView.StockSkuItems.class;
     return kalixClient.get(path, returnType)
@@ -36,7 +49,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
         .thenCompose(queryReply -> onAvailableStockSkuItems(event, queryReply));
   }
 
-  private CompletionStage<String> onAvailableStockSkuItems(OrderRequestedJoinToStockEvent event, stockSkuItemsAvailableView.StockSkuItems queryReply) {
+  private CompletionStage<String> onAvailableStockSkuItems(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event, stockSkuItemsAvailableView.StockSkuItems queryReply) {
     var count = queryReply.stockSkuItems().size();
     if (count > 0) {
       return orderRequestsJoinToStock(event, queryReply.stockSkuItems().get(random.nextInt(count)));
@@ -46,7 +59,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     }
   }
 
-  private CompletionStage<String> orderRequestsJoinToStock(OrderRequestedJoinToStockEvent event, StockSkuItemRow stockSkuItemRow) {
+  private CompletionStage<String> orderRequestsJoinToStock(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event, stockSkuItemsAvailableView.StockSkuItemRow stockSkuItemRow) {
     var path = "/stock-sku-item/%s/order-requests-join-to-stock".formatted(stockSkuItemRow.stockSkuItemId().toEntityId());
     var command = new StockSkuItemEntity.OrderRequestsJoinToStockCommand(
         stockSkuItemRow.stockSkuItemId(),
@@ -60,9 +73,52 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     return deferredCall.execute();
   }
 
-  private CompletionStage<String> backOrderOrderSkuItem(OrderRequestedJoinToStockEvent event) {
+  private CompletionStage<String> backOrderOrderSkuItem(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event) {
     var path = "/order-sku-item/%s/back-order-requested".formatted(event.orderSkuItemId());
     var command = new OrderSkuItemEntity.BackOrderSkuItemCommand(event.orderSkuItemId(), event.orderId(), event.skuId());
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+
+    return deferredCall.execute();
+  }
+
+  private Effect<String> orderRequestsJoinToStockRejected(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
+    var path = "/order-sku-item/%s/order-requests-join-to-stock-accepted".formatted(event.orderSkuItemId());
+    var command = new StockSkuItemEntity.OrderRequestsJoinToStockRejectedCommand(
+        event.stockSkuItemId(),
+        event.skuId(),
+        event.orderId(),
+        event.orderSkuItemId(),
+        event.stockOrderId());
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+
+    return effects().forward(deferredCall);
+  }
+
+  private Effect<String> stockRequestsJoinToOrderAccepted(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
+    var path = "/order-sku-item/%s/order-requests-join-to-stock-rejected".formatted(event.orderSkuItemId());
+    var command = new StockSkuItemEntity.StockRequestsJoinToOrderAcceptedCommand(
+        event.stockSkuItemId(),
+        event.skuId(),
+        event.orderId(),
+        event.orderSkuItemId(),
+        event.stockOrderId(),
+        event.readyToShipAt());
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+
+    return effects().forward(deferredCall);
+  }
+
+  private CompletionStage<String> StockRequestedJoinToOrderRejectedEvent(OrderSkuItemEntity.StockRequestedJoinToOrderRejectedEvent event) {
+    var path = "/order-sku-item/%s/stock-requests-join-to-order-rejected".formatted(event.orderSkuItemId());
+    var command = new StockSkuItemEntity.StockRequestsJoinToOrderRejectedCommand(
+        event.stockSkuItemId(),
+        event.skuId(),
+        event.orderId(),
+        event.orderSkuItemId(),
+        event.stockOrderId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 
