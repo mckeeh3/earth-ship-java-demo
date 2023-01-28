@@ -1,6 +1,5 @@
 package io.example.shipping;
 
-import java.time.Instant;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -26,7 +25,7 @@ public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedV
         FROM order_sku_items_back_ordered
        LIMIT 100
        WHERE skuId = :skuId
-         AND backOrderedAt > 0
+         AND backOrdered = true
       """)
   public OrderSkuItemRows getOrderSkuItemsBackOrdered(@PathVariable String skuId) {
     return null;
@@ -35,28 +34,28 @@ public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedV
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.CreatedOrderSkuItemEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(event.orderSkuItemId(), event.skuId(), Instant.EPOCH));
+        .updateState(new OrderSkuItemRow(event.orderSkuItemId(), event.skuId(), false));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), Instant.EPOCH));
+        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), false));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), Instant.EPOCH));
+        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), false));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects()
-        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), event.backOrderedAt()));
+        .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), true));
   }
 
-  public record OrderSkuItemRow(OrderSkuItemId orderSkuItemId, String skuId, Instant backOrderedAt) {}
+  public record OrderSkuItemRow(OrderSkuItemId orderSkuItemId, String skuId, boolean backOrdered) {}
 
   public record OrderSkuItemRows(List<OrderSkuItemRow> orderSkuItemRows) {}
 }

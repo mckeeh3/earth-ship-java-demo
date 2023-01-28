@@ -65,7 +65,7 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
   public Effect<String> stockRequestsJoinToOrderAccepted(@RequestBody StockRequestsJoinToOrderAcceptedCommand command) {
     log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
     return effects()
-        .emitEvent(currentState().eventsFor(command))
+        .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
   }
 

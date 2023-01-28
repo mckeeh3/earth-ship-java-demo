@@ -1,6 +1,7 @@
 package io.example.order;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,9 @@ public class ShoppingCartToOrderAction extends Action {
   public Effect<String> on(ShoppingCartEntity.CheckedOutEvent event) {
     log.info("Event: {}", event);
 
-    var path = "/order/%s/create".formatted(event.cartId());
-    var command = new OrderEntity.CreateOrderCommand(event.cartId(), event.customerId(), toOrderItems(event.items()));
+    var orderId = UUID.randomUUID().toString();
+    var path = "/order/%s/create".formatted(orderId);
+    var command = new OrderEntity.CreateOrderCommand(orderId, event.customerId(), toOrderItems(event.items()));
     var returnType = String.class;
     var deferredCall = kalixClient.post(path, command, returnType);
 

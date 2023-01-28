@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
+import io.example.stock.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -337,7 +338,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       String customerId,
       String skuId,
       String skuName,
-      String stockSkuItemId,
+      StockSkuItemId stockSkuItemId,
       Instant orderedAt,
       Instant readyToShipAt) {}
 
@@ -345,17 +346,17 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   public record CreatedOrderEvent(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) {}
 
-  public record ReadyToShipOrderSkuItemCommand(String orderId, String orderSkuItemId, String skuId, String stockSkuItemId, Instant readyToShipAt) {}
+  public record ReadyToShipOrderSkuItemCommand(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
 
-  public record ReadyToShipOrderSkuItemEvent(String orderId, String orderSkuItemId, String skuId, String stockSkuItemId, Instant readyToShipAt) {}
+  public record ReadyToShipOrderSkuItemEvent(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
 
   public record ReadyToShipOrderItemEvent(String orderId, String skuId, Instant readyToShipAt) {}
 
   public record ReadyToShipOrderEvent(String orderId, Instant readyToShipAt) {}
 
-  public record ReleaseOrderSkuItemCommand(String orderId, String orderSkuItemId, String skuId, String stockSkuItemId) {}
+  public record ReleaseOrderSkuItemCommand(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record ReleasedOrderSkuItemEvent(String orderId, String orderSkuItemId, String skuId, String stockSkuItemId) {}
+  public record ReleasedOrderSkuItemEvent(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
   public record ReleasedOrderItemEvent(String orderId, String skuId) {}
 

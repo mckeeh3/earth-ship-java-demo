@@ -25,8 +25,8 @@ public class StockSkuItemsAvailableView extends View<StockSkuItemsAvailableView.
         FROM stock_sku_items_available
        LIMIT 100
        WHERE skuId = :skuId
+         AND available = true
       """)
-  // AND readyToShipAt != 0
   public StockSkuItemRows getStockSkuItemsAvailable(@PathVariable String skuId) {
     return null;
   }

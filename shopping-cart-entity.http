@@ -2,18 +2,16 @@
 # @urlPrefix = https://empty-moon-4960.us-east1.kalix.app
 @urlPrefix = http://localhost:9000
 @customerId = customer-1
-@cartId = cart-1
 @skuId = sku-1
 @skuName = sku name 1
 @quantity = 3
 
 ### add item
 
-PUT {{urlPrefix}}/cart/{{cartId}}/items/add
+PUT {{urlPrefix}}/cart/{{customerId}}/items/add
 Content-Type: application/json
 
 {
-  "cartId":"{{cartId}}",
   "customerId":"{{customerId}}",
   "skuId":"{{skuId}}",
   "skuName":"{{skuName}}",
@@ -22,55 +20,45 @@ Content-Type: application/json
 
 ### change item
 
-PUT {{urlPrefix}}/cart/{{cartId}}/items/{{skuId}}/change
+PUT {{urlPrefix}}/cart/{{customerId}}/items/{{skuId}}/change
 Content-Type: application/json
 
 {
-  "cartId":"{{cartId}}",
+  "customerId":"{{customerId}}",
   "skuId":"{{skuId}}",
   "quantity":{{quantity}}
 }
 
 ### remove item
 
-PUT {{urlPrefix}}/cart/{{cartId}}/items/{{skuId}}/remove
+PUT {{urlPrefix}}/cart/{{customerId}}/items/{{skuId}}/remove
 Content-Type: application/json
 
 {
-  "cartId":"{{cartId}}",
+  "customerId":"{{customerId}}",
   "skuId":"{{skuId}}"
 }
 
 ### checkout
 
-PUT {{urlPrefix}}/cart/{{cartId}}/checkout
+PUT {{urlPrefix}}/cart/{{customerId}}/checkout
 Content-Type: application/json
 
 {
-  "cartId":"{{cartId}}"
-}
-
-### delete
-
-DELETE {{urlPrefix}}/cart/{{cartId}}/delete
-Content-Type: application/json
-
-{
-  "cartId":"{{cartId}}"
+  "customerId":"{{customerId}}"
 }
 
 ### get
 
-GET {{urlPrefix}}/cart/{{cartId}}
+GET {{urlPrefix}}/cart/{{customerId}}
 
 ### add item with missing fields
 
-PUT {{urlPrefix}}/cart/{{cartId}}/items/add
+PUT {{urlPrefix}}/cart/{{customerId}}/items/add
 Content-Type: application/json
 
 {
-  "cartId":"{{cartId}}",
-  "customerId":"",
+  "customerId":"{{customerId}}",
   "skuId":"",
   "skuName":"",
   "quantity":0

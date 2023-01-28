@@ -28,7 +28,7 @@ public class ShippingOrderToOrderSkuItemAction extends Action {
     var results = event.orderItems().stream()
         .flatMap(orderItem -> toCreateOrderSkuItemCommands(event, orderItem))
         .map(command -> {
-          var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId());
+          var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId().toEntityId());
           var returnType = String.class;
           var deferredCall = kalixClient.post(path, command, returnType);
           return deferredCall.execute();

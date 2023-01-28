@@ -72,7 +72,7 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
   }
 
   private CompletionStage<String> backOrderOrderSkuItem(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event) {
-    var path = "/order-sku-item/%s/back-order-order-sku-item".formatted(event.orderSkuItemId());
+    var path = "/order-sku-item/%s/back-order-order-sku-item".formatted(event.orderSkuItemId().toEntityId());
     var command = new OrderSkuItemEntity.BackOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId());
