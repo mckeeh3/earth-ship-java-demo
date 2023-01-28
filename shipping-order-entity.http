@@ -1,5 +1,5 @@
 @urlPrefix = http://localhost:9000
-@orderId = 39bb4923-3929-463d-a53e-df1cfc0daa60
+@orderId = 56e2b9a6-d96d-4e19-bd69-c39662d861cf
 @skuId = sku-2
 @orderSkuItemId = 1a24df69-e13b-4755-bc6f-ba5d7bae62f8
 @readyToShipAt = 2023-01-22T00:00:00.000Z

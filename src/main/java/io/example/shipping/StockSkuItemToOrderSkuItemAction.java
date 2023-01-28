@@ -34,17 +34,17 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
 
   public Effect<String> on(StockSkuItemEntity.StockRequestedJoinToOrderRejectedEvent event) {
     log.info("Event: {}", event);
-    return stockRequestsJoinToOrderRejected(event);
+    return callFor(event);
   }
 
   public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     log.info("Event: {}", event);
-    return orderRequestsJoinToStockAccepted(event);
+    return callFor(event);
   }
 
   public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
     log.info("Event: {}", event);
-    return orderRequestedJoinToStockRejected(event);
+    return callFor(event);
   }
 
   private CompletionStage<String> queryBackOrderedOrderSkuItems(StockSkuItemEntity.StockRequestedJoinToOrderEvent event) {
@@ -77,7 +77,7 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     return deferredCall.execute();
   }
 
-  private Effect<String> stockRequestsJoinToOrderRejected(StockRequestedJoinToOrderRejectedEvent event) {
+  private Effect<String> callFor(StockRequestedJoinToOrderRejectedEvent event) {
     var path = "/order-sku-item/%s/stock-requests-join-to-order-rejected".formatted(event.orderSkuItemId().toEntityId());
     var command = new OrderSkuItemEntity.StockRequestsJoinToOrderRejectedCommand(
         event.orderSkuItemId(),
@@ -89,7 +89,7 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     return effects().forward(deferredCall);
   }
 
-  private Effect<String> orderRequestsJoinToStockAccepted(OrderRequestedJoinToStockAcceptedEvent event) {
+  private Effect<String> callFor(OrderRequestedJoinToStockAcceptedEvent event) {
     var path = "/order-sku-item/%s/order-requests-join-to-stock-accepted".formatted(event.orderSkuItemId().toEntityId());
     var command = new OrderSkuItemEntity.OrderRequestsJoinToStockAcceptedCommand(
         event.orderSkuItemId(),
@@ -101,7 +101,7 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     return effects().forward(deferredCall);
   }
 
-  private Effect<String> orderRequestedJoinToStockRejected(OrderRequestedJoinToStockRejectedEvent event) {
+  private Effect<String> callFor(OrderRequestedJoinToStockRejectedEvent event) {
     var path = "/order-sku-item/%s/order-requests-join-to-stock-rejected".formatted(event.orderSkuItemId().toEntityId());
     var command = new OrderSkuItemEntity.OrderRequestsJoinToStockRejectedCommand(
         event.orderSkuItemId(),

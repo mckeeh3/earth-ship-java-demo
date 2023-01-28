@@ -167,7 +167,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
     }
 
     List<?> eventsFor(OrderRequestsJoinToStockAcceptedCommand command) {
-      if (this.stockSkuItemId != null) {
+      if (this.stockSkuItemId == null) {
         return List.of(
             new OrderRequestedJoinToStockAcceptedEvent(
                 command.orderSkuItemId,

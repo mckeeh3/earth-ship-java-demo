@@ -3,6 +3,11 @@ package io.example.shipping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.any.Any;
+
+import io.example.shipping.ShippingOrderEntity.ReadyToShipOrderSkuItemCommand;
+import io.example.shipping.ShippingOrderEntity.ReleaseOrderSkuItemCommand;
+import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
@@ -18,48 +23,69 @@ public class OrderSkuItemToShippingOrderAction extends Action {
 
   public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     logger.info("Event: {}", event);
-
-    var path = "/shipping-order/%s/ready-to-ship-order-sku-item".formatted(event.orderSkuItemId().orderId());
-    var command = new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
-        event.orderSkuItemId().orderId(),
-        event.orderSkuItemId(),
-        event.skuId(),
-        event.stockSkuItemId(),
-        event.readyToShipAt());
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-
-    return effects().forward(deferredCall);
+    return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     logger.info("Event: {}", event);
+    return effects().forward(callFor(event));
+  }
 
+  public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
+    logger.info("Event: {}", event);
+    return effects().forward(callFor(event));
+  }
+
+  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     var path = "/shipping-order/%s/ready-to-ship-order-sku-item".formatted(event.orderSkuItemId().orderId());
+    var command = toCommand(event);
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+    return deferredCall;
+  }
+
+  private ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     var command = new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
         event.orderSkuItemId().orderId(),
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId(),
         event.readyToShipAt());
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-
-    return effects().forward(deferredCall);
+    return command;
   }
 
-  public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
-    logger.info("Event: {}", event);
+  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
+    var path = "/shipping-order/%s/ready-to-ship-order-sku-item".formatted(event.orderSkuItemId().orderId());
+    var command = toCommand(event);
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+    return deferredCall;
+  }
 
+  private ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
+    var command = new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
+        event.orderSkuItemId().orderId(),
+        event.orderSkuItemId(),
+        event.skuId(),
+        event.stockSkuItemId(),
+        event.readyToShipAt());
+    return command;
+  }
+
+  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
     var path = "/shipping-order/%s/release-order-sku-item".formatted(event.orderSkuItemId().orderId());
+    var command = toCommand(event);
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+    return deferredCall;
+  }
+
+  private ReleaseOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
     var command = new ShippingOrderEntity.ReleaseOrderSkuItemCommand(
         event.orderSkuItemId().orderId(),
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId());
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-
-    return effects().forward(deferredCall);
+    return command;
   }
 }
