@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.shipping.OrderSkuItemEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
@@ -28,16 +29,23 @@ public class StockSkuItemToStockOrderLotAction extends Action {
     return effects().forward(deferredCall);
   }
 
-  public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
+  public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
+    log.info("Event: {}", event);
+    var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), true);
+
+    return effects().forward(deferredCall);
+  }
+
+  public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     log.info("Event: {}", event);
     var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), false);
 
     return effects().forward(deferredCall);
   }
 
-  public Effect<String> on(StockSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
+  public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     log.info("Event: {}", event);
-    var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), true);
+    var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), false);
 
     return effects().forward(deferredCall);
   }

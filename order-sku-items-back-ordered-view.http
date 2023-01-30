@@ -1,0 +1,6 @@
+@urlPrefix = http://localhost:9000
+@skuId = sku-1
+
+### get back ordered order sku items
+
+GET {{urlPrefix}}/order-sku-items-back-ordered/{{skuId}}

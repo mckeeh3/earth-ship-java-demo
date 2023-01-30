@@ -42,8 +42,8 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
     log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isNotEmpty(currentState().stockOrderId(), "StockOrder already exists")
-        .isLtEqZero(command.orderItemsTotal(), "OrderItemsTotal must be greater than 0")
-        .isGtLimit(generateBatchSize, 1_000, "OrderItemsTotal must be less than or equal to 1_000")
+        .isLtEqZero(command.quantityTotal(), "quantityTotal must be greater than 0")
+        .isGtLimit(command.quantityTotal(), 1_000, "quantityTotal must be less than or equal to 1_000")
         .isEmpty(command.skuId, "SkuId must not be empty")
         .isEmpty(command.skuName, "SkuName must not be empty")
         .isEmpty(command.stockOrderId, "StockOrderId must not be empty")
@@ -64,6 +64,9 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
   @PutMapping("/generate-stock-sku-item-ids")
   public Effect<String> generateStockSkuItemIds(@RequestBody GenerateStockSkuItemIdsCommand command) {
     log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    if (currentState().quantityCreated >= currentState().quantityTotal) {
+      return effects().reply("OK");
+    }
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -100,11 +103,11 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
       String stockOrderId,
       String skuId,
       String skuName,
-      int orderItemsTotal,
-      int orderItemsCreated,
-      int orderItemsOrdered,
-      int orderItemsAvailable,
-      Instant orderReceivedAt) {
+      int quantityTotal,
+      int quantityCreated,
+      int quantityOrdered,
+      int quantityAvailable,
+      Instant stockOrderReceivedAt) {
 
     static State emptyState() {
       return new State("", "", "", 0, 0, 0, 0, Instant.EPOCH);
@@ -115,19 +118,19 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
     }
 
     CreatedStockOrderEvent eventFor(CreateStockOrderCommand command) {
-      return new CreatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.skuName(), command.orderItemsTotal());
+      return new CreatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.skuName(), command.quantityTotal());
     }
 
     UpdatedStockOrderEvent eventFor(UpdateStockOrderCommand command) {
-      return new UpdatedStockOrderEvent(command.stockOrderId(), command.orderItemsOrdered(), command.orderItemsAvailable());
+      return new UpdatedStockOrderEvent(command.stockOrderId(), command.quantityTotal(), command.quantityOrdered());
     }
 
     GeneratedStockSkuItemIdsEvent eventFor(GenerateStockSkuItemIdsCommand command) {
-      var limit = Math.min(orderItemsCreated + generateBatchSize, orderItemsTotal);
-      var generateCommands = IntStream.range(orderItemsCreated, limit)
+      var limit = Math.min(quantityCreated + generateBatchSize, quantityTotal);
+      var generateCommands = IntStream.range(quantityCreated, limit)
           .mapToObj(i -> {
-            var stockSkuItemId = StockSkuItemId.of(stockOrderId, orderItemsTotal, i);
-            return new GenerateStockSkuItem(stockSkuItemId, skuId, skuName, stockOrderId);
+            var stockSkuItemId = StockSkuItemId.of(stockOrderId, quantityTotal, i);
+            return new GenerateStockSkuItem(stockSkuItemId, skuId, skuName);
           })
           .toList();
       return new GeneratedStockSkuItemIdsEvent(command.stockOrderId(), generateCommands);
@@ -138,7 +141,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
           event.stockOrderId(),
           event.skuId(),
           event.skuName(),
-          event.orderItemsTotal(),
+          event.quantityTotal(),
           0,
           0,
           0,
@@ -150,11 +153,11 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
           stockOrderId,
           skuId,
           skuName,
-          orderItemsTotal,
-          orderItemsCreated,
-          event.orderItemsOrdered(),
-          event.orderItemsAvailable(),
-          orderReceivedAt);
+          quantityTotal,
+          quantityCreated,
+          event.quantityOrdered(),
+          quantityTotal - event.quantityOrdered(),
+          stockOrderReceivedAt);
     }
 
     State on(GeneratedStockSkuItemIdsEvent event) {
@@ -162,25 +165,25 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
           stockOrderId,
           skuId,
           skuName,
-          orderItemsTotal,
-          orderItemsCreated + event.generateStockSkuItems().size(),
-          orderItemsOrdered,
-          orderItemsAvailable,
-          orderReceivedAt);
+          quantityTotal,
+          quantityCreated + event.generateStockSkuItems().size(),
+          quantityOrdered,
+          quantityAvailable + event.generateStockSkuItems().size(),
+          stockOrderReceivedAt);
     }
   }
 
-  public record CreateStockOrderCommand(String stockOrderId, String skuId, String skuName, int orderItemsTotal) {}
+  public record CreateStockOrderCommand(String stockOrderId, String skuId, String skuName, int quantityTotal) {}
 
-  public record CreatedStockOrderEvent(String stockOrderId, String skuId, String skuName, int orderItemsTotal) {}
+  public record CreatedStockOrderEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) {}
 
-  public record UpdateStockOrderCommand(String stockOrderId, int orderItemsOrdered, int orderItemsAvailable) {}
+  public record UpdateStockOrderCommand(String stockOrderId, int quantityTotal, int quantityOrdered) {}
 
-  public record UpdatedStockOrderEvent(String stockOrderId, int orderItemsOrdered, int orderItemsAvailable) {}
+  public record UpdatedStockOrderEvent(String stockOrderId, int quantityTotal, int quantityOrdered) {}
 
   public record GenerateStockSkuItemIdsCommand(String stockOrderId) {}
 
   public record GeneratedStockSkuItemIdsEvent(String stockOrderId, List<GenerateStockSkuItem> generateStockSkuItems) {}
 
-  public record GenerateStockSkuItem(StockSkuItemId stockSkuItemId, String skuId, String skuName, String stockOrderId) {}
+  public record GenerateStockSkuItem(StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
 }
