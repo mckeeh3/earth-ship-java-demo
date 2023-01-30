@@ -32,31 +32,31 @@ public class StockSkuItemsAvailableView extends View<StockSkuItemsAvailableView.
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.CreatedStockSkuItemEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), event.skuName(), true));
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new StockSkuItemRow(viewState().stockSkuItemId(), viewState().skuId(), viewState().skuName(), false));
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new StockSkuItemRow(viewState().stockSkuItemId(), viewState().skuId(), viewState().skuName(), true));
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new StockSkuItemRow(viewState().stockSkuItemId(), viewState().skuId(), viewState().skuName(), false));
   }
 
-  public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.StockRequestedJoinToOrderRejectedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+  public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.StockRequestedJoinToOrderReleasedEvent event) {
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new StockSkuItemRow(viewState().stockSkuItemId(), viewState().skuId(), viewState().skuName(), true));
   }

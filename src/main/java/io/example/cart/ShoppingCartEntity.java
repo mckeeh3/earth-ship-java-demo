@@ -37,7 +37,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/items/add")
   public Effect<String> addLineItem(@RequestBody AddLineItemCommand command) {
-    log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\nState {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isEmpty(command.customerId(), "Cannot add item to cart without customer id")
         .isEmpty(command.skuId(), "Cannot add item to cart without sku id")
@@ -51,7 +51,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/items/{sku_id}/change")
   public Effect<String> changeLineItem(@RequestBody ChangeLineItemCommand command) {
-    log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\nState {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isNull(currentState().findLineItem(command.skuId), "Item not found in cart")
         .isEmpty(currentState().lineItems, "Cannot change item in empty cart")
@@ -65,7 +65,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/items/{sku_id}/remove")
   public Effect<String> removeLineItem(@RequestBody RemoveLineItemCommand command) {
-    log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\nState {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isEmpty(command.skuId(), "Cannot remove item from cart without sku id")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
@@ -76,7 +76,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/checkout")
   public Effect<String> checkout(@RequestBody CheckoutCommand command) {
-    log.info("EntityId: {}\nState {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\nState {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isEmpty(currentState().lineItems, "Cannot checkout empty cart")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
@@ -87,7 +87,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @GetMapping()
   public Effect<State> get() {
-    log.info("EntityId: {}\nState {}\nGetShoppingCart", entityId, currentState());
+    log.info("EntityId: {}\nState {}\n_GetShoppingCart", entityId, currentState());
     return Validator.<Effect<State>>start()
         .isTrue(currentState().isEmpty(), "Shopping cart is not found")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
@@ -96,25 +96,25 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @EventHandler
   public State on(AddedLineItemEvent event) {
-    log.info("EntityId: {}\nState {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\nState {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ChangedLineItemEvent event) {
-    log.info("EntityId: {}\nState {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\nState {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(RemovedLineItemEvent event) {
-    log.info("EntityId: {}\nState {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\nState {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(CheckedOutEvent event) {
-    log.info("EntityId: {}\nState {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\nState {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

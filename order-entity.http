@@ -1,5 +1,5 @@
 @urlPrefix = http://localhost:9000
-@orderId = 56e2b9a6-d96d-4e19-bd69-c39662d861cf
+@orderId = 6c96666a-6b03-42ff-bfad-4386831af411
 @skuId = sku-1
 
 ### ship order

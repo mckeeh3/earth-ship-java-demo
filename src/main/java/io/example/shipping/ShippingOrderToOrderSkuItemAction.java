@@ -26,7 +26,7 @@ public class ShippingOrderToOrderSkuItemAction extends Action {
     log.info("Event: {}", event);
 
     var results = event.orderItems().stream()
-        .flatMap(orderItem -> toCreateOrderSkuItemCommands(event, orderItem))
+        .flatMap(orderItem -> toCommands(event, orderItem))
         .map(command -> {
           var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId().toEntityId());
           var returnType = String.class;
@@ -41,7 +41,7 @@ public class ShippingOrderToOrderSkuItemAction extends Action {
     return effects().asyncReply(result);
   }
 
-  private Stream<CreateOrderSkuItemCommand> toCreateOrderSkuItemCommands(CreatedOrderEvent event, OrderItem orderItem) {
+  private Stream<CreateOrderSkuItemCommand> toCommands(CreatedOrderEvent event, OrderItem orderItem) {
     return orderItem.orderSkuItems().stream()
         .map(orderSkuItem -> new CreateOrderSkuItemCommand(
             orderSkuItem.orderSkuItemId(),

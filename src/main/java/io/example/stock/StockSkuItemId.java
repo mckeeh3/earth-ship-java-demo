@@ -10,11 +10,12 @@ public record StockSkuItemId(StockOrderLotId stockOrderLotId, int stockSkuItemNu
   }
 
   static int lotNumberFor(int thisStockOrderItemNumber) {
-    return Math.round(thisStockOrderItemNumber / StockOrderLotId.subLotsPerLot);
+    // return Math.round(thisStockOrderItemNumber % StockOrderLotId.subLotsPerLot);
+    return thisStockOrderItemNumber;
   }
 
   static StockSkuItemId of(String stockOrderId, int stockOrderItemsTotal, int thisStockOrderItemNumber) {
-    var lotLevel = lotLevelsFor(stockOrderItemsTotal) - 1;
+    var lotLevel = lotLevelsFor(stockOrderItemsTotal);
     var lotNumber = lotNumberFor(thisStockOrderItemNumber);
     var stockOrderLotId = new StockOrderLotId(stockOrderId, lotLevel, lotNumber);
     return new StockSkuItemId(stockOrderLotId, thisStockOrderItemNumber);

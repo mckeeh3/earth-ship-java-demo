@@ -32,25 +32,25 @@ public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedV
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.CreatedOrderSkuItemEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new OrderSkuItemRow(event.orderSkuItemId(), event.skuId(), false));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), false));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), false));
   }
 
   public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), true));
   }

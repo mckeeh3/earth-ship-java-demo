@@ -1,0 +1,6 @@
+@urlPreFix = http://localhost:9000
+@stockOrderLotId = stock-order-1_0_0
+
+###
+
+GET {{urlPreFix}}/stockOrderLot/{{stockOrderLotId}}

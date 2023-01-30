@@ -40,7 +40,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @PostMapping("/create")
   public Effect<String> createOrder(@RequestBody CreateOrderCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -48,7 +48,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @PutMapping("/ready-to-ship-order-sku-item")
   public Effect<String> readyToShipOrderSkuItem(@RequestBody ReadyToShipOrderSkuItemCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -56,7 +56,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @PutMapping("/release-order-sku-item")
   public Effect<String> releaseOrderSkuItem(@RequestBody ReleaseOrderSkuItemCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -64,7 +64,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\nState: {}\nGetShippingOrder", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_GetShippingOrder", entityId, currentState());
     return Validator.<Effect<State>>start()
         .isTrue(currentState().isEmpty(), "ShippingOrder is not found")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
@@ -73,43 +73,43 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @EventHandler
   public State on(CreatedOrderEvent event) {
-    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReadyToShipOrderSkuItemEvent event) {
-    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReadyToShipOrderItemEvent event) {
-    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReadyToShipOrderEvent event) {
-    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReleasedOrderSkuItemEvent event) {
-    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReleasedOrderItemEvent event) {
-    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReleasedOrderEvent event) {
-    log.info("EntityId: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

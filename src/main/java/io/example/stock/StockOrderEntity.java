@@ -22,7 +22,7 @@ import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("stockOrderId")
 @EntityType("StockOrder")
-@RequestMapping("/stock-order/{stockOrderId}")
+@RequestMapping("/stockOrder/{stockOrderId}")
 public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(StockOrderEntity.class);
   private final String entityId;
@@ -39,7 +39,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
   @PostMapping("/create")
   public Effect<String> create(@RequestBody CreateStockOrderCommand command) {
-    log.info("EntityID: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isNotEmpty(currentState().stockOrderId(), "StockOrder already exists")
         .isLtEqZero(command.orderItemsTotal(), "OrderItemsTotal must be greater than 0")
@@ -55,7 +55,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
   @PutMapping("/update")
   public Effect<String> update(@RequestBody UpdateStockOrderCommand command) {
-    log.info("EntityID: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -63,7 +63,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
   @PutMapping("/generate-stock-sku-item-ids")
   public Effect<String> generateStockSkuItemIds(@RequestBody GenerateStockSkuItemIdsCommand command) {
-    log.info("EntityID: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -71,7 +71,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityID: {}\nState: {}\nGetStockOrder", entityId, currentState());
+    log.info("EntityID: {}\n_State: {}\n_GetStockOrder", entityId, currentState());
     return Validator.<Effect<State>>start()
         .isEmpty(currentState().stockOrderId(), "StockOrder does not exist")
         .onError(errorMessages -> effects().error(errorMessages))
@@ -80,19 +80,19 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
   @EventHandler
   public State on(CreatedStockOrderEvent event) {
-    log.info("EntityID: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityID: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedStockOrderEvent event) {
-    log.info("EntityID: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityID: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeneratedStockSkuItemIdsEvent event) {
-    log.info("EntityID: {}\nState: {}\nEvent: {}", entityId, currentState(), event);
+    log.info("EntityID: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

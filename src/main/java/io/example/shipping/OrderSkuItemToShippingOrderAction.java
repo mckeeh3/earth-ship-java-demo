@@ -31,7 +31,7 @@ public class OrderSkuItemToShippingOrderAction extends Action {
     return effects().forward(callFor(event));
   }
 
-  public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
+  public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     logger.info("Event: {}", event);
     return effects().forward(callFor(event));
   }
@@ -72,7 +72,7 @@ public class OrderSkuItemToShippingOrderAction extends Action {
     return command;
   }
 
-  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
+  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     var path = "/shipping-order/%s/release-order-sku-item".formatted(event.orderSkuItemId().orderId());
     var command = toCommand(event);
     var returnType = String.class;
@@ -80,7 +80,7 @@ public class OrderSkuItemToShippingOrderAction extends Action {
     return deferredCall;
   }
 
-  private ReleaseOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockRejectedEvent event) {
+  private ReleaseOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     var command = new ShippingOrderEntity.ReleaseOrderSkuItemCommand(
         event.orderSkuItemId().orderId(),
         event.orderSkuItemId(),
