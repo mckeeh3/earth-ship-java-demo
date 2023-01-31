@@ -33,6 +33,6 @@ public class ShoppingCartToOrderAction extends Action {
   }
 
   private List<OrderEntity.OrderItem> toOrderItems(List<ShoppingCartEntity.LineItem> items) {
-    return items.stream().map(item -> new OrderEntity.OrderItem(item.skuId(), item.skuName(), item.quantity(), null)).toList();
+    return items.stream().map(i -> new OrderEntity.OrderItem(i.skuId(), i.skuName(), i.quantity(), null, null)).toList();
   }
 }

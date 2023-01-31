@@ -1,5 +1,5 @@
 @urlPrefix = http://localhost:9000
-@orderSkuItemId = e661d103-98e1-4866-9a3d-196457390144
+@orderSkuItemId = 3ac07364-29e4-4213-89bf-48218df0f6cb_49cdb94a-f2e4-45b2-8a64-7ced590e1405
 
 ### get order sku item
 

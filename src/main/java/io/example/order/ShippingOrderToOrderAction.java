@@ -60,4 +60,26 @@ public class ShippingOrderToOrderAction extends Action {
 
     return effects().forward(deferredCall);
   }
+
+  public Effect<String> on(ShippingOrderEntity.BackOrderedOrderItemEvent event) {
+    log.info("Event: {}", event);
+
+    var path = "/order/%s/back-order-order-item".formatted(event.orderId());
+    var command = new OrderEntity.BackOrderOrderItemCommand(event.orderId(), event.skuId(), event.backOrderedAt());
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+
+    return effects().forward(deferredCall);
+  }
+
+  public Effect<String> on(ShippingOrderEntity.BackOrderedOrderEvent event) {
+    log.info("Event: {}", event);
+
+    var path = "/order/%s/back-order".formatted(event.orderId());
+    var command = new OrderEntity.BackOrderOrderCommand(event.orderId(), event.backOrderedAt());
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+
+    return effects().forward(deferredCall);
+  }
 }

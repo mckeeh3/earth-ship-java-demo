@@ -31,6 +31,6 @@ public class OrderToShippingOrderAction extends Action {
   }
 
   private List<ShippingOrderEntity.OrderItem> toOrderItems(List<OrderEntity.OrderItem> items) {
-    return items.stream().map(i -> new ShippingOrderEntity.OrderItem(i.skuId(), i.skuName(), i.quantity(), null, List.of())).toList();
+    return items.stream().map(i -> new ShippingOrderEntity.OrderItem(i.skuId(), i.skuName(), i.quantity(), null, null, List.of())).toList();
   }
 }
