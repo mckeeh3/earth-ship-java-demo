@@ -46,7 +46,6 @@ public class OrderSkuItemToShippingOrderAction extends Action {
 
   private ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     var command = new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
-        event.orderSkuItemId().orderId(),
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId(),
@@ -64,7 +63,6 @@ public class OrderSkuItemToShippingOrderAction extends Action {
 
   private ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     var command = new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
-        event.orderSkuItemId().orderId(),
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId(),
@@ -82,7 +80,6 @@ public class OrderSkuItemToShippingOrderAction extends Action {
 
   private ReleaseOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     var command = new ShippingOrderEntity.ReleaseOrderSkuItemCommand(
-        event.orderSkuItemId().orderId(),
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId());

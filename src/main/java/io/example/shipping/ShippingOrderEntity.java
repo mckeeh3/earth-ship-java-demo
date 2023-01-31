@@ -134,16 +134,16 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
     List<?> eventsFor(ReadyToShipOrderSkuItemCommand command) {
       var events = new ArrayList<>();
-      var orderSkuItemReadyToShipEvent = new ReadyToShipOrderSkuItemEvent(command.orderId(), command.orderSkuItemId(), command.skuId(), command.stockSkuItemId(), command.readyToShipAt());
+      var orderSkuItemReadyToShipEvent = new ReadyToShipOrderSkuItemEvent(command.orderSkuItemId(), command.skuId(), command.stockSkuItemId(), command.readyToShipAt());
       var newOrderItems = readyToShip(orderSkuItemReadyToShipEvent);
       var newOrderItem = newOrderItems.stream().filter(i -> i.skuId().equals(command.skuId())).findFirst().orElse(null);
 
       events.add(orderSkuItemReadyToShipEvent);
       if (newOrderItem != null && allOrderSkuItemsReadyToShip(newOrderItem)) {
-        events.add(new ReadyToShipOrderItemEvent(command.orderId(), command.skuId(), command.readyToShipAt()));
+        events.add(new ReadyToShipOrderItemEvent(command.orderSkuItemId().orderId(), command.skuId(), command.readyToShipAt()));
       }
       if (allOrderItemsReadyToShip(newOrderItems)) {
-        events.add(new ReadyToShipOrderEvent(command.orderId(), command.readyToShipAt()));
+        events.add(new ReadyToShipOrderEvent(command.orderSkuItemId().orderId(), command.readyToShipAt()));
       }
 
       return events;
@@ -159,16 +159,16 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
     List<?> eventsFor(ReleaseOrderSkuItemCommand command) {
       var events = new ArrayList<>();
-      var orderSkuItemsReleasedEvent = new ReleasedOrderSkuItemEvent(command.orderId(), command.orderSkuItemId(), command.skuId(), command.stockSkuItemId());
+      var orderSkuItemsReleasedEvent = new ReleasedOrderSkuItemEvent(command.orderSkuItemId(), command.skuId(), command.stockSkuItemId());
       var newOrderItems = release(orderSkuItemsReleasedEvent);
       var newOrderItem = newOrderItems.stream().filter(i -> i.skuId().equals(command.skuId())).findFirst().orElse(null);
 
       events.add(orderSkuItemsReleasedEvent);
       if (newOrderItem != null && allOrderSkuItemsReleased(newOrderItem)) {
-        events.add(new ReleasedOrderItemEvent(command.orderId(), command.skuId()));
+        events.add(new ReleasedOrderItemEvent(command.orderSkuItemId().orderId(), command.skuId()));
       }
       if (allOrderItemsReleased(newOrderItems)) {
-        events.add(new ReleasedOrderEvent(command.orderId()));
+        events.add(new ReleasedOrderEvent(command.orderSkuItemId().orderId()));
       }
 
       return events;
@@ -346,17 +346,17 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   public record CreatedOrderEvent(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) {}
 
-  public record ReadyToShipOrderSkuItemCommand(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
+  public record ReadyToShipOrderSkuItemCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
 
-  public record ReadyToShipOrderSkuItemEvent(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
+  public record ReadyToShipOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
 
   public record ReadyToShipOrderItemEvent(String orderId, String skuId, Instant readyToShipAt) {}
 
   public record ReadyToShipOrderEvent(String orderId, Instant readyToShipAt) {}
 
-  public record ReleaseOrderSkuItemCommand(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
+  public record ReleaseOrderSkuItemCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record ReleasedOrderSkuItemEvent(String orderId, OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
+  public record ReleasedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
   public record ReleasedOrderItemEvent(String orderId, String skuId) {}
 
