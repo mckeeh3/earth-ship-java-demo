@@ -2,7 +2,7 @@ package io.example.stock;
 
 public record StockOrderLotId(String stockOrderId, int lotLevel, int lotNumber) {
 
-  static final int subLotsPerLot = 3;
+  static final int subLotsPerLot = 32;
 
   String toEntityId() {
     return "%s_%d_%d".formatted(stockOrderId, lotLevel, lotNumber);

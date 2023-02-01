@@ -23,7 +23,7 @@ public class StockSkuItemsAvailableView extends View<StockSkuItemsAvailableView.
   @Query("""
       SELECT * AS stockSkuItemRows
         FROM stock_sku_items_available
-       LIMIT 100
+       LIMIT 1000
        WHERE skuId = :skuId
          AND available = true
       """)
