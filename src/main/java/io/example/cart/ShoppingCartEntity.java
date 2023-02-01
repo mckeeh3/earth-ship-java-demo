@@ -1,8 +1,8 @@
 package io.example.cart;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,26 +147,34 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
     }
 
     State on(AddedLineItemEvent event) {
-      var newItems = new ArrayList<LineItem>(lineItems.stream().filter(i -> !i.skuId().equals(event.skuId)).toList());
-      newItems.add(new LineItem(event.skuId, event.skuName, event.quantity));
+      var newLineItems = Stream.concat(
+          lineItems.stream().filter(i -> !i.skuId().equals(event.skuId)),
+          Stream.of(new LineItem(event.skuId, event.skuName, event.quantity)))
+          .toList();
       return new State(
           event.customerId,
-          newItems);
+          newLineItems);
     }
 
     State on(ChangedLineItemEvent event) {
-      var newItems = new ArrayList<LineItem>(lineItems.stream().filter(i -> !i.skuId().equals(event.skuId)).toList());
-      newItems.add(new LineItem(event.skuId, findLineItem(event.skuId).skuName(), event.quantity));
+      var newLineItems = lineItems.stream()
+          .map(i -> {
+            if (i.skuId().equals(event.skuId)) {
+              return new LineItem(i.skuId, i.skuName(), event.quantity);
+            } else {
+              return i;
+            }
+          }).toList();
       return new State(
           customerId,
-          newItems);
+          newLineItems);
     }
 
     State on(RemovedLineItemEvent event) {
-      var newItems = new ArrayList<LineItem>(lineItems.stream().filter(i -> !i.skuId().equals(event.skuId)).toList());
+      var newLineItems = lineItems.stream().filter(i -> !i.skuId().equals(event.skuId)).toList();
       return new State(
           customerId,
-          newItems);
+          newLineItems);
     }
 
     State on(CheckedOutEvent event) {

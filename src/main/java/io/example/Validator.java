@@ -1,9 +1,9 @@
 package io.example;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public record Validator<T>(List<String> reasons, Function<String, T> error) {
 
@@ -44,8 +44,7 @@ public record Validator<T>(List<String> reasons, Function<String, T> error) {
   }
 
   private Validator<T> addError(String message) {
-    var newReasons = new ArrayList<String>(reasons);
-    newReasons.add(message);
+    var newReasons = Stream.concat(reasons.stream(), Stream.of(message)).toList();
     return new Validator<T>(newReasons, error);
   }
 
