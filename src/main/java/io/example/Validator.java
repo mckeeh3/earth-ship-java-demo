@@ -15,6 +15,10 @@ public record Validator<T>(List<String> reasons, Function<String, T> error) {
     return test ? addError(reason) : this;
   }
 
+  public Validator<T> isFalse(boolean test, String reason) {
+    return !test ? addError(reason) : this;
+  }
+
   public Validator<T> isNull(Object test, String reason) {
     return test == null ? addError(reason) : this;
   }

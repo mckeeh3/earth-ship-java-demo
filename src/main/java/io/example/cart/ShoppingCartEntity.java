@@ -53,7 +53,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   public Effect<String> changeLineItem(@RequestBody ChangeLineItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
-        .isNull(currentState().findLineItem(command.skuId), "Item not found in cart")
+        .isFalse(currentState().containsLineItem(command.skuId), "Item not found in cart")
         .isEmpty(currentState().lineItems, "Cannot change item in empty cart")
         .isEmpty(command.skuId(), "Cannot change item in cart without sku id")
         .isLtEqZero(command.quantity(), "Cannot change item in cart with quantity <= 0")
@@ -183,8 +183,8 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
           List.of());
     }
 
-    LineItem findLineItem(String skuId) {
-      return lineItems.stream()
+    boolean containsLineItem(String skuId) {
+      return null == lineItems.stream()
           .filter(i -> i.skuId().equals(skuId))
           .findFirst()
           .orElse(null);
