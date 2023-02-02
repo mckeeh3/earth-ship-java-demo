@@ -115,5 +115,8 @@ public class OrderItemEntity extends ValueEntity<OrderItemEntity.State> {
       int quantity,
       Instant orderedAt) {}
 
-  public record UpdateOrderItemCommand(OrderItemId orderItemId, Instant readyToShipAt, Instant backOrderedAt) {}
+  public record UpdateOrderItemCommand(
+      OrderItemId orderItemId,
+      Instant readyToShipAt,
+      Instant backOrderedAt) {}
 }

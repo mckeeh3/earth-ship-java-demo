@@ -73,17 +73,27 @@ public class OrderToOrderItemAction extends Action {
 
   private DeferredCall<Any, String> callFor(OrderEntity.ReadyToShipOrderItemEvent event) {
     var path = "/order-item/%s/update".formatted(OrderItemId.of(event.orderId(), event.skuId()).toEntityId());
-    var command = new OrderItemEntity.UpdateOrderItemCommand(OrderItemId.of(event.orderId(), event.skuId()), event.readyToShipAt(), null);
+    var command = toCommand(event);
     var returnType = String.class;
 
     return kalixClient.put(path, command, returnType);
   }
 
+  private OrderItemEntity.UpdateOrderItemCommand toCommand(OrderEntity.ReadyToShipOrderItemEvent event) {
+    return new OrderItemEntity.UpdateOrderItemCommand(
+        OrderItemId.of(event.orderId(), event.skuId()), null, null);
+  }
+
   private DeferredCall<Any, String> callFor(OrderEntity.BackOrderedOrderItemEvent event) {
     var path = "/order-item/%s/update".formatted(OrderItemId.of(event.orderId(), event.skuId()).toEntityId());
-    var command = new OrderItemEntity.UpdateOrderItemCommand(OrderItemId.of(event.orderId(), event.skuId()), null, event.backOrderedAt());
+    var command = toCommand(event);
     var returnType = String.class;
 
     return kalixClient.put(path, command, returnType);
+  }
+
+  private OrderItemEntity.UpdateOrderItemCommand toCommand(OrderEntity.BackOrderedOrderItemEvent event) {
+    return new OrderItemEntity.UpdateOrderItemCommand(
+        OrderItemId.of(event.orderId(), event.skuId()), null, event.backOrderedAt());
   }
 }
