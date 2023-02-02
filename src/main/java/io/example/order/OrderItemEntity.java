@@ -48,7 +48,7 @@ public class OrderItemEntity extends ValueEntity<OrderItemEntity.State> {
   public Effect<String> update(@RequestBody UpdateOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
-        .isFalse(currentState().isEmpty(), "OrderItem not found")
+        .isTrue(currentState().isEmpty(), "OrderItem not found")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .updateState(currentState().on(command))

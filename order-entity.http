@@ -1,5 +1,5 @@
 @urlPrefix = http://localhost:9000
-@orderId = 6c96666a-6b03-42ff-bfad-4386831af411
+@orderId = 965fa733-bd6c-4620-b6e7-3f6c0041e0dd
 @skuId = sku-1
 
 ### ship order
@@ -67,6 +67,6 @@ Content-Type: application/json
   "orderId": "{{orderId}}"
 }
 
-### get
+### get order
 
 GET {{urlPrefix}}/order/{{orderId}}
