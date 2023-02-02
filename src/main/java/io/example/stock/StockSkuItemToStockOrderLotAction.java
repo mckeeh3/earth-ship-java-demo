@@ -24,41 +24,33 @@ public class StockSkuItemToStockOrderLotAction extends Action {
 
   public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     log.info("Event: {}", event);
-    var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), true);
-
-    return effects().forward(deferredCall);
+    return effects().forward(callFor(event.stockSkuItemId().stockOrderLotId(), true));
   }
 
   public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     log.info("Event: {}", event);
-    var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), true);
-
-    return effects().forward(deferredCall);
+    return effects().forward(callFor(event.stockSkuItemId().stockOrderLotId(), true));
   }
 
   public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     log.info("Event: {}", event);
-    var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), false);
-
-    return effects().forward(deferredCall);
+    return effects().forward(callFor(event.stockSkuItemId().stockOrderLotId(), false));
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     log.info("Event: {}", event);
-    var deferredCall = acceptedOrRejected(event.stockSkuItemId().stockOrderLotId(), false);
-
-    return effects().forward(deferredCall);
+    return effects().forward(callFor(event.stockSkuItemId().stockOrderLotId(), false));
   }
 
-  private DeferredCall<Any, String> acceptedOrRejected(StockOrderLotId subStockOrderLotId, boolean accepted) {
-    var totalOrdered = accepted ? 1 : 0;
+  private DeferredCall<Any, String> callFor(StockOrderLotId subStockOrderLotId, boolean acceptedOrReleased) {
+    var totalOrdered = acceptedOrReleased ? 1 : 0;
     var upperStockOrderLotId = subStockOrderLotId.levelUp();
     var subStockOrderLot = new StockOrderLot(subStockOrderLotId, 1, totalOrdered, List.of());
+
     var path = "/stockOrderLot/%s/updateSubStockOrderLot".formatted(upperStockOrderLotId.toEntityId());
     var command = new StockOrderLotEntity.UpdateSubStockOrderLotCommand(subStockOrderLotId, subStockOrderLot);
     var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
 
-    return deferredCall;
+    return kalixClient.put(path, command, returnType);
   }
 }

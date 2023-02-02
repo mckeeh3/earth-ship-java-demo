@@ -41,7 +41,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
     return Validator.<Effect<String>>start()
         .isEmpty(command.orderId(), "Cannot create order without order id")
         .isEmpty(command.customerId(), "Cannot create order without customer id")
-        .isEmpty(command.items(), "Cannot create order without items")
+        .isEmpty(command.orderItems(), "Cannot create order without items")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
@@ -233,7 +233,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
       Instant deliveredAt,
       Instant returnedAt,
       Instant canceledAt,
-      List<OrderItem> items) {
+      List<OrderItem> orderItems) {
 
     static State emptyState() {
       return new State("", "", null, null, null, null, null, null, List.of());
@@ -245,7 +245,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
 
     CreatedOrderEvent eventFor(CreateOrderCommand command) {
       var newOrderedAt = orderedAt == null ? Instant.now() : orderedAt;
-      return new CreatedOrderEvent(command.orderId(), command.customerId(), newOrderedAt, command.items());
+      return new CreatedOrderEvent(command.orderId(), command.customerId(), newOrderedAt, command.orderItems());
     }
 
     ReadyToShipOrderEvent eventFor(ReadyToShipOrderCommand command) {
@@ -294,7 +294,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
           deliveredAt,
           returnedAt,
           canceledAt,
-          event.items());
+          event.orderItems());
     }
 
     State on(ReadyToShipOrderEvent event) {
@@ -307,7 +307,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
           deliveredAt,
           returnedAt,
           canceledAt,
-          items);
+          orderItems);
     }
 
     State on(ReleasedOrderEvent event) {
@@ -320,7 +320,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
           deliveredAt,
           returnedAt,
           canceledAt,
-          items);
+          orderItems);
     }
 
     State on(BackOrderedOrderEvent event) {
@@ -333,11 +333,11 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
           deliveredAt,
           returnedAt,
           canceledAt,
-          items);
+          orderItems);
     }
 
     State on(ReadyToShipOrderItemEvent event) {
-      var newOrderItems = items.stream()
+      var newOrderItems = orderItems.stream()
           .map(i -> {
             if (i.skuId.equals(event.skuId())) {
               return new OrderItem(i.skuId, i.skuName, i.quantity, event.readyToShipAt(), null);
@@ -358,7 +358,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
     }
 
     State on(ReleasedOrderItemEvent event) {
-      var newOrderItems = items.stream()
+      var newOrderItems = orderItems.stream()
           .map(i -> {
             if (i.skuId.equals(event.skuId())) {
               return new OrderItem(i.skuId, i.skuName, i.quantity, null, null);
@@ -379,7 +379,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
     }
 
     State on(BackOrderedOrderItemEvent event) {
-      var newOrderItems = items.stream()
+      var newOrderItems = orderItems.stream()
           .map(i -> {
             if (i.skuId.equals(event.skuId())) {
               return new OrderItem(i.skuId, i.skuName, i.quantity, null, event.backOrderedAt);
@@ -409,7 +409,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
           Instant.now(),
           returnedAt,
           canceledAt,
-          items);
+          orderItems);
     }
 
     State on(ReturnedOrderEvent event) {
@@ -422,7 +422,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
           deliveredAt,
           Instant.now(),
           canceledAt,
-          items);
+          orderItems);
     }
 
     State on(CanceledOrderEvent event) {
@@ -435,15 +435,15 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
           deliveredAt,
           returnedAt,
           Instant.now(),
-          items);
+          orderItems);
     }
   }
 
   public record OrderItem(String skuId, String skuName, int quantity, Instant readyToShipAt, Instant backOrderedAt) {}
 
-  public record CreateOrderCommand(String orderId, String customerId, List<OrderItem> items) {}
+  public record CreateOrderCommand(String orderId, String customerId, List<OrderItem> orderItems) {}
 
-  public record CreatedOrderEvent(String orderId, String customerId, Instant orderedAt, List<OrderItem> items) {}
+  public record CreatedOrderEvent(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) {}
 
   public record ReadyToShipOrderCommand(String orderId, Instant readyToShipAt) {}
 

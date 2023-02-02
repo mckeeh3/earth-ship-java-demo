@@ -1,5 +1,7 @@
 package io.example.order;
 
+import java.time.Instant;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +19,7 @@ import kalix.springsdk.annotations.EntityType;
 
 @EntityKey("orderItemId")
 @EntityType("order-item")
-@RequestMapping("/cart/{orderItemId}")
+@RequestMapping("/order-item/{orderItemId}")
 public class OrderItemEntity extends ValueEntity<OrderItemEntity.State> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
@@ -31,12 +33,22 @@ public class OrderItemEntity extends ValueEntity<OrderItemEntity.State> {
     return State.emptyState();
   }
 
-  // TODO: step 4: define entity commands and request handlers
   @PostMapping("/create")
-  public Effect<String> create(@RequestBody CreateOrderItem2Command command) {
+  public Effect<String> create(@RequestBody CreateOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
-        .isEmpty(command.orderItemId(), "Cannot create OrderItem2 without orderItemId")
+        .isNull(command.orderItemId(), "Cannot create OrderItem without orderItemId")
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
+        .onSuccess(() -> effects()
+            .updateState(currentState().on(command))
+            .thenReply("OK"));
+  }
+
+  @PutMapping("/update")
+  public Effect<String> update(@RequestBody UpdateOrderItemCommand command) {
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    return Validator.<Effect<String>>start()
+        .isFalse(currentState().isEmpty(), "OrderItem not found")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .updateState(currentState().on(command))
@@ -45,31 +57,63 @@ public class OrderItemEntity extends ValueEntity<OrderItemEntity.State> {
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}\n_GetOrderItem2", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_GetOrderItem", entityId, currentState());
     return Validator.<Effect<State>>start()
-        .isTrue(currentState().isEmpty(), "OrderItem2 not found")
+        .isTrue(currentState().isEmpty(), "OrderItem not found")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.NOT_FOUND))
         .onSuccess(() -> effects().reply(currentState()));
   }
 
-  // TODO: step 3: define entity state fields
-  public record State(String orderItemId) {
+  public record State(
+      OrderItemId orderItemId,
+      String customerId,
+      String skuId,
+      String skuName,
+      int quantity,
+      Instant orderedAt,
+      Instant readyToShipAt,
+      Instant backOrderedAt) {
 
     static State emptyState() {
-      return new State(null);
+      return new State(null, null, null, null, 0, null, null, null);
     }
 
     boolean isEmpty() {
-      return orderItemId == null || orderItemId.isEmpty();
+      return orderItemId == null;
     }
 
-    // TODO: step 2: define command handler methods
-    State on(CreateOrderItem2Command command) {
-      return new State(command.orderItemId);
+    State on(CreateOrderItemCommand command) {
+      return new State(
+          command.orderItemId,
+          command.customerId,
+          command.skuId,
+          command.skuName,
+          command.quantity,
+          command.orderedAt,
+          null,
+          null);
+    }
+
+    State on(UpdateOrderItemCommand command) {
+      return new State(
+          orderItemId,
+          customerId,
+          skuId,
+          skuName,
+          quantity,
+          orderedAt,
+          command.readyToShipAt,
+          command.backOrderedAt);
     }
   }
 
-  // TODO: step 1: define command records
+  public record CreateOrderItemCommand(
+      OrderItemId orderItemId,
+      String customerId,
+      String skuId,
+      String skuName,
+      int quantity,
+      Instant orderedAt) {}
 
-  public record CreateOrderItem2Command(String orderItemId) {}
+  public record UpdateOrderItemCommand(OrderItemId orderItemId, Instant readyToShipAt, Instant backOrderedAt) {}
 }

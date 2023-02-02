@@ -1,14 +1,13 @@
 package io.example.shipping;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.example.shipping.OrderSkuItemEntity.CreateOrderSkuItemCommand;
-import io.example.shipping.ShippingOrderEntity.CreatedOrderEvent;
-import io.example.shipping.ShippingOrderEntity.OrderItem;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
@@ -25,29 +24,38 @@ public class ShippingOrderToOrderSkuItemAction extends Action {
   public Effect<String> on(ShippingOrderEntity.CreatedOrderEvent event) {
     log.info("Event: {}", event);
 
-    var results = event.orderItems().stream()
-        .flatMap(orderItem -> toCommands(event, orderItem))
-        .map(command -> {
-          var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId().toEntityId());
-          var returnType = String.class;
-          var deferredCall = kalixClient.post(path, command, returnType);
-          return deferredCall.execute();
-        })
-        .toList();
-
-    var result = CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
-        .thenApply(__ -> "OK");
-
-    return effects().asyncReply(result);
+    return onOneEventInToManyCommandsOut(event);
   }
 
-  private Stream<CreateOrderSkuItemCommand> toCommands(CreatedOrderEvent event, OrderItem orderItem) {
+  private Effect<String> onOneEventInToManyCommandsOut(ShippingOrderEntity.CreatedOrderEvent event) {
+    var results = event.orderItems().stream()
+        .flatMap(orderItem -> toCommands(event, orderItem))
+        .map(command -> callFor(command))
+        .toList();
+
+    return effects().asyncReply(waitForCallsToFinish(results));
+  }
+
+  private Stream<OrderSkuItemEntity.CreateOrderSkuItemCommand> toCommands(ShippingOrderEntity.CreatedOrderEvent event, ShippingOrderEntity.OrderItem orderItem) {
     return orderItem.orderSkuItems().stream()
-        .map(orderSkuItem -> new CreateOrderSkuItemCommand(
+        .map(orderSkuItem -> new OrderSkuItemEntity.CreateOrderSkuItemCommand(
             orderSkuItem.orderSkuItemId(),
             orderSkuItem.customerId(),
             orderSkuItem.skuId(),
             orderSkuItem.skuName(),
             orderSkuItem.orderedAt()));
+  }
+
+  private CompletionStage<String> callFor(OrderSkuItemEntity.CreateOrderSkuItemCommand command) {
+    var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId().toEntityId());
+    var returnType = String.class;
+    var deferredCall = kalixClient.post(path, command, returnType);
+
+    return deferredCall.execute();
+  }
+
+  private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
+    return CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
+        .thenApply(__ -> "OK");
   }
 }

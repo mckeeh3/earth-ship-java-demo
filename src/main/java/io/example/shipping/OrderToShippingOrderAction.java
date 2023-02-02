@@ -5,7 +5,10 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.any.Any;
+
 import io.example.order.OrderEntity;
+import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
@@ -21,13 +24,19 @@ public class OrderToShippingOrderAction extends Action {
 
   public Effect<String> on(OrderEntity.CreatedOrderEvent event) {
     log.info("Event: {}", event);
+    return effects().forward(callFor(event));
+  }
 
+  private DeferredCall<Any, String> callFor(OrderEntity.CreatedOrderEvent event) {
     var path = "/shipping-order/%s/create".formatted(event.orderId());
-    var command = new ShippingOrderEntity.CreateOrderCommand(event.orderId(), event.customerId(), event.orderedAt(), toOrderItems(event.items()));
+    var command = toCommand(event);
     var returnType = String.class;
     var deferredCall = kalixClient.post(path, command, returnType);
+    return deferredCall;
+  }
 
-    return effects().forward(deferredCall);
+  private ShippingOrderEntity.CreateOrderCommand toCommand(OrderEntity.CreatedOrderEvent event) {
+    return new ShippingOrderEntity.CreateOrderCommand(event.orderId(), event.customerId(), event.orderedAt(), toOrderItems(event.orderItems()));
   }
 
   private List<ShippingOrderEntity.OrderItem> toOrderItems(List<OrderEntity.OrderItem> items) {

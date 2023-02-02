@@ -5,9 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
-import io.example.shipping.ShippingOrderEntity.BackOrderOrderSkuItemCommand;
-import io.example.shipping.ShippingOrderEntity.ReadyToShipOrderSkuItemCommand;
-import io.example.shipping.ShippingOrderEntity.ReleaseOrderSkuItemCommand;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
@@ -46,65 +43,61 @@ public class OrderSkuItemToShippingOrderAction extends Action {
     var path = "/shipping-order/%s/ready-to-ship-order-sku-item".formatted(event.orderSkuItemId().orderId());
     var command = toCommand(event);
     var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-    return deferredCall;
+
+    return kalixClient.put(path, command, returnType);
   }
 
-  private static ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
-    var command = new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
+  private static ShippingOrderEntity.ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
+    return new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId(),
         event.readyToShipAt());
-    return command;
   }
 
   private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     var path = "/shipping-order/%s/ready-to-ship-order-sku-item".formatted(event.orderSkuItemId().orderId());
     var command = toCommand(event);
     var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-    return deferredCall;
+
+    return kalixClient.put(path, command, returnType);
   }
 
-  private static ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
-    var command = new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
+  private static ShippingOrderEntity.ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
+    return new ShippingOrderEntity.ReadyToShipOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId(),
         event.readyToShipAt());
-    return command;
   }
 
   private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     var path = "/shipping-order/%s/release-order-sku-item".formatted(event.orderSkuItemId().orderId());
     var command = toCommand(event);
     var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-    return deferredCall;
+
+    return kalixClient.put(path, command, returnType);
   }
 
-  private static ReleaseOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
-    var command = new ShippingOrderEntity.ReleaseOrderSkuItemCommand(
+  private static ShippingOrderEntity.ReleaseOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
+    return new ShippingOrderEntity.ReleaseOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId());
-    return command;
   }
 
   private DeferredCall<Any, String> callFor(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
     var path = "/shipping-order/%s/back-order-order-sku-item".formatted(event.orderSkuItemId().orderId());
     var command = toCommand(event);
     var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-    return deferredCall;
+
+    return kalixClient.put(path, command, returnType);
   }
 
-  private static BackOrderOrderSkuItemCommand toCommand(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
-    var command = new ShippingOrderEntity.BackOrderOrderSkuItemCommand(
+  private static ShippingOrderEntity.BackOrderOrderSkuItemCommand toCommand(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
+    return new ShippingOrderEntity.BackOrderOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId(),
         event.backOrderedAt());
-    return command;
   }
 }

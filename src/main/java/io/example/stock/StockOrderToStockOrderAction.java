@@ -3,6 +3,9 @@ package io.example.stock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.any.Any;
+
+import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
@@ -18,20 +21,19 @@ public class StockOrderToStockOrderAction extends Action {
 
   public Effect<String> on(StockOrderEntity.CreatedStockOrderEvent event) {
     log.info("Event: {}", event);
-    return sendCommand(event.stockOrderId());
+    return effects().forward(callFor(event.stockOrderId()));
   }
 
   public Effect<String> on(StockOrderEntity.GeneratedStockSkuItemIdsEvent event) {
     log.info("Event: {}", event);
-    return sendCommand(event.stockOrderId());
+    return effects().forward(callFor(event.stockOrderId()));
   }
 
-  private Effect<String> sendCommand(String stockOrderId) {
+  private DeferredCall<Any, String> callFor(String stockOrderId) {
     var path = "/stockOrder/%s/generate-stock-sku-item-ids".formatted(stockOrderId);
     var command = new StockOrderEntity.GenerateStockSkuItemIdsCommand(stockOrderId);
     var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
 
-    return effects().forward(deferredCall);
+    return kalixClient.put(path, command, returnType);
   }
 }
