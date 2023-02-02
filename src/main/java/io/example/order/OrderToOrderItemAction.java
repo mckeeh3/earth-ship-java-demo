@@ -7,6 +7,9 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.any.Any;
+
+import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
@@ -24,6 +27,16 @@ public class OrderToOrderItemAction extends Action {
     log.info("Event: {}", event);
 
     return onOneEventInToManyCommandsOut(event);
+  }
+
+  public Effect<String> on(OrderEntity.ReadyToShipOrderItemEvent event) {
+    log.info("Event: {}", event);
+    return effects().forward(callFor(event));
+  }
+
+  public Effect<String> on(OrderEntity.BackOrderedOrderItemEvent event) {
+    log.info("Event: {}", event);
+    return effects().forward(callFor(event));
   }
 
   private Effect<String> onOneEventInToManyCommandsOut(OrderEntity.CreatedOrderEvent event) {
@@ -56,5 +69,21 @@ public class OrderToOrderItemAction extends Action {
   private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
     return CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
         .thenApply(__ -> "OK");
+  }
+
+  private DeferredCall<Any, String> callFor(OrderEntity.ReadyToShipOrderItemEvent event) {
+    var path = "/order-item/%s/update".formatted(OrderItemId.of(event.orderId(), event.skuId()).toEntityId());
+    var command = new OrderItemEntity.UpdateOrderItemCommand(OrderItemId.of(event.orderId(), event.skuId()), event.readyToShipAt(), null);
+    var returnType = String.class;
+
+    return kalixClient.put(path, command, returnType);
+  }
+
+  private DeferredCall<Any, String> callFor(OrderEntity.BackOrderedOrderItemEvent event) {
+    var path = "/order-item/%s/update".formatted(OrderItemId.of(event.orderId(), event.skuId()).toEntityId());
+    var command = new OrderItemEntity.UpdateOrderItemCommand(OrderItemId.of(event.orderId(), event.skuId()), null, event.backOrderedAt());
+    var returnType = String.class;
+
+    return kalixClient.put(path, command, returnType);
   }
 }

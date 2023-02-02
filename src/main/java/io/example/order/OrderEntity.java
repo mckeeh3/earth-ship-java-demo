@@ -269,7 +269,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
     }
 
     BackOrderedOrderItemEvent eventFor(BackOrderOrderItemCommand command) {
-      return new BackOrderedOrderItemEvent(command.orderId(), command.skuId(), command.backOrderedAt());
+      return new BackOrderedOrderItemEvent(command.orderId(), command.skuId(), command.backOrderedAt(), true);
     }
 
     DeliveredOrderEvent eventFor(DeliverOrderCommand command) {
@@ -467,7 +467,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
 
   public record BackOrderOrderItemCommand(String orderId, String skuId, Instant backOrderedAt) {}
 
-  public record BackOrderedOrderItemEvent(String orderId, String skuId, Instant backOrderedAt) {}
+  public record BackOrderedOrderItemEvent(String orderId, String skuId, Instant backOrderedAt, boolean test) {}
 
   public record DeliverOrderCommand(String orderId) {}
 
