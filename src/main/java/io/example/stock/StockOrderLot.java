@@ -1,6 +1,7 @@
 package io.example.stock;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public record StockOrderLot(
     StockOrderLotId stockOrderLotId,
@@ -10,5 +11,20 @@ public record StockOrderLot(
 
   public StockOrderLot copyWithoutSubLots() {
     return new StockOrderLot(stockOrderLotId, quantityTotal, quantityOrdered, List.of());
+  }
+
+  public StockOrderLot addSubLot(StockOrderLot subStockOrderLot) {
+    var filteredLots = subStockOrderLots.stream()
+        .filter(subLot -> !subLot.stockOrderLotId().equals(subStockOrderLot.stockOrderLotId()));
+    var addLot = Stream.of(subStockOrderLot);
+    var newSubStockOrderLots = Stream.concat(filteredLots, addLot);
+
+    var zeroStockOrderLot = new StockOrderLot(stockOrderLotId, 0, 0, newSubStockOrderLots.toList());
+    return newSubStockOrderLots
+        .reduce(zeroStockOrderLot, (a, s) -> new StockOrderLot(
+            a.stockOrderLotId(),
+            a.quantityTotal() + s.quantityTotal(),
+            a.quantityOrdered() + s.quantityOrdered(),
+            a.subStockOrderLots()));
   }
 }

@@ -21,7 +21,7 @@ import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("stockOrderId")
-@EntityType("stock-order")
+@EntityType("stockOrder")
 @RequestMapping("/stockOrder/{stockOrderId}")
 public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(StockOrderEntity.class);

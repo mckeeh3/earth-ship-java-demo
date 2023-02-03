@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.product.ProductEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;

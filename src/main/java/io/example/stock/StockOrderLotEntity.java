@@ -1,7 +1,6 @@
 package io.example.stock;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,7 @@ import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("stockOrderLotId")
-@EntityType("stock-order-lot")
+@EntityType("stockOrderLot")
 @RequestMapping("/stockOrderLot/{stockOrderLotId}")
 public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(StockOrderLotEntity.class);
@@ -103,34 +102,31 @@ public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.
       return new ReleasedStockOrderLotEvent(stockOrderLot.stockOrderLotId(), stockOrderLot.copyWithoutSubLots());
     }
 
-    State on(UpdatedStockOrderLotEvent event) {
-      return this;
-    }
-
     State on(UpdatedSubStockOrderLotEvent event) {
       if (isEmpty()) {
-        var newStockOrderLot = new StockOrderLot(
-            event.subStockOrderLotId().levelUp(),
-            event.subStockOrderLot.quantityTotal(),
-            event.subStockOrderLot.quantityOrdered(),
-            List.of(event.subStockOrderLot));
-        return new State(newStockOrderLot, true);
+        var newStockOrderLot = new StockOrderLot(event.subStockOrderLotId().levelUp(), 0, 0, List.of());
+        return new State(newStockOrderLot.addSubLot(event.subStockOrderLot), true);
       }
 
-      var filteredLots = stockOrderLot.subStockOrderLots().stream()
-          .filter(s -> !s.stockOrderLotId().equals(event.subStockOrderLotId));
-      var addLot = Stream.of(event.subStockOrderLot);
-      var newSubStockOrderLots = Stream.concat(filteredLots, addLot).toList();
+      return new State(stockOrderLot.addSubLot(event.subStockOrderLot), true);
+      // var filteredLots = stockOrderLot.subStockOrderLots().stream()
+      // .filter(s -> !s.stockOrderLotId().equals(event.subStockOrderLotId));
+      // var addLot = Stream.of(event.subStockOrderLot);
+      // var newSubStockOrderLots = Stream.concat(filteredLots, addLot).toList();
 
-      var zeroStockOrderLot = new StockOrderLot(event.subStockOrderLotId().levelUp(), 0, 0, newSubStockOrderLots);
-      var newStockOrderLot = newSubStockOrderLots.stream()
-          .reduce(zeroStockOrderLot, (a, s) -> new StockOrderLot(
-              a.stockOrderLotId(),
-              a.quantityTotal() + s.quantityTotal(),
-              a.quantityOrdered() + s.quantityOrdered(),
-              a.subStockOrderLots()));
+      // var zeroStockOrderLot = new StockOrderLot(event.subStockOrderLotId().levelUp(), 0, 0, newSubStockOrderLots);
+      // var newStockOrderLot = newSubStockOrderLots.stream()
+      // .reduce(zeroStockOrderLot, (a, s) -> new StockOrderLot(
+      // a.stockOrderLotId(),
+      // a.quantityTotal() + s.quantityTotal(),
+      // a.quantityOrdered() + s.quantityOrdered(),
+      // a.subStockOrderLots()));
 
-      return new State(newStockOrderLot, true);
+      // return new State(newStockOrderLot, true);
+    }
+
+    State on(UpdatedStockOrderLotEvent event) {
+      return this;
     }
 
     State on(ReleasedStockOrderLotEvent event) {

@@ -1,4 +1,6 @@
-package io.example.stock;
+package io.example.product;
+
+import java.math.BigDecimal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +18,9 @@ import kalix.springsdk.annotations.EntityKey;
 import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
 
-@EntityKey("productId")
+@EntityKey("skuId")
 @EntityType("product")
-@RequestMapping("/cart/{productId}")
+@RequestMapping("/product/{skuId}")
 public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
@@ -32,12 +34,11 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
     return State.emptyState();
   }
 
-  // TODO: step 6: define entity commands and request handlers
   @PostMapping("/create")
   public Effect<String> create(@RequestBody CreateProductCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
-        .isEmpty(command.productId(), "Cannot create Product without productId")
+        .isEmpty(command.skuId(), "Cannot create Product without skuId")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
@@ -53,37 +54,43 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
         .onSuccess(() -> effects().reply(currentState()));
   }
 
-  // TODO: step 5: define entity event handlers
   @EventHandler
   public State on(CreatedProductEvent event) {
     return currentState().on(event);
   }
 
-  // TODO: step 4: define entity state fields
-  public record State(String productId) {
+  public record State(
+      String skuId,
+      String skuName,
+      String skuDescription,
+      BigDecimal skuPrice) {
 
     static State emptyState() {
-      return new State(null);
+      return new State(null, null, null, null);
     }
 
     boolean isEmpty() {
-      return productId == null || productId.isEmpty();
+      return skuId == null || skuId.isEmpty();
     }
 
-    // TODO: step 3: define state eventFor methods
     CreatedProductEvent eventFor(CreateProductCommand command) {
-      return new CreatedProductEvent(command.productId());
+      return new CreatedProductEvent(
+          command.skuId(),
+          command.skuNAme(),
+          command.skuDescription(),
+          command.skuPrice());
     }
 
-    // TODO: step 2: define state event handler methods
     State on(CreatedProductEvent event) {
-      return new State(event.productId);
+      return new State(
+          event.skuId(),
+          event.skuNAme(),
+          event.skuDescription(),
+          event.skuPrice());
     }
   }
 
-  // TODO: step 1: define command and event records
+  public record CreateProductCommand(String skuId, String skuNAme, String skuDescription, BigDecimal skuPrice) {}
 
-  public record CreateProductCommand(String productId) {}
-
-  public record CreatedProductEvent(String productId) {}
+  public record CreatedProductEvent(String skuId, String skuNAme, String skuDescription, BigDecimal skuPrice) {}
 }

@@ -23,7 +23,7 @@ import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("orderId")
-@EntityType("shipping-order")
+@EntityType("shippingOrder")
 @RequestMapping("/shipping-order/{orderId}")
 public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(ShippingOrderEntity.class);

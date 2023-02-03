@@ -19,7 +19,7 @@ import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("stockSkuItemEntityId")
-@EntityType("stock-sku-item")
+@EntityType("stockSkuItem")
 @RequestMapping("/stock-sku-item/{stockSkuItemEntityId}")
 public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(StockSkuItemEntity.class);

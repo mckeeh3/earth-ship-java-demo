@@ -18,7 +18,7 @@ import kalix.springsdk.annotations.EntityKey;
 import kalix.springsdk.annotations.EntityType;
 
 @EntityKey("orderItemId")
-@EntityType("order-item")
+@EntityType("orderItem")
 @RequestMapping("/order-item/{orderItemId}")
 public class OrderItemEntity extends ValueEntity<OrderItemEntity.State> {
   private final Logger log = LoggerFactory.getLogger(getClass());
