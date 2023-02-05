@@ -80,7 +80,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
   }
 
   @PutMapping("/back-order-order-sku-item")
-  public Effect<String> backOrderRequested(@RequestBody BackOrderSkuItemCommand command) {
+  public Effect<String> backOrderRequested(@RequestBody BackOrderOrderSkuItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
@@ -139,7 +139,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
   }
 
   @EventHandler
-  public State on(BackOrderedSkuItemEvent event) {
+  public State on(BackOrderedOrderSkuItemEvent event) {
     log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
@@ -180,6 +180,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
         return List.of(
             new OrderRequestedJoinToStockAcceptedEvent(
                 command.orderSkuItemId,
+                orderedAt,
                 command.skuId,
                 command.stockSkuItemId,
                 Instant.now()));
@@ -205,6 +206,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
       if (stockSkuItemId == null || stockSkuItemId.equals(command.stockSkuItemId)) {
         return new StockRequestedJoinToOrderAcceptedEvent(
             command.orderSkuItemId,
+            orderedAt,
             command.skuId,
             command.stockSkuItemId,
             Instant.now());
@@ -223,9 +225,10 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
           command.stockSkuItemId);
     }
 
-    BackOrderedSkuItemEvent eventFor(BackOrderSkuItemCommand command) {
-      return new BackOrderedSkuItemEvent(
+    BackOrderedOrderSkuItemEvent eventFor(BackOrderOrderSkuItemCommand command) {
+      return new BackOrderedOrderSkuItemEvent(
           command.orderSkuItemId,
+          orderedAt,
           command.skuId,
           Instant.now());
     }
@@ -315,7 +318,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
       return this;
     }
 
-    State on(BackOrderedSkuItemEvent event) {
+    State on(BackOrderedOrderSkuItemEvent event) {
       return new State(
           orderSkuItemId,
           skuId,
@@ -336,13 +339,13 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
 
   public record StockRequestsJoinToOrderCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record StockRequestedJoinToOrderAcceptedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
+  public record StockRequestedJoinToOrderAcceptedEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
 
   public record StockRequestedJoinToOrderRejectedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
   public record OrderRequestsJoinToStockAcceptedCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record OrderRequestedJoinToStockAcceptedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
+  public record OrderRequestedJoinToStockAcceptedEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
 
   public record OrderRequestsJoinToStockRejectedCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
@@ -352,7 +355,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
 
   public record OrderRequestedJoinToStockReleasedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record BackOrderSkuItemCommand(OrderSkuItemId orderSkuItemId, String skuId) {}
+  public record BackOrderOrderSkuItemCommand(OrderSkuItemId orderSkuItemId, String skuId) {}
 
-  public record BackOrderedSkuItemEvent(OrderSkuItemId orderSkuItemId, String skuId, Instant backOrderedAt) {}
+  public record BackOrderedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, Instant backOrderedAt) {}
 }

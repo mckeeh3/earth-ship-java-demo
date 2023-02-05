@@ -30,7 +30,7 @@ public class StockOrderToStockOrderAction extends Action {
   }
 
   private DeferredCall<Any, String> callFor(String stockOrderId) {
-    var path = "/stockOrder/%s/generate-stock-sku-item-ids".formatted(stockOrderId);
+    var path = "/stock-order/%s/generate-stock-sku-item-ids".formatted(stockOrderId);
     var command = new StockOrderEntity.GenerateStockSkuItemIdsCommand(stockOrderId);
     var returnType = String.class;
 

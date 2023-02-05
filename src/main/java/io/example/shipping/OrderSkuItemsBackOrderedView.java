@@ -49,7 +49,7 @@ public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedV
         .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), event.readyToShipAt().toString(), false, null));
   }
 
-  public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
+  public UpdateEffect<OrderSkuItemRow> on(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new OrderSkuItemRow(viewState().orderSkuItemId(), viewState().skuId(), null, true, event.backOrderedAt().toString()));

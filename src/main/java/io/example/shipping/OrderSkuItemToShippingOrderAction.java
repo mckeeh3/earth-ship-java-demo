@@ -34,7 +34,7 @@ public class OrderSkuItemToShippingOrderAction extends Action {
     return effects().forward(callFor(event));
   }
 
-  public Effect<String> on(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
+  public Effect<String> on(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
     logger.info("Event: {}", event);
     return effects().forward(callFor(event));
   }
@@ -86,7 +86,7 @@ public class OrderSkuItemToShippingOrderAction extends Action {
         event.stockSkuItemId());
   }
 
-  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
+  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
     var path = "/shipping-order/%s/back-order-order-sku-item".formatted(event.orderSkuItemId().orderId());
     var command = toCommand(event);
     var returnType = String.class;
@@ -94,7 +94,7 @@ public class OrderSkuItemToShippingOrderAction extends Action {
     return kalixClient.put(path, command, returnType);
   }
 
-  private static ShippingOrderEntity.BackOrderOrderSkuItemCommand toCommand(OrderSkuItemEntity.BackOrderedSkuItemEvent event) {
+  private static ShippingOrderEntity.BackOrderOrderSkuItemCommand toCommand(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
     return new ShippingOrderEntity.BackOrderOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId(),

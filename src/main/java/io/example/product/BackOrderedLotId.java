@@ -21,9 +21,9 @@ public record BackOrderedLotId(String skuId, String orderSkuItemId, int lotLevel
     return new BackOrderedLotId(skuId, "", newLotLevel, newLotNumber);
   }
 
-  public static BackOrderedLotId of(String skuId, String orderItemId, Instant backOrderedAt) {
+  public static BackOrderedLotId of(String skuId, String orderItemId, Instant orderedAt) {
     var lotLevel = lotLevels;
-    var lotNumber = backOrderedAt.toEpochMilli();
+    var lotNumber = orderedAt.toEpochMilli();
     return new BackOrderedLotId(skuId, orderItemId, lotLevel, lotNumber);
   }
 }

@@ -88,8 +88,8 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
     return deferredCall.execute();
   }
 
-  private OrderSkuItemEntity.BackOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event) {
-    return new OrderSkuItemEntity.BackOrderSkuItemCommand(
+  private OrderSkuItemEntity.BackOrderOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event) {
+    return new OrderSkuItemEntity.BackOrderOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId());
   }

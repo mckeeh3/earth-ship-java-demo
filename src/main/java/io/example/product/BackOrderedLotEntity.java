@@ -2,12 +2,9 @@ package io.example.product;
 
 import java.util.List;
 
-import javax.naming.ldap.HasControls;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +19,7 @@ import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("backOrderedLotId")
 @EntityType("backOrderedLot")
-@RequestMapping("/backOrderedLot/{backOrderedLotId}")
+@RequestMapping("/back-ordered-lot/{backOrderedLotId}")
 public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntity.State> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
@@ -36,16 +33,16 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
     return State.emptyState();
   }
 
-  @PostMapping("/updateSubBackOrderedLot")
-  public Effect<String> create(@RequestBody UpdateSubBackOrderLotCommand command) {
+  @PutMapping("/update")
+  public Effect<String> create(@RequestBody UpdateSubBackOrderedLotCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventFor(command))
         .thenReply(__ -> "OK");
   }
 
-  @PutMapping("/releaseBackOrderedLot")
-  public Effect<String> releaseBackOrderedLot(@RequestBody ReleaseBackOrderLotCommand command) {
+  @PutMapping("/release")
+  public Effect<String> releaseBackOrderedLot(@RequestBody ReleaseBackOrderedLotCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
@@ -54,25 +51,25 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}\n_GetBackOrderLot", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_GetBackOrderedLot", entityId, currentState());
     return Validator.<Effect<State>>start()
-        .isTrue(currentState().isEmpty(), "BackOrderLot not found")
+        .isTrue(currentState().isEmpty(), "BackOrderedLot not found")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.NOT_FOUND))
         .onSuccess(() -> effects().reply(currentState()));
   }
 
   @EventHandler
-  public State on(UpdatedSubBackOrderLotEvent event) {
+  public State on(UpdatedSubBackOrderedLotEvent event) {
     return currentState().on(event);
   }
 
   @EventHandler
-  public State on(UpdatedBackOrderLotEvent event) {
+  public State on(UpdatedBackOrderedLotEvent event) {
     return currentState().on(event);
   }
 
   @EventHandler
-  public State on(ReleasedBackOrderLotEvent event) {
+  public State on(ReleasedBackOrderedLotEvent event) {
     return currentState().on(event);
   }
 
@@ -88,22 +85,22 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
       return backOrderedLot == null;
     }
 
-    List<?> eventFor(UpdateSubBackOrderLotCommand command) {
+    List<?> eventFor(UpdateSubBackOrderedLotCommand command) {
       if (hasChanged) {
-        return List.of(new UpdatedSubBackOrderLotEvent(command.subBackOrderedLotId(), command.subBackOrderedLot()));
+        return List.of(new UpdatedSubBackOrderedLotEvent(command.subBackOrderedLotId(), command.subBackOrderedLot()));
       } else {
-        var backOrderedLotId = command.subBackOrderedLotId().levelUp();
+        var upperBackOrderedLotId = command.subBackOrderedLotId().levelUp();
         return List.of(
-            new UpdatedSubBackOrderLotEvent(command.subBackOrderedLotId(), command.subBackOrderedLot()),
-            new UpdatedBackOrderLotEvent(backOrderedLotId));
+            new UpdatedSubBackOrderedLotEvent(command.subBackOrderedLotId(), command.subBackOrderedLot()),
+            new UpdatedBackOrderedLotEvent(upperBackOrderedLotId));
       }
     }
 
-    ReleasedBackOrderLotEvent eventFor(ReleaseBackOrderLotCommand command) {
-      return new ReleasedBackOrderLotEvent(backOrderedLot.backOrderedLotId(), backOrderedLot.copyWithoutSubLots());
+    ReleasedBackOrderedLotEvent eventFor(ReleaseBackOrderedLotCommand command) {
+      return new ReleasedBackOrderedLotEvent(backOrderedLot.backOrderedLotId(), backOrderedLot.copyWithoutSubLots());
     }
 
-    State on(UpdatedSubBackOrderLotEvent event) {
+    State on(UpdatedSubBackOrderedLotEvent event) {
       if (isEmpty()) {
         var newBackOrderedLot = new BackOrderedLot(event.subBackOrderedLotId().levelUp(), 0, List.of());
         return new State(newBackOrderedLot.addSubLot(event.subBackOrderedLot()), true);
@@ -111,22 +108,22 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
       return new State(backOrderedLot.addSubLot(event.subBackOrderedLot), true);
     }
 
-    State on(UpdatedBackOrderLotEvent event) {
+    State on(UpdatedBackOrderedLotEvent event) {
       return this;
     }
 
-    State on(ReleasedBackOrderLotEvent event) {
-      return new State(event.backOrderedLot(), false);
+    State on(ReleasedBackOrderedLotEvent event) {
+      return new State(backOrderedLot, false);
     }
   }
 
-  public record UpdateSubBackOrderLotCommand(BackOrderedLotId subBackOrderedLotId, BackOrderedLot subBackOrderedLot) {}
+  public record UpdateSubBackOrderedLotCommand(BackOrderedLotId subBackOrderedLotId, BackOrderedLot subBackOrderedLot) {}
 
-  public record UpdatedSubBackOrderLotEvent(BackOrderedLotId subBackOrderedLotId, BackOrderedLot subBackOrderedLot) {}
+  public record UpdatedSubBackOrderedLotEvent(BackOrderedLotId subBackOrderedLotId, BackOrderedLot subBackOrderedLot) {}
 
-  public record UpdatedBackOrderLotEvent(BackOrderedLotId backOrderedLotId) {}
+  public record UpdatedBackOrderedLotEvent(BackOrderedLotId backOrderedLotId) {}
 
-  public record ReleaseBackOrderLotCommand(BackOrderedLotId backOrderedLotId) {}
+  public record ReleaseBackOrderedLotCommand(BackOrderedLotId backOrderedLotId) {}
 
-  public record ReleasedBackOrderLotEvent(BackOrderedLotId backOrderedLotId, BackOrderedLot backOrderedLot) {}
+  public record ReleasedBackOrderedLotEvent(BackOrderedLotId backOrderedLotId, BackOrderedLot backOrderedLot) {}
 }

@@ -18,7 +18,7 @@ import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("stockOrderLotId")
 @EntityType("stockOrderLot")
-@RequestMapping("/stockOrderLot/{stockOrderLotId}")
+@RequestMapping("/stock-order-lot/{stockOrderLotId}")
 public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(StockOrderLotEntity.class);
   private final String entityId;
@@ -32,7 +32,7 @@ public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.
     return State.emptyState();
   }
 
-  @PutMapping("/updateSubStockOrderLot")
+  @PutMapping("/update")
   public Effect<String> updateSubStockOrderLot(@RequestBody UpdateSubStockOrderLotCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
@@ -40,7 +40,7 @@ public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.
         .thenReply(__ -> "OK");
   }
 
-  @PutMapping("/releaseStockOrderLot")
+  @PutMapping("/release")
   public Effect<String> releaseStockOrderLot(@RequestBody ReleaseStockOrderLotCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
@@ -109,20 +109,6 @@ public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.
       }
 
       return new State(stockOrderLot.addSubLot(event.subStockOrderLot), true);
-      // var filteredLots = stockOrderLot.subStockOrderLots().stream()
-      // .filter(s -> !s.stockOrderLotId().equals(event.subStockOrderLotId));
-      // var addLot = Stream.of(event.subStockOrderLot);
-      // var newSubStockOrderLots = Stream.concat(filteredLots, addLot).toList();
-
-      // var zeroStockOrderLot = new StockOrderLot(event.subStockOrderLotId().levelUp(), 0, 0, newSubStockOrderLots);
-      // var newStockOrderLot = newSubStockOrderLots.stream()
-      // .reduce(zeroStockOrderLot, (a, s) -> new StockOrderLot(
-      // a.stockOrderLotId(),
-      // a.quantityTotal() + s.quantityTotal(),
-      // a.quantityOrdered() + s.quantityOrdered(),
-      // a.subStockOrderLots()));
-
-      // return new State(newStockOrderLot, true);
     }
 
     State on(UpdatedStockOrderLotEvent event) {

@@ -24,14 +24,6 @@ public class StockOrderLotToStockOrderLotAction extends Action {
     return effects().forward(callFor(event));
   }
 
-  private DeferredCall<Any, String> callFor(StockOrderLotEntity.UpdatedStockOrderLotEvent event) {
-    var path = "/stockOrderLot/%s/releaseStockOrderLot".formatted(event.stockOrderLotId().toEntityId());
-    var command = new StockOrderLotEntity.ReleaseStockOrderLotCommand(event.stockOrderLotId());
-    var returnType = String.class;
-
-    return kalixClient.put(path, command, returnType);
-  }
-
   public Effect<String> on(StockOrderLotEntity.ReleasedStockOrderLotEvent event) {
     log.info("Event: {}", event);
 
@@ -42,9 +34,17 @@ public class StockOrderLotToStockOrderLotAction extends Action {
     }
   }
 
+  private DeferredCall<Any, String> callFor(StockOrderLotEntity.UpdatedStockOrderLotEvent event) {
+    var path = "/stock-order-lot/%s/release".formatted(event.stockOrderLotId().toEntityId());
+    var command = new StockOrderLotEntity.ReleaseStockOrderLotCommand(event.stockOrderLotId());
+    var returnType = String.class;
+
+    return kalixClient.put(path, command, returnType);
+  }
+
   private DeferredCall<Any, String> callForStockOrderLot(StockOrderLotEntity.ReleasedStockOrderLotEvent event) {
-    var stockOrderLotId = event.stockOrderLotId().levelUp();
-    var path = "/stockOrderLot/%s/updateSubStockOrderLot".formatted(stockOrderLotId.toEntityId());
+    var upperStockOrderLotId = event.stockOrderLotId().levelUp();
+    var path = "/stock-order-lot/%s/update".formatted(upperStockOrderLotId.toEntityId());
     var command = new StockOrderLotEntity.UpdateSubStockOrderLotCommand(event.stockOrderLotId(), event.stockOrderLot());
     var returnType = String.class;
 
@@ -53,7 +53,7 @@ public class StockOrderLotToStockOrderLotAction extends Action {
 
   private DeferredCall<Any, String> callForStockOrder(StockOrderLotEntity.ReleasedStockOrderLotEvent event) {
     var stockOrderId = event.stockOrderLotId().stockOrderId();
-    var path = "/stockOrder/%s/update".formatted(stockOrderId);
+    var path = "/stock-order/%s/update".formatted(stockOrderId);
     var command = new StockOrderEntity.UpdateStockOrderCommand(stockOrderId, event.stockOrderLot().quantityTotal(), event.stockOrderLot().quantityOrdered());
     var returnType = String.class;
 

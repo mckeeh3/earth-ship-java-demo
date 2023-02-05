@@ -3,4 +3,4 @@
 
 ###
 
-GET {{urlPreFix}}/stockOrderLot/{{stockOrderLotId}}
+GET {{urlPreFix}}/stock-order-lot/{{stockOrderLotId}}

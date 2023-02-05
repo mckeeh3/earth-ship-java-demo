@@ -8,7 +8,7 @@
 
 ### Create a new stock order
 
-POST {{urlPrefix}}/stockOrder/{{stockOrderId}}/create
+POST {{urlPrefix}}/stock-order/{{stockOrderId}}/create
 Content-Type: application/json
 
 {
@@ -20,7 +20,7 @@ Content-Type: application/json
 
 ### Create a new stock order (bad request)
 
-POST {{urlPrefix}}/stockOrder/{{stockOrderId}}/create
+POST {{urlPrefix}}/stock-order/{{stockOrderId}}/create
 Content-Type: application/json
 
 {
@@ -32,7 +32,7 @@ Content-Type: application/json
 
 ### Update a stock order
 
-PUT {{urlPrefix}}/stockOrder/{{stockOrderId}}/update
+PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/update
 Content-Type: application/json
 
 {
@@ -43,7 +43,7 @@ Content-Type: application/json
 
 ### Generate stock sku items
 
-PUT {{urlPrefix}}/stockOrder/{{stockOrderId}}/generate-stock-sku-item-ids
+PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/generate-stock-sku-item-ids
 Content-Type: application/json
 
 {
@@ -52,4 +52,4 @@ Content-Type: application/json
 
 ### Get a stock order
 
-GET {{urlPrefix}}/stockOrder/{{stockOrderId}}
+GET {{urlPrefix}}/stock-order/{{stockOrderId}}

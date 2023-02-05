@@ -45,6 +45,22 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
             .thenReply(__ -> "OK"));
   }
 
+  @PutMapping("/update-available")
+  public Effect<String> updateAvailable(@RequestBody UpdateProductsAvailableCommand command) {
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    return effects()
+        .emitEvent(currentState().eventFor(command))
+        .thenReply(__ -> "OK");
+  }
+
+  @PutMapping("/update-back-ordered")
+  public Effect<String> updateBackOrdered(@RequestBody UpdateProductsBackOrderedCommand command) {
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    return effects()
+        .emitEvent(currentState().eventFor(command))
+        .thenReply(__ -> "OK");
+  }
+
   @GetMapping
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}\n_GetProduct", entityId, currentState());
@@ -59,14 +75,26 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
     return currentState().on(event);
   }
 
+  @EventHandler
+  public State on(UpdatedProductsAvailableEvent event) {
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(UpdatedProductsBackOrderedEvent event) {
+    return currentState().on(event);
+  }
+
   public record State(
       String skuId,
       String skuName,
       String skuDescription,
+      int available,
+      int backOrdered,
       BigDecimal skuPrice) {
 
     static State emptyState() {
-      return new State(null, null, null, null);
+      return new State(null, null, null, 0, 0, null);
     }
 
     boolean isEmpty() {
@@ -81,16 +109,54 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
           command.skuPrice());
     }
 
+    UpdatedProductsAvailableEvent eventFor(UpdateProductsAvailableCommand command) {
+      return new UpdatedProductsAvailableEvent(command.skuId(), command.available());
+    }
+
+    UpdatedProductsBackOrderedEvent eventFor(UpdateProductsBackOrderedCommand command) {
+      return new UpdatedProductsBackOrderedEvent(command.skuId(), command.backOrdered());
+    }
+
     State on(CreatedProductEvent event) {
       return new State(
           event.skuId(),
           event.skuNAme(),
           event.skuDescription(),
+          isEmpty() ? 0 : available,
+          isEmpty() ? 0 : backOrdered,
           event.skuPrice());
+    }
+
+    State on(UpdatedProductsAvailableEvent event) {
+      return new State(
+          skuId,
+          skuName,
+          skuDescription,
+          event.available(),
+          backOrdered,
+          skuPrice);
+    }
+
+    State on(UpdatedProductsBackOrderedEvent event) {
+      return new State(
+          skuId,
+          skuName,
+          skuDescription,
+          available,
+          event.backOrdered(),
+          skuPrice);
     }
   }
 
   public record CreateProductCommand(String skuId, String skuNAme, String skuDescription, BigDecimal skuPrice) {}
 
   public record CreatedProductEvent(String skuId, String skuNAme, String skuDescription, BigDecimal skuPrice) {}
+
+  public record UpdateProductsAvailableCommand(String skuId, int available) {}
+
+  public record UpdatedProductsAvailableEvent(String skuId, int available) {}
+
+  public record UpdateProductsBackOrderedCommand(String skuId, int backOrdered) {}
+
+  public record UpdatedProductsBackOrderedEvent(String skuId, int backOrdered) {}
 }

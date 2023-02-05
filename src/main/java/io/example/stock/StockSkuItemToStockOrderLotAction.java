@@ -47,7 +47,7 @@ public class StockSkuItemToStockOrderLotAction extends Action {
     var upperStockOrderLotId = subStockOrderLotId.levelUp();
     var subStockOrderLot = new StockOrderLot(subStockOrderLotId, 1, totalOrdered, List.of());
 
-    var path = "/stockOrderLot/%s/updateSubStockOrderLot".formatted(upperStockOrderLotId.toEntityId());
+    var path = "/stock-order-lot/%s/update".formatted(upperStockOrderLotId.toEntityId());
     var command = new StockOrderLotEntity.UpdateSubStockOrderLotCommand(subStockOrderLotId, subStockOrderLot);
     var returnType = String.class;
 

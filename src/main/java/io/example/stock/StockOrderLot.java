@@ -17,10 +17,10 @@ public record StockOrderLot(
     var filteredLots = subStockOrderLots.stream()
         .filter(subLot -> !subLot.stockOrderLotId().equals(subStockOrderLot.stockOrderLotId()));
     var addLot = Stream.of(subStockOrderLot);
-    var newSubStockOrderLots = Stream.concat(filteredLots, addLot);
+    var newSubStockOrderLots = Stream.concat(filteredLots, addLot).toList();
 
-    var zeroStockOrderLot = new StockOrderLot(stockOrderLotId, 0, 0, newSubStockOrderLots.toList());
-    return newSubStockOrderLots
+    var zeroStockOrderLot = new StockOrderLot(stockOrderLotId, 0, 0, newSubStockOrderLots);
+    return newSubStockOrderLots.stream()
         .reduce(zeroStockOrderLot, (a, s) -> new StockOrderLot(
             a.stockOrderLotId(),
             a.quantityTotal() + s.quantityTotal(),
