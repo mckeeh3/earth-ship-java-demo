@@ -54,7 +54,7 @@ public class BackOrderedLotToBackOrderedLotAction extends Action {
   private DeferredCall<Any, String> callForProduct(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
     var skuId = event.backOrderedLotId().skuId();
     var path = "/product/%s/update-back-ordered".formatted(skuId);
-    var command = new ProductEntity.UpdateProductsBackOrderedCommand(skuId, event.backOrderedLot().quantityBackOrdered());
+    var command = new ProductEntity.UpdateProductsBackOrderedCommand(skuId, event.backOrderedLot());
     var returnType = String.class;
 
     return kalixClient.put(path, command, returnType);
