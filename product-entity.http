@@ -1,0 +1,6 @@
+@urlPrefix = http://localhost:9000
+@skuId = sku-1
+
+### get product
+
+GET {{urlPrefix}}/product/{{skuId}}

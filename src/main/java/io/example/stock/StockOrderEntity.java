@@ -122,7 +122,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
     }
 
     UpdatedStockOrderEvent eventFor(UpdateStockOrderCommand command) {
-      return new UpdatedStockOrderEvent(command.stockOrderId(), command.quantityTotal(), command.quantityOrdered());
+      return new UpdatedStockOrderEvent(command.stockOrderId(), skuId, command.quantityTotal(), command.quantityOrdered());
     }
 
     GeneratedStockSkuItemIdsEvent eventFor(GenerateStockSkuItemIdsCommand command) {
@@ -179,7 +179,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
 
   public record UpdateStockOrderCommand(String stockOrderId, int quantityTotal, int quantityOrdered) {}
 
-  public record UpdatedStockOrderEvent(String stockOrderId, int quantityTotal, int quantityOrdered) {}
+  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal, int quantityOrdered) {}
 
   public record GenerateStockSkuItemIdsCommand(String stockOrderId) {}
 
