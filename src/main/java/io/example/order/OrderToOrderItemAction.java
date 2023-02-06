@@ -61,7 +61,7 @@ public class OrderToOrderItemAction extends Action {
   private CompletionStage<String> callFor(OrderItemEntity.CreateOrderItemCommand command) {
     var path = "/order-item/%s/create".formatted(command.orderItemId().toEntityId());
     var returnType = String.class;
-    var deferredCall = kalixClient.post(path, command, returnType);
+    var deferredCall = kalixClient.put(path, command, returnType);
 
     return deferredCall.execute();
   }

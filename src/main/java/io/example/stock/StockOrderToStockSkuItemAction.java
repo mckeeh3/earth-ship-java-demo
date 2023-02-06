@@ -42,7 +42,7 @@ public class StockOrderToStockSkuItemAction extends Action {
   private CompletionStage<String> callFor(StockSkuItemEntity.CreateStockSkuItemCommand command) {
     var path = "/stock-sku-item/%s/create".formatted(command.stockSkuItemId().toEntityId());
     var returnType = String.class;
-    var deferredCall = kalixClient.post(path, command, returnType);
+    var deferredCall = kalixClient.put(path, command, returnType);
 
     return deferredCall.execute();
   }

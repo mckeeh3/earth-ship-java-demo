@@ -31,7 +31,7 @@ public class OrderToShippingOrderAction extends Action {
     var path = "/shipping-order/%s/create".formatted(event.orderId());
     var command = toCommand(event);
     var returnType = String.class;
-    var deferredCall = kalixClient.post(path, command, returnType);
+    var deferredCall = kalixClient.put(path, command, returnType);
     return deferredCall;
   }
 

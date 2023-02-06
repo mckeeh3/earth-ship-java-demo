@@ -7,7 +7,6 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +36,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
     return State.emptyState();
   }
 
-  @PostMapping("/create")
+  @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateStockOrderCommand command) {
     log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()

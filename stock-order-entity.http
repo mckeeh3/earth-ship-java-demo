@@ -8,7 +8,7 @@
 
 ### Create a new stock order
 
-POST {{urlPrefix}}/stock-order/{{stockOrderId}}/create
+PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/create
 Content-Type: application/json
 
 {
@@ -20,7 +20,7 @@ Content-Type: application/json
 
 ### Create a new stock order (bad request)
 
-POST {{urlPrefix}}/stock-order/{{stockOrderId}}/create
+PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/create
 Content-Type: application/json
 
 {

@@ -9,7 +9,7 @@
 
 ### Create a stock sku item
 
-POST {{urlPrefix}}/stock-sku-item/{{entityId}}/create
+PUT {{urlPrefix}}/stock-sku-item/{{entityId}}/create
 Content-Type: application/json
 
 {

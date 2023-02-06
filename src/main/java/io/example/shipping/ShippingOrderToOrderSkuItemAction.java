@@ -49,7 +49,7 @@ public class ShippingOrderToOrderSkuItemAction extends Action {
   private CompletionStage<String> callFor(OrderSkuItemEntity.CreateOrderSkuItemCommand command) {
     var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId().toEntityId());
     var returnType = String.class;
-    var deferredCall = kalixClient.post(path, command, returnType);
+    var deferredCall = kalixClient.put(path, command, returnType);
 
     return deferredCall.execute();
   }

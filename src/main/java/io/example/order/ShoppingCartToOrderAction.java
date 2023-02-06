@@ -33,7 +33,7 @@ public class ShoppingCartToOrderAction extends Action {
     var path = "/order/%s/create".formatted(orderId);
     var command = new OrderEntity.CreateOrderCommand(orderId, event.customerId(), toOrderItems(event.items()));
     var returnType = String.class;
-    var deferredCall = kalixClient.post(path, command, returnType);
+    var deferredCall = kalixClient.put(path, command, returnType);
     return deferredCall;
   }
 
