@@ -2,121 +2,121 @@
   "products": [
     {
       "skuId": "P0001",
-      "skuskuName": "HyperDrive Pro",
+      "skuName": "HyperDrive Pro",
       "description": "High-performance solid-state drive with speeds up to 5000MB/s",
       "msrp": 200
     },
     {
       "skuId": "P0002",
-      "skuskuName": "Vortex Cooler",
+      "skuName": "Vortex Cooler",
       "description": "High-efficiency liquid cooling system for CPUs",
       "msrp": 150
     },
     {
       "skuId": "P0003",
-      "skuskuName": "Thunderbolt GPU",
+      "skuName": "Thunderbolt GPU",
       "description": "High-performance graphics card with Thunderbolt connectivity",
       "msrp": 500
     },
     {
       "skuId": "P0004",
-      "skuskuName": "PowerMax Pro",
+      "skuName": "PowerMax Pro",
       "description": "High-wattage power supply with advanced voltage regulation",
       "msrp": 200
     },
     {
       "skuId": "P0005",
-      "skuskuName": "Chrono RAM",
+      "skuName": "Chrono RAM",
       "description": "High-speed DDR4 memory with low latency timings",
       "msrp": 100
     },
     {
       "skuId": "P0006",
-      "skuskuName": "Aurora RGB",
+      "skuName": "Aurora RGB",
       "description": "RGB lighting system for PC components",
       "msrp": 50
     },
     {
       "skuId": "P0007",
-      "skuskuName": "Silent Pro Fan",
+      "skuName": "Silent Pro Fan",
       "description": "Quiet and efficient PC cooling fan",
       "msrp": 25
     },
     {
       "skuId": "P0008",
-      "skuskuName": "Extreme SSD",
+      "skuName": "Extreme SSD",
       "description": "High-capacity solid-state drive with fast read and write speeds",
       "msrp": 150
     },
     {
       "skuId": "P0009",
-      "skuskuName": "ThunderX Motherboard",
+      "skuName": "ThunderX Motherboard",
       "description": "High-performance motherboard with Thunderbolt connectivity",
       "msrp": 300
     },
     {
       "skuId": "P0010",
-      "skuskuName": "Prime Cooler",
+      "skuName": "Prime Cooler",
       "description": "High-efficiency air cooling system for CPUs",
       "msrp": 50
     },
     {
       "skuId": "P0011",
-      "skuskuName": "Stealth Case",
+      "skuName": "Stealth Case",
       "description": "Stylish and compact PC case with sound-damping material",
       "msrp": 100
     },
     {
       "skuId": "P0012",
-      "skuskuName": "Lightning RAM",
+      "skuName": "Lightning RAM",
       "description": "High-speed DDR4 memory with RGB lighting",
       "msrp": 120
     },
     {
       "skuId": "P0013",
-      "skuskuName": "G-Force GPU",
+      "skuName": "G-Force GPU",
       "description": "High-performance graphics card for gaming and VR",
       "msrp": 400
     },
     {
       "skuId": "P0014",
-      "skuskuName": "Xtreme Power Supply",
+      "skuName": "Xtreme Power Supply",
       "description": "High-wattage power supply with advanced cable management",
       "msrp": 150
     },
     {
       "skuId": "P0015",
-      "skuskuName": "Zero Noise Fan",
+      "skuName": "Zero Noise Fan",
       "description": "Quiet PC cooling fan with zero RPM mode",
       "msrp": 30
     },
     {
       "skuId": "P0016",
-      "skuskuName": "Echo Microphone",
+      "skuName": "Echo Microphone",
       "description": "High-quality PC microphone for streaming and recording",
       "msrp": 80
     },
     {
       "skuId": "P0017",
-      "skuskuName": "Virtual Headset",
+      "skuName": "Virtual Headset",
       "description": "VR headset with advanced tracking technology",
       "msrp": 400
     },
     {
       "skuId": "P0018",
-      "skuskuName": "Voltage Regulator",
+      "skuName": "Voltage Regulator",
       "description": "Advanced voltage regulator for overclocking and stability",
       "msrp": 80
     },
     {
       "skuId": "P0019",
-      "skuskuName": "Gamepad Pro",
+      "skuName": "Gamepad Pro",
       "description": "High-quality gamepad for PC gaming",
       "msrp": 60
     },
     {
       "skuId": "P0020",
-      "skuskuName": "Storm Cooler",
+      "skuName": "Storm Cooler",
       "description": "High-performance air cooling system with RGB lighting",
       "msrp": 120
     },
