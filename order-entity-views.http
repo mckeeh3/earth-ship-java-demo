@@ -1,0 +1,15 @@
+@urlPrefix = http://localhost:9000
+//today's date in iso format
+@orderedAtFrom = 2022-01-01T00:00:00.000Z
+@orderedAtTo = 2023-02-28T23:59:59.999Z
+@nextPageToken = NULL
+
+### Get all orders in from/to range
+
+POST {{urlPrefix}}/orders-by-ordered-at?nextPageToken={{nextPageToken}}
+Content-Type: application/json
+
+{
+  "orderedAtFrom": "{{orderedAtFrom}}",
+  "orderedAtTo": "{{orderedAtTo}}"
+}
