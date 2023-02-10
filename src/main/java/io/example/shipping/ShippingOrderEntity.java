@@ -141,7 +141,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
   public record State(
       String orderId,
       String customerId,
-      Instant createdAt,
+      Instant orderedAt,
       Instant readyToShipAt,
       Instant backOrderedAt,
       List<OrderItem> orderItems) {
@@ -255,7 +255,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       return new State(
           orderId,
           customerId,
-          createdAt,
+          orderedAt,
           newOrderItems.stream().anyMatch(i -> i.readyToShipAt() != null) ? event.readyToShipAt() : null,
           newOrderItems.stream().allMatch(i -> i.backOrderedAt() != null) ? backOrderedAt : null,
           newOrderItems);
@@ -266,7 +266,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       return new State(
           orderId,
           customerId,
-          createdAt,
+          orderedAt,
           newOrderItems.stream().anyMatch(i -> i.readyToShipAt() == null) ? null : readyToShipAt,
           newOrderItems.stream().allMatch(i -> i.backOrderedAt() != null) ? backOrderedAt : null,
           newOrderItems);
@@ -277,7 +277,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       return new State(
           orderId,
           customerId,
-          createdAt,
+          orderedAt,
           newOrderItems.stream().anyMatch(i -> i.readyToShipAt() == null) ? null : readyToShipAt,
           newOrderItems.stream().allMatch(i -> i.backOrderedAt() != null) ? event.backOrderedAt() : null,
           newOrderItems);
