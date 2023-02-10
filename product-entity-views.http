@@ -1,0 +1,18 @@
+@urlPrefix = http://localhost:9000
+@nextPageToken = NULL
+
+### Get all products
+
+GET {{urlPrefix}}/products/{{nextPageToken}}
+
+### Get back ordered products
+
+GET {{urlPrefix}}/products-back-ordered/{{nextPageToken}}
+
+### Get products with low inventory
+
+GET {{urlPrefix}}/products-low-inventory/{{nextPageToken}}
+
+### Get products with some inventory
+
+GET {{urlPrefix}}/products-some-inventory/{{nextPageToken}}

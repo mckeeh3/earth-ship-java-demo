@@ -2,183 +2,183 @@
   "products": [
     {
       "skuId": "P0001",
-      "skuName": "HyperDrive Pro",
+      "skuskuName": "HyperDrive Pro",
       "description": "High-performance solid-state drive with speeds up to 5000MB/s",
       "msrp": 200
     },
     {
       "skuId": "P0002",
-      "skuName": "Vortex Cooler",
+      "skuskuName": "Vortex Cooler",
       "description": "High-efficiency liquid cooling system for CPUs",
       "msrp": 150
     },
     {
       "skuId": "P0003",
-      "skuName": "Thunderbolt GPU",
+      "skuskuName": "Thunderbolt GPU",
       "description": "High-performance graphics card with Thunderbolt connectivity",
       "msrp": 500
     },
     {
       "skuId": "P0004",
-      "skuName": "PowerMax Pro",
+      "skuskuName": "PowerMax Pro",
       "description": "High-wattage power supply with advanced voltage regulation",
       "msrp": 200
     },
     {
       "skuId": "P0005",
-      "skuName": "Chrono RAM",
+      "skuskuName": "Chrono RAM",
       "description": "High-speed DDR4 memory with low latency timings",
       "msrp": 100
     },
     {
       "skuId": "P0006",
-      "skuName": "Aurora RGB",
+      "skuskuName": "Aurora RGB",
       "description": "RGB lighting system for PC components",
       "msrp": 50
     },
     {
       "skuId": "P0007",
-      "skuName": "Silent Pro Fan",
+      "skuskuName": "Silent Pro Fan",
       "description": "Quiet and efficient PC cooling fan",
       "msrp": 25
     },
     {
       "skuId": "P0008",
-      "skuName": "Extreme SSD",
+      "skuskuName": "Extreme SSD",
       "description": "High-capacity solid-state drive with fast read and write speeds",
       "msrp": 150
     },
     {
       "skuId": "P0009",
-      "skuName": "ThunderX Motherboard",
+      "skuskuName": "ThunderX Motherboard",
       "description": "High-performance motherboard with Thunderbolt connectivity",
       "msrp": 300
     },
     {
       "skuId": "P0010",
-      "skuName": "Prime Cooler",
+      "skuskuName": "Prime Cooler",
       "description": "High-efficiency air cooling system for CPUs",
       "msrp": 50
     },
     {
       "skuId": "P0011",
-      "skuName": "Stealth Case",
+      "skuskuName": "Stealth Case",
       "description": "Stylish and compact PC case with sound-damping material",
       "msrp": 100
     },
     {
       "skuId": "P0012",
-      "skuName": "Lightning RAM",
+      "skuskuName": "Lightning RAM",
       "description": "High-speed DDR4 memory with RGB lighting",
       "msrp": 120
     },
     {
       "skuId": "P0013",
-      "skuName": "G-Force GPU",
+      "skuskuName": "G-Force GPU",
       "description": "High-performance graphics card for gaming and VR",
       "msrp": 400
     },
     {
       "skuId": "P0014",
-      "skuName": "Xtreme Power Supply",
+      "skuskuName": "Xtreme Power Supply",
       "description": "High-wattage power supply with advanced cable management",
       "msrp": 150
     },
     {
       "skuId": "P0015",
-      "skuName": "Zero Noise Fan",
+      "skuskuName": "Zero Noise Fan",
       "description": "Quiet PC cooling fan with zero RPM mode",
       "msrp": 30
     },
     {
       "skuId": "P0016",
-      "skuName": "Echo Microphone",
+      "skuskuName": "Echo Microphone",
       "description": "High-quality PC microphone for streaming and recording",
       "msrp": 80
     },
     {
       "skuId": "P0017",
-      "skuName": "Virtual Headset",
+      "skuskuName": "Virtual Headset",
       "description": "VR headset with advanced tracking technology",
       "msrp": 400
     },
     {
       "skuId": "P0018",
-      "skuName": "Voltage Regulator",
+      "skuskuName": "Voltage Regulator",
       "description": "Advanced voltage regulator for overclocking and stability",
       "msrp": 80
     },
     {
       "skuId": "P0019",
-      "skuName": "Gamepad Pro",
+      "skuskuName": "Gamepad Pro",
       "description": "High-quality gamepad for PC gaming",
       "msrp": 60
     },
     {
       "skuId": "P0020",
-      "skuName": "Storm Cooler",
+      "skuskuName": "Storm Cooler",
       "description": "High-performance air cooling system with RGB lighting",
       "msrp": 120
     },
     {
-      "Product ID": "P0021",
-      "Name": "Element Case",
-      "Description": "Stylish and durable PC case with tempered glass panels",
-      "MSRP": 120
+      "skuId": "P0021",
+      "skuName": "Element Case",
+      "description": "Stylish and durable PC case with tempered glass panels",
+      "msrp": 120
     },
     {
-      "Product ID": "P0022",
-      "Name": "ThunderNet Network Card",
-      "Description": "High-speed network card with Thunderbolt connectivity",
-      "MSRP": 150
+      "skuId": "P0022",
+      "skuName": "ThunderNet Network Card",
+      "description": "High-speed network card with Thunderbolt connectivity",
+      "msrp": 150
     },
     {
-      "Product ID": "P0023",
-      "Name": "Radiant RAM",
-      "Description": "High-speed DDR4 memory with RGB lighting and heat spreaders",
-      "MSRP": 90
+      "skuId": "P0023",
+      "skuName": "Radiant RAM",
+      "description": "High-speed DDR4 memory with RGB lighting and heat spreaders",
+      "msrp": 90
     },
     {
-      "Product ID": "P0024",
-      "Name": "Blaze SSD",
-      "Description": "High-capacity solid-state drive with fast read and write speeds and RGB lighting",
-      "MSRP": 200
+      "skuId": "P0024",
+      "skuName": "Blaze SSD",
+      "description": "High-capacity solid-state drive with fast read and write speeds and RGB lighting",
+      "msrp": 200
     },
     {
-      "Product ID": "P0025",
-      "Name": "StreamCam Webcam",
-      "Description": "High-definition webcam with advanced image processing",
-      "MSRP": 80
+      "skuId": "P0025",
+      "skuName": "StreamCam Webcam",
+      "description": "High-definition webcam with advanced image processing",
+      "msrp": 80
     },
     {
-      "Product ID": "P0026",
-      "Name": "Flux Keyboard",
-      "Description": "High-performance mechanical keyboard with RGB lighting and customizable macros",
-      "MSRP": 150
+      "skuId": "P0026",
+      "skuName": "Flux Keyboard",
+      "description": "High-performance mechanical keyboard with RGB lighting and customizable macros",
+      "msrp": 150
     },
     {
-      "Product ID": "P0027",
-      "Name": "Neo Mouse",
-      "Description": "High-precision gaming mouse with advanced tracking technology",
-      "MSRP": 50
+      "skuId": "P0027",
+      "skuName": "Neo Mouse",
+      "description": "High-precision gaming mouse with advanced tracking technology",
+      "msrp": 50
     },
     {
-      "Product ID": "P0028",
-      "Name": "Eco Fan",
-      "Description": "Energy-efficient PC cooling fan with low noise levels",
-      "MSRP": 20
+      "skuId": "P0028",
+      "skuName": "Eco Fan",
+      "description": "Energy-efficient PC cooling fan with low noise levels",
+      "msrp": 20
     },
     {
-      "Product ID": "P0029",
-      "Name": "Glacier CPU Cooler",
-      "Description": "High-performance liquid cooling system for CPUs with RGB lighting",
-      "MSRP": 200
+      "skuId": "P0029",
+      "skuName": "Glacier CPU Cooler",
+      "description": "High-performance liquid cooling system for CPUs with RGB lighting",
+      "msrp": 200
     },
     {
-      "Product ID": "P0030",
-      "Name": "Nebula Case",
-      "Description": "Stylish and spacious PC case with RGB lighting and ample cable management options",
-      "MSRP": 150
+      "skuId": "P0030",
+      "skuName": "Nebula Case",
+      "description": "Stylish and spacious PC case with RGB lighting and ample cable management options",
+      "msrp": 150
     }
   ]
 }

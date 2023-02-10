@@ -118,7 +118,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
     }
 
     CreatedProductEvent eventFor(CreateProductCommand command) {
-      return new CreatedProductEvent(command.skuId(), command.skuNAme(), command.skuDescription(), command.skuPrice());
+      return new CreatedProductEvent(command.skuId(), command.skuName(), command.skuDescription(), command.skuPrice());
     }
 
     AddedStockOrderEvent eventFor(AddStockOrderCommand command) {
@@ -136,7 +136,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
     State on(CreatedProductEvent event) {
       return new State(
           event.skuId(),
-          event.skuNAme(),
+          event.skuName(),
           event.skuDescription(),
           isEmpty() ? 0 : available,
           isEmpty() ? 0 : backOrdered,
@@ -204,9 +204,9 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
 
   public record StockOrder(String stockOrderId, int quantityTotal, int quantityOrdered, int quantityAvailable) {}
 
-  public record CreateProductCommand(String skuId, String skuNAme, String skuDescription, BigDecimal skuPrice) {}
+  public record CreateProductCommand(String skuId, String skuName, String skuDescription, BigDecimal skuPrice) {}
 
-  public record CreatedProductEvent(String skuId, String skuNAme, String skuDescription, BigDecimal skuPrice) {}
+  public record CreatedProductEvent(String skuId, String skuName, String skuDescription, BigDecimal skuPrice) {}
 
   public record AddStockOrderCommand(String stockOrderId, String skuId, int quantityTotal) {}
 

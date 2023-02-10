@@ -4,3 +4,10 @@
 ### get product
 
 GET {{urlPrefix}}/product/{{skuId}}
+
+### Load products from file
+
+PUT {{urlPrefix}}/product-ui/create-products
+Content-Type: application/json
+
+< ./product-list.json
