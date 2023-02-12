@@ -25,12 +25,12 @@ public class OrdersByOrderedAtView extends View<OrderEntity.State> {
   @Query("""
       SELECT * AS orders, next_page_token() AS nextPageToken, has_more() AS hasMore
         FROM orders_by_ordered_at
-      OFFSET page_token_offset(:nextPageToken)
-       LIMIT 100
        WHERE orderedAt >= :orderedAtFrom
          AND orderedAt < :orderedAtTo
+      OFFSET page_token_offset(:nextPageToken)
+       LIMIT 100
       """)
-  public Orders getOrdersByOrderedAt(@RequestBody QueryRequest query, @RequestParam String nextPageToken) {
+  public Orders getOrdersByOrderedAt(@RequestBody QueryRequest queryRequest, @RequestParam String nextPageToken) {
     return null;
   }
 

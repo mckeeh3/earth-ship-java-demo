@@ -20,7 +20,7 @@ import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("customerId")
-@EntityType("shopping-cart")
+@EntityType("shoppingCart")
 @RequestMapping("/cart/{customerId}")
 public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.State> {
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -120,10 +120,11 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   public record State(
       String customerId,
+      Instant createdAt,
       List<LineItem> lineItems) {
 
     static State emptyState() {
-      return new State("", List.of());
+      return new State("", Instant.now(), List.of());
     }
 
     boolean isEmpty() {
@@ -153,6 +154,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
           .toList();
       return new State(
           event.customerId,
+          createdAt,
           newLineItems);
     }
 
@@ -167,6 +169,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
           }).toList();
       return new State(
           customerId,
+          createdAt,
           newLineItems);
     }
 
@@ -174,12 +177,14 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
       var newLineItems = lineItems.stream().filter(i -> !i.skuId().equals(event.skuId)).toList();
       return new State(
           customerId,
+          createdAt,
           newLineItems);
     }
 
     State on(CheckedOutEvent event) {
       return new State(
           customerId,
+          createdAt,
           List.of());
     }
 

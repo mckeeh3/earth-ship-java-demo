@@ -1,0 +1,17 @@
+@urlPrefix = http://localhost:9000
+@createdAtFrom = 2022-03-01T00:00:00.000Z
+@createdAtTo = 2023-12-31T23:59:59.999Z
+
+### Get shopping carts
+
+GET {{urlPrefix}}/shopping-carts
+
+### Get shopping carts by created at date range
+
+POST {{urlPrefix}}/shopping-carts-by-created-at
+Content-Type: application/json
+
+{
+  "createdAtFrom": "{{createdAtFrom}}",
+  "createdAtTo": "{{createdAtTo}}"
+}

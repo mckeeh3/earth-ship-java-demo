@@ -2,6 +2,7 @@
 @orderedAtFrom = 2022-01-01T00:00:00.000Z
 @orderedAtTo = 2023-02-28T23:59:59.999Z
 @nextPageToken = ABCD
+@customerId = customer-1
 
 ### Get all shipping orders in from/to date range
 
@@ -12,3 +13,7 @@ Content-Type: application/json
   "orderedAtFrom": "{{orderedAtFrom}}",
   "orderedAtTo": "{{orderedAtTo}}"
 }
+
+### Get shipping orders by customerId
+
+GET {{urlPrefix}}/shipping-orders-by-customer/{{customerId}}

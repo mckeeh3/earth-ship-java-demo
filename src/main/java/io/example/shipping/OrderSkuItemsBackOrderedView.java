@@ -23,9 +23,9 @@ public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedV
   @Query("""
       SELECT * AS orderSkuItemRows
         FROM order_sku_items_back_ordered
-       LIMIT 100
        WHERE skuId = :skuId
          AND backOrdered = true
+       LIMIT 100
       """)
   public OrderSkuItemRows getOrderSkuItemsBackOrdered(@PathVariable String skuId) {
     return null;
