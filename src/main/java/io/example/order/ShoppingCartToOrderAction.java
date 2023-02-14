@@ -33,13 +33,13 @@ public class ShoppingCartToOrderAction extends Action {
     var path = "/order/%s/create".formatted(orderId);
     var command = new OrderEntity.CreateOrderCommand(orderId, event.customerId(), toOrderItems(event.items()));
     var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-    return deferredCall;
+
+    return kalixClient.put(path, command, returnType);
   }
 
   private List<OrderEntity.OrderItem> toOrderItems(List<ShoppingCartEntity.LineItem> items) {
     return items.stream()
-        .map(i -> new OrderEntity.OrderItem(i.skuId(), i.skuName(), i.quantity(), null, null))
+        .map(i -> new OrderEntity.OrderItem(i.skuId(), i.skuName(), i.skuDescription(), i.skuPrice(), i.quantity(), null, null))
         .toList();
   }
 }

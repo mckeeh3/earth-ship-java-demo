@@ -2,9 +2,61 @@
 # @urlPrefix = https://empty-moon-4960.us-east1.kalix.app
 @urlPrefix = http://localhost:9000
 @customerId = customer-1
-@skuId = sku-1
+@skuId = P0001
 @skuName = sku name 1
+@skuDescription = sku description 1
+@skuPrice = 199.99
 @quantity = 4
+
+### ==================== Call cart UI controller action directly ====================
+
+### add item to cart
+
+PUT {{urlPrefix}}/cart-ui/{{customerId}}/items/add
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId}}",
+  "skuId":"{{skuId}}",
+  "quantity":{{quantity}}
+}
+
+### change item
+
+PUT {{urlPrefix}}/cart-ui/{{customerId}}/items/{{skuId}}/change
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId}}",
+  "skuId":"{{skuId}}",
+  "quantity":{{quantity}}
+}
+
+### remove item
+
+PUT {{urlPrefix}}/cart-ui/{{customerId}}/items/{{skuId}}/remove
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId}}",
+  "skuId":"{{skuId}}"
+}
+
+### checkout
+
+PUT {{urlPrefix}}/cart-ui/{{customerId}}/checkout
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId}}"
+}
+
+### get
+
+GET {{urlPrefix}}/cart-ui/{{customerId}}
+
+
+### ==================== Call cart service directly ====================
 
 ### add item to cart
 
@@ -15,6 +67,8 @@ Content-Type: application/json
   "customerId":"{{customerId}}",
   "skuId":"{{skuId}}",
   "skuName":"{{skuName}}",
+  "skuDescription":"{{skuDescription}}",
+  "skuPrice":{{skuPrice}},
   "quantity":{{quantity}}
 }
 

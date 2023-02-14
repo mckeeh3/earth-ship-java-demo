@@ -25,7 +25,7 @@ public class ProductControllerAction extends Action {
 
   @PutMapping("/create-products")
   public Effect<String> createProducts(@RequestBody CreateProductsCommand command) {
-    log.info("Event: {}", command);
+    log.info("Command: {}", command);
 
     return onOneCommandInToManyCommandsOut(command);
   }

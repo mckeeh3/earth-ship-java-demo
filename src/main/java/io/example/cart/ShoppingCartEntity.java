@@ -1,5 +1,6 @@
 package io.example.cart;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
@@ -53,7 +54,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   public Effect<String> changeLineItem(@RequestBody ChangeLineItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
-        .isFalse(currentState().containsLineItem(command.skuId), "Item not found in cart")
+        .isFalse(currentState().containsLineItem(command.skuId), "Item '%s' not found in cart".formatted(command.skuId))
         .isEmpty(currentState().lineItems, "Cannot change item in empty cart")
         .isEmpty(command.skuId(), "Cannot change item in cart without sku id")
         .isLtEqZero(command.quantity(), "Cannot change item in cart with quantity <= 0")
@@ -132,7 +133,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
     }
 
     AddedLineItemEvent eventFor(AddLineItemCommand command) {
-      return new AddedLineItemEvent(command.customerId, command.skuId(), command.skuName, command.quantity);
+      return new AddedLineItemEvent(command.customerId, command.skuId(), command.skuName, command.skuDescription, command.skuPrice, command.quantity);
     }
 
     ChangedLineItemEvent eventFor(ChangeLineItemCommand command) {
@@ -150,7 +151,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
     State on(AddedLineItemEvent event) {
       var newLineItems = Stream.concat(
           lineItems.stream().filter(i -> !i.skuId().equals(event.skuId)),
-          Stream.of(new LineItem(event.skuId, event.skuName, event.quantity)))
+          Stream.of(new LineItem(event.skuId, event.skuName, event.skuDescription, event.skuPrice, event.quantity)))
           .toList();
       return new State(
           event.customerId,
@@ -162,7 +163,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
       var newLineItems = lineItems.stream()
           .map(i -> {
             if (i.skuId().equals(event.skuId)) {
-              return new LineItem(i.skuId, i.skuName(), event.quantity);
+              return new LineItem(i.skuId, i.skuName(), i.skuDescription, i.skuPrice, event.quantity);
             } else {
               return i;
             }
@@ -189,18 +190,15 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
     }
 
     boolean containsLineItem(String skuId) {
-      return null == lineItems.stream()
-          .filter(i -> i.skuId().equals(skuId))
-          .findFirst()
-          .orElse(null);
+      return lineItems.stream().anyMatch(i -> i.skuId().equals(skuId));
     }
   }
 
-  public record LineItem(String skuId, String skuName, int quantity) {}
+  public record LineItem(String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity) {}
 
-  public record AddLineItemCommand(String customerId, String skuId, String skuName, int quantity) {}
+  public record AddLineItemCommand(String customerId, String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity) {}
 
-  public record AddedLineItemEvent(String customerId, String skuId, String skuName, int quantity) {}
+  public record AddedLineItemEvent(String customerId, String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity) {}
 
   public record ChangeLineItemCommand(String customerId, String skuId, int quantity) {}
 

@@ -1,5 +1,6 @@
 package io.example.order;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -339,7 +340,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
       var newOrderItems = orderItems.stream()
           .map(i -> {
             if (i.skuId.equals(event.skuId())) {
-              return new OrderItem(i.skuId, i.skuName, i.quantity, event.readyToShipAt(), null);
+              return new OrderItem(i.skuId, i.skuName, i.skuDescription, i.skuPrice, i.quantity, event.readyToShipAt(), null);
             } else {
               return i;
             }
@@ -360,7 +361,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
       var newOrderItems = orderItems.stream()
           .map(i -> {
             if (i.skuId.equals(event.skuId())) {
-              return new OrderItem(i.skuId, i.skuName, i.quantity, null, null);
+              return new OrderItem(i.skuId, i.skuName, i.skuDescription, i.skuPrice, i.quantity, null, null);
             } else {
               return i;
             }
@@ -381,7 +382,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
       var newOrderItems = orderItems.stream()
           .map(i -> {
             if (i.skuId.equals(event.skuId())) {
-              return new OrderItem(i.skuId, i.skuName, i.quantity, null, event.backOrderedAt);
+              return new OrderItem(i.skuId, i.skuName, i.skuDescription, i.skuPrice, i.quantity, null, event.backOrderedAt);
             } else {
               return i;
             }
@@ -438,7 +439,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
     }
   }
 
-  public record OrderItem(String skuId, String skuName, int quantity, Instant readyToShipAt, Instant backOrderedAt) {}
+  public record OrderItem(String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity, Instant readyToShipAt, Instant backOrderedAt) {}
 
   public record CreateOrderCommand(String orderId, String customerId, List<OrderItem> orderItems) {}
 
