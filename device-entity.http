@@ -1,0 +1,31 @@
+@urlPrefix = https://green-voice-3640.us-east1.kalix.app
+@deviceId = device-id_36.1202610336205_-115.1386047020768
+
+# @topLeftLat = 11.0
+# @topLeftLng = 9.0
+# @botRightLat = 9.0
+# @botRightLng = 11.0
+@topLeftLat = 90.0
+@topLeftLng = -180.0
+@botRightLat = -90.0
+@botRightLng = 180.0
+@nextPageToken =
+
+###
+
+GET {{urlPrefix}}/device/{{deviceId}}
+
+###
+
+PUT {{urlPrefix}}/device/{{deviceId}}/ping
+Content-Type: application/json
+
+{
+  "deviceId":"{{deviceId}}"
+}
+
+### TODO for testing
+PUT {{urlPrefix}}/device/{{deviceId}}/toggle-alarm
+
+###
+GET {{urlPrefix}}/devices/by-location/{{topLeftLat}}/{{topLeftLng}}/{{botRightLat}}/{{botRightLng}}/{{nextPageToken}}

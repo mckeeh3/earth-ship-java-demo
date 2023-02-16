@@ -1,3 +1,7 @@
+const devicesQueryIntervalMs = 1000;
+const generatorQueryIntervalMs = 1000;
+const regionQueryIntervalMs = 1000;
+
 const labelColor = [200, 0, 0, 255];
 const labelColorRadius = labelColor;
 const labelColorRate = labelColor;
@@ -21,20 +25,25 @@ const rateGraphStroke = [0, 0, 50, 255];
 
 const generatorRateMin = 100;
 const generatorRateMax = 1_000;
-const generatorDevicesMin = 1_000;
-const generatorDevicesMax = 100_000;
 const quadrantTopRight = 1;
 const quadrantBottomRight = 2;
 const quadrantBottomLeft = 3;
 const quadrantTopLeft = 4;
 
+// const urlPrefix = 'https://green-voice-3640.us-east1.kalix.app';
+const urlPrefix = 'http://localhost:80';
+let queryResponseDevices = [];
+let queryResponseGenerators = [];
+let queryResponseRegions = [];
+
 const grid = {
   borderWidth: 20,
-  ticksHorizontal: 100,
+  ticksHorizontal: 0,
   ticksVertical: 0,
   tickWidth: 0,
   resize: function () {
     const gridWidth = windowWidth - 2 * this.borderWidth;
+    this.ticksHorizontal = max(100, (windowWidth / 1920) * 100);
     this.tickWidth = gridWidth / this.ticksHorizontal;
     this.ticksVertical = (windowHeight / windowWidth) * this.ticksHorizontal;
   },
@@ -198,19 +207,20 @@ class Label {
 
 class Generator {
   constructor() {
+    this.zoom = 0;
     this.lat = 0.0;
     this.lng = 0.0;
-    this.zoom = 0;
     this.radiusLat = 0.0;
     this.radiusLng = 0.0;
     this.radiusKm = 0.0;
     this.ratePerSecond = 0;
     this.rateAngle = 0.0;
-    this.devicesToGenerate = 0;
-    this.devicesAngle = 0.0;
-    this.generated = 0;
+    this.deviceCountLimit = 0;
+    this.deviceCountLimitMin = 0;
+    this.deviceCountLimitMax = 0;
+    this.deviceCountCurrent = 0;
+    this.deviceCountAngle = 0.0;
     this.generatedAngle = 0.0;
-    this.tickLast = 0; // TODO: remove when integrated with backend service
   }
 
   position() {
@@ -226,6 +236,11 @@ class Generator {
     return this;
   }
 
+  setDeviceCountLimits() {
+    this.deviceCountLimitMin = 1000;
+    this.deviceCountLimitMax = max(2000, round(this.radiusKm / 4) * 1000);
+  }
+
   draw() {
     if (this.zoom > 0 && this.radiusKm == 0) {
       this.position();
@@ -239,14 +254,14 @@ class Generator {
       this.radiusLng = radiusLatLng.lng;
 
       this.#drawArea();
-    } else if (this.radiusKm > 0.0 && this.devicesToGenerate == 0) {
+    } else if (this.radiusKm > 0.0 && this.deviceCountLimit == 0) {
       this.#drawArea();
       this.#drawDevicesToGenerate();
-    } else if (this.devicesToGenerate > 0 && this.ratePerSecond == 0) {
+    } else if (this.deviceCountLimit > 0 && this.ratePerSecond == 0) {
       this.#drawArea();
       this.#drawDevicesToGenerate();
       this.#drawRatePerSecond();
-    } else if (this.devicesToGenerate > 0 && this.#isGeneratorVisible()) {
+    } else if (this.deviceCountLimit > 0 && this.#isGeneratorVisible()) {
       const centerXY = worldMap.latLngToPixel(this.lat, this.lng);
       const radiusXY = worldMap.latLngToPixel(this.radiusLat, this.radiusLng);
       const radiusInPixels = sqrt(pow(centerXY.x - radiusXY.x, 2) + pow(centerXY.y - radiusXY.y, 2));
@@ -361,22 +376,20 @@ class Generator {
     const radiusXY = worldMap.latLngToPixel(this.radiusLat, this.radiusLng);
     const radiusInPixels = sqrt(pow(centerXY.x - radiusXY.x, 2) + pow(centerXY.y - radiusXY.y, 2));
     const radiusOffset = radiusInPixels + 10;
-    const angles = this.#quadrantAngles(quadrantBottomLeft);
-    const angleStart = angles.start;
-    const angleStop = angles.stop;
-    const angleRate = this.rateAngle > 0.0 ? this.rateAngle : this.#mouseXtoAngle(angleStart, angleStop);
+    const angles = this.quadrantAngles(quadrantBottomLeft);
+    const angleRate = this.rateAngle > 0.0 ? this.rateAngle : this.#mouseXtoAngle(angles.start, angles.stop);
     const rate =
       this.ratePerSecond > 0.0
         ? this.ratePerSecond //
-        : max(generatorRateMin, min(generatorRateMax, round(map(angleRate, angleStart, angleStop, generatorRateMin, generatorRateMax))));
+        : max(generatorRateMin, min(generatorRateMax, round(map(angleRate, angles.start, angles.stop, generatorRateMin, generatorRateMax))));
 
     this.#drawAmountGauge({
       centerXY: centerXY,
       radiusXY: radiusXY,
       radiusInPixels: radiusInPixels,
       radiusOffset: radiusOffset,
-      angleStart: angleStart,
-      angleStop: angleStop,
+      angleStart: angles.start,
+      angleStop: angles.stop,
       angle: angleRate,
       count: rate,
       countMin: generatorRateMin,
@@ -394,26 +407,24 @@ class Generator {
     const radiusXY = worldMap.latLngToPixel(this.radiusLat, this.radiusLng);
     const radiusInPixels = sqrt(pow(centerXY.x - radiusXY.x, 2) + pow(centerXY.y - radiusXY.y, 2));
     const radiusOffset = radiusInPixels + 10;
-    const angles = this.#quadrantAngles(quadrantTopLeft);
-    const angleStart = angles.start;
-    const angleStop = angles.stop;
-    const angleDevices = this.devicesAngle > 0.0 ? this.devicesAngle : this.#mouseXtoAngle(angleStart, angleStop);
+    const angles = this.quadrantAngles(quadrantTopLeft);
+    const angleDevices = this.deviceCountAngle > 0.0 ? this.deviceCountAngle : this.#mouseXtoAngle(angles.start, angles.stop);
     const devices =
-      this.devicesToGenerate > 0.0
-        ? this.devicesToGenerate //
-        : max(generatorDevicesMin, min(generatorDevicesMax, round(map(angleDevices, angleStart, angleStop, generatorDevicesMin, generatorDevicesMax))));
+      this.deviceCountLimit > 0.0
+        ? this.deviceCountLimit //
+        : max(this.deviceCountLimitMin, min(this.deviceCountLimitMax, round(map(angleDevices, angles.start, angles.stop, this.deviceCountLimitMin, this.deviceCountLimitMax))));
 
     this.#drawAmountGauge({
       centerXY: centerXY,
       radiusXY: radiusXY,
       radiusInPixels: radiusInPixels,
       radiusOffset: radiusOffset,
-      angleStart: angleStart,
-      angleStop: angleStop,
+      angleStart: angles.start,
+      angleStop: angles.stop,
       angle: angleDevices,
       count: devices,
-      countMin: generatorDevicesMin,
-      countMax: generatorDevicesMax,
+      countMin: this.deviceCountLimitMin,
+      countMax: this.deviceCountLimitMax,
       stroke: generatorDevicesStroke,
       labelColor: labelColorGenerate,
       labelText: `Generate ${devices.toLocaleString()}`,
@@ -427,23 +438,21 @@ class Generator {
     const radiusXY = worldMap.latLngToPixel(this.radiusLat, this.radiusLng);
     const radiusInPixels = sqrt(pow(centerXY.x - radiusXY.x, 2) + pow(centerXY.y - radiusXY.y, 2));
     const radiusOffset = radiusInPixels + 10;
-    const angles = this.#quadrantAngles(quadrantBottomRight);
-    const angleStart = angles.start;
-    const angleStop = angles.stop;
-    const angleGenerated = map(this.generated, 0, this.devicesToGenerate, angleStart, angleStop);
-    const generated = this.generated;
+    const angles = this.quadrantAngles(quadrantBottomRight);
+    const angleGenerated = map(this.deviceCountCurrent, 0, this.deviceCountLimit, angles.start, angles.stop);
+    const generated = this.deviceCountCurrent;
 
     this.#drawAmountGauge({
       centerXY: centerXY,
       radiusXY: radiusXY,
       radiusInPixels: radiusInPixels,
       radiusOffset: radiusOffset,
-      angleStart: angleStart,
-      angleStop: angleStop,
+      angleStart: angles.start,
+      angleStop: angles.stop,
       angle: angleGenerated,
       count: generated,
       countMin: 0,
-      countMax: this.devicesToGenerate,
+      countMax: this.deviceCountLimit,
       stroke: generatorGeneratedStroke,
       labelColor: labelColorGenerated,
       labelText: `Generated ${generated.toLocaleString()}`,
@@ -512,7 +521,7 @@ class Generator {
     return distance <= circleR;
   }
 
-  #quadrantAngles(quadrant) {
+  quadrantAngles(quadrant) {
     const border = PI * 0.02;
     const start = ((quadrant - 2) * PI) / 2;
     const stop = start + PI / 2;
@@ -535,31 +544,19 @@ class Generator {
       this.radiusLat = radiusLatLng.lat;
       this.radiusLng = radiusLatLng.lng;
       this.radiusKm = haversineDistance(this.lat, this.lng, radiusLatLng.lat, radiusLatLng.lng);
+      this.setDeviceCountLimits();
       return;
-    } else if (this.radiusKm > 0 && this.devicesToGenerate == 0.0) {
-      const angles = this.#quadrantAngles(quadrantTopLeft);
-      const angleStart = angles.start;
-      const angleStop = angles.stop;
-      const angleDevices = this.#mouseXtoAngle(angleStart, angleStop);
-      this.devicesAngle = angleDevices;
-      this.devicesToGenerate = round(map(angleDevices, angleStart, angleStop, generatorDevicesMin, generatorDevicesMax));
-    } else if (this.devicesToGenerate > 0 && this.ratePerSecond == 0.0) {
-      const angles = this.#quadrantAngles(quadrantBottomLeft);
-      const angleStart = angles.start;
-      const angleStop = angles.stop;
-      const angleRate = this.#mouseXtoAngle(angleStart, angleStop);
+    } else if (this.radiusKm > 0 && this.deviceCountLimit == 0.0) {
+      const angles = this.quadrantAngles(quadrantTopLeft);
+      const angleDevices = this.#mouseXtoAngle(angles.start, angles.stop);
+      this.deviceCountAngle = angleDevices;
+      // this.deviceCountLimit = round(map(angleDevices, angles.start, angles.stop, generatorDevicesMin, generatorDevicesMax));
+      this.deviceCountLimit = round(map(angleDevices, angles.start, angles.stop, this.deviceCountLimitMin, this.deviceCountLimitMax));
+    } else if (this.deviceCountLimit > 0 && this.ratePerSecond == 0.0) {
+      const angles = this.quadrantAngles(quadrantBottomLeft);
+      const angleRate = this.#mouseXtoAngle(angles.start, angles.stop);
       this.rateAngle = angleRate;
-      this.ratePerSecond = round(map(angleRate, angleStart, angleStop, generatorRateMin, generatorRateMax));
-    }
-  }
-
-  tick(milliSecond) {
-    // TODO: remove when integrated with backend service
-    this.tickLast = this.tickLast == 0 ? milliSecond : this.tickLast;
-    if (milliSecond > this.tickLast) {
-      const generated = round((this.ratePerSecond / 1000) * (milliSecond - this.tickLast));
-      this.tickLast = milliSecond;
-      this.generated = min(this.generated + generated, this.devicesToGenerate);
+      this.ratePerSecond = round(map(angleRate, angles.start, angles.stop, generatorRateMin, generatorRateMax));
     }
   }
 }
@@ -730,6 +727,7 @@ const options = {
 const generators = [];
 
 let currentGenerator = generator();
+let worldWideDeviceCounts = { devices: 0, alarms: 0 };
 
 function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
@@ -740,6 +738,11 @@ function setup() {
   worldMap.overlay(canvas);
   worldMap.onChange(mapChanged);
   grid.resize();
+
+  scheduleNextDeviceQuery(0);
+  scheduleNextGeneratorQuery(0);
+  scheduleNextRegionQuery(0);
+  scheduleNextRegionGet();
 }
 
 function draw() {
@@ -749,11 +752,16 @@ function draw() {
 
 const rateGraph = new RateGraph();
 
+// Order is important here
 function drawMapOverlay() {
-  drawZoomAndMouseLocation();
   drawLatLngGrid();
+  drawRegions();
+  drawDevices();
   drawCrossHairs();
   drawGenerators();
+  drawMouseLocation();
+  drawZoomAndMouseLocation();
+  drawDeviceCounts();
   rateGraph.draw();
 }
 
@@ -783,10 +791,10 @@ function drawCrossHairs() {
   line(x, y3, x, y4);
   line(x1, y, x2, y);
 
-  strokeWeight(6);
-  point(x1, y);
-  point(x, y1);
-  point(x, y4);
+  strokeWeight(5);
+  point(x1 - 15, y);
+  point(x, y1 - 15);
+  point(x, y4 + 15);
 
   stroke(mapCrossHairsDistanceStroke);
   strokeWeight(lineStrokeWeight * 2);
@@ -814,14 +822,40 @@ function drawCrossHairs() {
 
 function drawGenerators() {
   if (currentGenerator.ratePerSecond > 0) {
+    const generatorId = `generator_${currentGenerator.lat}_${currentGenerator.lng}`;
+    currentGenerator.generatorId = generatorId;
     generators.push(currentGenerator);
+    postCreateGenerator(currentGenerator);
     currentGenerator = generator();
   }
 
   currentGenerator.draw();
   generators.forEach((generator) => {
-    generator.tick(Date.now());
     generator.draw();
+  });
+}
+
+function drawRegions() {
+  stroke(0, 200, 200);
+  strokeWeight(0.25);
+  queryResponseRegions.forEach((region) => {
+    const topLeft = { lat: region.region.topLeft.lat || 0.0, lng: region.region.topLeft.lng || 0.0 };
+    const botRight = { lat: region.region.botRight.lat || 0.0, lng: region.region.botRight.lng || 0.0 };
+    const topLeftXY = worldMap.latLngToPixel(topLeft);
+    const botRightXY = worldMap.latLngToPixel(botRight);
+    fill(region.deviceAlarmCount && region.deviceAlarmCount > 0 ? [200, 0, 0, 50] : [0, 200, 200, 50]);
+    rect(topLeftXY.x, topLeftXY.y, botRightXY.x - topLeftXY.x, botRightXY.y - topLeftXY.y);
+  });
+}
+
+function drawDevices() {
+  const zoom = worldMap.zoom();
+  const weight = map(zoom, 1, 18, 0, 12);
+  strokeWeight(weight);
+  queryResponseDevices.forEach((device) => {
+    const deviceXY = worldMap.latLngToPixel(device.position.lat, device.position.lng);
+    stroke(device.alarmOn ? [230, 0, 0] : [70, 110, 230]);
+    point(deviceXY.x, deviceXY.y);
   });
 }
 
@@ -874,12 +908,157 @@ function drawZoomAndMouseLocation() {
     .draw();
 }
 
+function drawDeviceCounts() {
+  const h = 1.2;
+  const border = 0.2;
+  const keyColor = color(255, 255, 0);
+  const valueColor = color(255, 255, 255);
+  const bgColor = color(0, 0, 75, 125);
+  const bgColorAlarms = color(255, 0, 0, 150);
+
+  label() //
+    .x(grid.ticksHorizontal - 21.13)
+    .y(0.1)
+    .w(13)
+    .h(h)
+    .key('World wide devices')
+    .value(worldWideDeviceCounts.devices.toLocaleString())
+    .border(border)
+    .bgColor(bgColor)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+
+  label() //
+    .x(grid.ticksHorizontal - 8)
+    .y(0.1)
+    .w(7)
+    .h(h)
+    .key('Alarms')
+    .value(worldWideDeviceCounts.alarms.toLocaleString())
+    .border(border)
+    .bgColor(bgColorAlarms)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+
+  const inViewDevices = queryResponseRegions.reduce((acc, region) => acc + region.deviceCount, 0);
+  const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + (region.deviceAlarmCount || 0), 0);
+
+  label() //
+    .x(grid.ticksHorizontal - 21.13)
+    .y(1.4)
+    .w(13)
+    .h(h)
+    .key('In view devices')
+    .value(inViewDevices.toLocaleString())
+    .border(border)
+    .bgColor(bgColor)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+
+  label() //
+    .x(grid.ticksHorizontal - 8)
+    .y(1.4)
+    .w(7)
+    .h(h)
+    .key('')
+    .value(inViewAlarms.toLocaleString())
+    .border(border)
+    .bgColor(bgColorAlarms)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+}
+
 function drawLatLngGrid() {
   stroke(125);
   strokeWeight(0.5);
 
   gridLatLines.forEach((latLine) => line(0, latLine.y, windowWidth - 1, latLine.y));
   gridLngLines.forEach((lngLine) => line(lngLine.x, 0, lngLine.x, windowHeight - 1));
+}
+
+function drawMouseLocation() {
+  drawMouseGridLocation();
+}
+
+function drawMouseGridLocation() {
+  const region = findRegionUnderMouse();
+  if (region) {
+    drawRegion(region);
+  }
+
+  function findRegionUnderMouse() {
+    const mouseLatLng = worldMap.pixelToLatLng(mouseX, mouseY);
+    const region = queryResponseRegions.find((r) => {
+      const topLeftLat = r.region.topLeft.lat || 0.0;
+      const topLeftLng = r.region.topLeft.lng || 0.0;
+      const botRightLat = r.region.botRight.lat || 0.0;
+      const botRightLng = r.region.botRight.lng || 0.0;
+      return (
+        topLeftLat > mouseLatLng.lat && //
+        topLeftLng < mouseLatLng.lng &&
+        botRightLat < mouseLatLng.lat &&
+        botRightLng > mouseLatLng.lng
+      );
+    });
+    return region;
+  }
+
+  function drawRegion(region) {
+    const deviceCounts = { devices: region.region.deviceCount || 0.0, alarms: region.region.deviceAlarmCount || 0.0 };
+    const topLeft = { lat: region.region.topLeft.lat || 0.0, lng: region.region.topLeft.lng || 0.0 };
+    const botRight = { lat: region.region.botRight.lat || 0.0, lng: region.region.botRight.lng || 0.0 };
+    const topLeftXY = worldMap.latLngToPixel(topLeft);
+    const botRightXY = worldMap.latLngToPixel(botRight);
+    const x = grid.toGridX(topLeftXY.x);
+    const yDevices = grid.toGridY(topLeftXY.y) + 0.1;
+    const yAlarms = grid.toGridY(botRightXY.y) - 1.1;
+    const w = grid.toGridLength(botRightXY.x - topLeftXY.x);
+    const h = 1;
+
+    const border = 0.1;
+    const bgColorDevices = color(255, 251, 51, 100);
+    const bgColorAlarms = color(255, 51, 51, 100);
+    const keyColor = color(10, 20, 0);
+    const valueColor = color(10, 20, 0);
+
+    if (deviceCounts.devices > 0) {
+      label() //
+        .x(x)
+        .y(yDevices)
+        .w(w)
+        .h(h)
+        .key('Devices')
+        .value(deviceCounts.devices.toLocaleString())
+        .border(border)
+        .bgColor(bgColorDevices)
+        .keyColor(keyColor)
+        .valueColor(valueColor)
+        .draw();
+    }
+    if (deviceCounts.alarms >= 0) {
+      label() //
+        .x(x)
+        .y(yAlarms)
+        .w(w)
+        .h(h)
+        .key('Alarms')
+        .value(deviceCounts.alarms.toLocaleString())
+        .border(border)
+        .bgColor(bgColorAlarms)
+        .keyColor(keyColor)
+        .valueColor(valueColor)
+        .draw();
+    }
+
+    stroke(255, 251, 51);
+    strokeWeight(2);
+    noFill();
+    rect(topLeftXY.x, topLeftXY.y, botRightXY.x - topLeftXY.x, botRightXY.y - topLeftXY.y);
+  }
 }
 
 function mouseClicked(event) {
@@ -890,6 +1069,8 @@ function mouseClicked(event) {
 function keyTyped() {
   if (key === 'g') {
     currentGenerator = generator().position();
+  } else if (key === 't') {
+    toggleClickedDevice();
   }
 }
 
@@ -936,16 +1117,12 @@ function recalculateLatLngGrid() {
   }
 }
 
-function toRad(deg) {
-  return deg * (PI / 180);
-}
-
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371; // km
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const lat1Rad = toRad(lat1);
-  const lat2Rad = toRad(lat2);
+  const dLat = radians(lat2 - lat1);
+  const dLng = radians(lng2 - lng1);
+  const lat1Rad = radians(lat1);
+  const lat2Rad = radians(lat2);
 
   const a = sin(dLat / 2) * sin(dLat / 2) + sin(dLng / 2) * sin(dLng / 2) * cos(lat1Rad) * cos(lat2Rad);
   const c = 2 * atan2(sqrt(a), sqrt(1 - a));
@@ -955,13 +1132,22 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 
 function destinationPoint(lat, lng, bearing, distanceKm) {
   const R = 6371; // km
-  const d = distanceKm;
+  const d = distanceKm / R;
   const φ1 = lat;
   const λ1 = lng;
-  const φ2 = asin(sin(φ1) * cos(d / R) + cos(φ1) * sin(d / R) * cos(bearing));
-  const λ2 = λ1 + atan2(sin(bearing) * sin(d / R) * cos(φ1), cos(d / R) - sin(φ1) * sin(φ2));
+  const φ2 = asin(sin(φ1) * cos(d) + cos(φ1) * sin(d) * cos(bearing));
+  const λ2 = λ1 + atan2(sin(bearing) * sin(d) * cos(φ1), cos(d) - sin(φ1) * sin(φ2));
 
   return { lat: φ2, lng: λ2 };
+}
+
+function radiusLocation(lat, lng, distanceKm, bearingDeg) {
+  const bearing = bearingDeg * (Math.PI / 180);
+  const lat1 = lat * (Math.PI / 180);
+  const lon1 = lng * (Math.PI / 180);
+  const position = destinationPoint(lat1, lon1, bearing, distanceKm);
+
+  return { lat: position.lat * (180 / Math.PI), lng: position.lng * (180 / Math.PI) };
 }
 
 function windowResized() {
@@ -986,4 +1172,244 @@ function label() {
 
 function generator() {
   return new Generator();
+}
+
+function postCreateGenerator(generator) {
+  const path = `${urlPrefix}/generator/${generator.generatorId}/create`;
+  const body = {
+    generatorId: generator.generatorId,
+    position: { lat: generator.lat, lng: generator.lng },
+    radiusKm: generator.radiusKm,
+    deviceCountLimit: generator.deviceCountLimit,
+    ratePerSecond: generator.ratePerSecond,
+  };
+  httpPost(path, 'json', body, responseCreateGenerator, errorCreateGenerator);
+
+  function responseCreateGenerator(json) {
+    console.log('HTTP response, create generator:', json);
+  }
+
+  function errorCreateGenerator(error) {
+    console.log('HTTP error, create generator:', error);
+  }
+}
+
+function scheduleNextDeviceQuery(lastQueryDurationMs) {
+  const timeout = max(1, devicesQueryIntervalMs - lastQueryDurationMs);
+  setTimeout(queryDevices, timeout);
+}
+
+function queryDevices() {
+  const zoom = worldMap.getZoom();
+  if (zoom < 10) {
+    queryResponseDevices = [];
+    scheduleNextDeviceQuery(0);
+    return;
+  }
+  const startTimeMs = performance.now();
+  const topLeft = worldMap.pixelToLatLng(0, 0);
+  const botRight = worldMap.pixelToLatLng(windowWidth - 1, windowHeight - 1);
+  let nextPageToken = '';
+  let hasMore = false;
+  let path = '';
+  let devices = [];
+
+  path = `${urlPrefix}/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}?nextPageToken=${nextPageToken}`;
+  httpGet(path, 'json', responseDevices, errorDevices);
+
+  function isNotEmpty(json) {
+    return json && json.devices && json.devices.length > 0;
+  }
+
+  function responseDevices(json) {
+    if (isNotEmpty(json)) {
+      nextPageToken = json.nextPageToken || '';
+      hasMore = json.hasMore || false;
+      devices = devices.concat(json.devices);
+
+      if (hasMore) {
+        path = `${urlPrefix}/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}?nextPageToken=${nextPageToken}`;
+        httpGet(path, 'json', responseDevices, errorDevices);
+      } else {
+        queryResponseDevices = devices;
+        logQueryResponse(startTimeMs, queryResponseDevices, 'devices');
+        scheduleNextDeviceQuery(performance.now() - startTimeMs);
+      }
+    } else {
+      queryResponseDevices = [];
+      logQueryResponse(startTimeMs, queryResponseDevices, 'devices');
+      scheduleNextDeviceQuery(performance.now() - startTimeMs);
+    }
+  }
+
+  function errorDevices(error) {
+    console.log('HTTP error, query devices:', error);
+    scheduleNextDeviceQuery(0);
+  }
+}
+
+function scheduleNextGeneratorQuery(lastQueryDurationMs) {
+  const timeout = max(1, generatorQueryIntervalMs - lastQueryDurationMs);
+  setTimeout(queryGenerators, timeout);
+}
+
+function queryGenerators() {
+  const startTimeMs = performance.now();
+  const topLeft = worldMap.pixelToLatLng(0, 0);
+  const botRight = worldMap.pixelToLatLng(windowWidth - 1, windowHeight - 1);
+  const path = `${urlPrefix}/generators/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}`;
+  httpGet(path, 'json', responseGenerators, errorGenerators);
+
+  function isNotEmpty(json) {
+    return json && json.generators && json.generators.length > 0;
+  }
+
+  function responseGenerators(json) {
+    queryResponseGenerators = isNotEmpty(json) ? json.generators : [];
+    updateGenerators(queryResponseGenerators);
+    logQueryResponse(startTimeMs, queryResponseGenerators, 'generators');
+    scheduleNextGeneratorQuery(performance.now() - startTimeMs);
+  }
+
+  function errorGenerators(error) {
+    console.log('HTTP error, query generators:', error);
+    scheduleNextGeneratorQuery(performance.now() - startTimeMs);
+  }
+
+  function updateGenerators(queryResponse) {
+    queryResponse.forEach(updateGenerator);
+  }
+
+  function updateGenerator(queryGenerator) {
+    if (!queryGenerator.deviceCountCurrent) {
+      queryGenerator.deviceCountCurrent = 0; // TODO remove this when the missing view fields issue is fixed
+    }
+    const found = generators.find((g) => equal(g, queryGenerator));
+    if (found) {
+      found.deviceCountCurrent = queryGenerator.deviceCountCurrent;
+    } else {
+      const newGenerator = new Generator();
+      const radiusLatLng = radiusLocation(queryGenerator.position.lat, queryGenerator.position.lng, queryGenerator.radiusKm, 0);
+      const deviceAngles = newGenerator.quadrantAngles(quadrantTopLeft);
+      const rateAngles = newGenerator.quadrantAngles(quadrantBottomLeft);
+      const rateAngle = map(queryGenerator.ratePerSecond, 100, 1000, rateAngles.start, rateAngles.stop);
+      newGenerator.generatorId = queryGenerator.generatorId;
+      newGenerator.zoom = 18;
+      newGenerator.lat = queryGenerator.position.lat;
+      newGenerator.lng = queryGenerator.position.lng;
+      newGenerator.radiusLat = radiusLatLng.lat;
+      newGenerator.radiusLng = radiusLatLng.lng;
+      newGenerator.radiusKm = queryGenerator.radiusKm;
+      newGenerator.setDeviceCountLimits();
+      newGenerator.ratePerSecond = queryGenerator.ratePerSecond;
+      newGenerator.rateAngle = rateAngle;
+      newGenerator.deviceCountLimit = queryGenerator.deviceCountLimit;
+      newGenerator.deviceCountCurrent = queryGenerator.deviceCountCurrent;
+      const deviceCountLimitMax = max(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMax);
+      const deviceAngle = map(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMin, deviceCountLimitMax, deviceAngles.start, deviceAngles.stop);
+      newGenerator.deviceCountAngle = deviceAngle;
+      generators.push(newGenerator);
+    }
+  }
+
+  function equal(gen, queryGen) {
+    return gen.generatorId === queryGen.generatorId && gen.lat === queryGen.position.lat && gen.lng === queryGen.position.lng;
+  }
+}
+
+function scheduleNextRegionQuery(lastQueryDurationMs) {
+  const timeout = max(1, regionQueryIntervalMs - lastQueryDurationMs);
+  setTimeout(queryRegions, timeout);
+}
+
+function queryRegions() {
+  const startTimeMs = performance.now();
+  const zoom = worldMap.getZoom();
+  const topLeft = worldMap.pixelToLatLng(0, 0);
+  const botRight = worldMap.pixelToLatLng(windowWidth - 1, windowHeight - 1);
+  const path = `${urlPrefix}/regions/by-location/${zoom}/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}`;
+  httpGet(path, 'json', responseRegions, errorRegions);
+
+  function isNotEmpty(json) {
+    return json && json.regions && json.regions.length > 0;
+  }
+
+  function responseRegions(json) {
+    queryResponseRegions = isNotEmpty(json) ? json.regions : [];
+    logQueryResponse(startTimeMs, queryResponseRegions, 'regions');
+    scheduleNextRegionQuery(performance.now() - startTimeMs);
+  }
+
+  function errorRegions(error) {
+    console.log('HTTP error, query regions:', error);
+    scheduleNextRegionQuery(performance.now() - startTimeMs);
+  }
+}
+
+function logQueryResponse(startTimeMs, response, label) {
+  const endTimeMs = performance.now();
+  const elapsedMs = endTimeMs - startTimeMs;
+  console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${response.length.toLocaleString()} ${label}`);
+}
+
+function scheduleNextRegionGet() {
+  setTimeout(getWorldWideDeviceCounts, 1000);
+}
+
+function getWorldWideDeviceCounts() {
+  const startTimeMs = performance.now();
+  const regionId = '0_90.0000000000000_-180.0000000000000_-90.0000000000000_180.0000000000000';
+  const path = `${urlPrefix}/region/${regionId}`;
+  httpGet(path, 'json', responseWorldWideDeviceCount, errorWorldWideDeviceCount);
+
+  function isNotEmpty(json) {
+    return json && json.region && json.region.deviceCount;
+  }
+
+  function responseWorldWideDeviceCount(json) {
+    worldWideDeviceCounts = isNotEmpty(json) //
+      ? { devices: json.region.deviceCount, alarms: json.region.deviceAlarmCount }
+      : { devices: 0, alarms: 0 };
+    scheduleNextRegionGet();
+    logGet(startTimeMs);
+  }
+
+  function errorWorldWideDeviceCount(error) {
+    console.error('HTTP error, query world wide device count:', error);
+    scheduleNextRegionGet();
+  }
+
+  function logGet(startTimeMs) {
+    const endTimeMs = performance.now();
+    const elapsedMs = endTimeMs - startTimeMs;
+    const counts = `${worldWideDeviceCounts.devices.toLocaleString()} devices, ${worldWideDeviceCounts.alarms.toLocaleString()} alarms`;
+    console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${counts}`);
+  }
+}
+
+function toggleClickedDevice() {
+  if (queryResponseDevices.length === 0) {
+    return;
+  }
+  const mouseLetLng = worldMap.pixelToLatLng(mouseX, mouseY);
+  const distanceFromMouse = queryResponseDevices.map((device) => {
+    const distance = haversineDistance(mouseLetLng.lat, mouseLetLng.lng, device.position.lat, device.position.lng);
+    return { distance, device };
+  });
+  const closest = distanceFromMouse.reduce((prev, curr) => (prev.distance < curr.distance ? prev : curr));
+  putToggleDeviceAlarm(closest.device);
+  console.log('closest', closest);
+}
+
+function putToggleDeviceAlarm(device) {
+  const path = `${urlPrefix}/device/${device.deviceId}/toggle-alarm`;
+  httpDo(path, 'PUT', '', responseToggleDeviceAlarm, errorToggleDeviceAlarm);
+
+  function responseToggleDeviceAlarm(json) {
+    console.log('HTTP response, toggle device alarm:', json);
+  }
+
+  function errorToggleDeviceAlarm(error) {
+    console.log('HTTP error, toggle device alarm', error);
+  }
 }

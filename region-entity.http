@@ -1,0 +1,6 @@
+@urlPrefix = http://localhost:9000
+@region0id = 0_90.0000000000000_-180.0000000000000_-90.0000000000000_180.000000000000
+
+### get zoom 0 region
+
+GET {{urlPrefix}}/region/{{region0id}}

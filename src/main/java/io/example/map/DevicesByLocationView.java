@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import io.example.map.DeviceEntity.AlarmChangedEvent;
 import io.example.map.WorldMap.LatLng;
@@ -21,7 +22,7 @@ import kalix.springsdk.annotations.ViewId;
 public class DevicesByLocationView extends View<DevicesByLocationView.DeviceViewRow> {
   private static final Logger log = LoggerFactory.getLogger(DevicesByLocationView.class);
 
-  @GetMapping("/devices/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}/{nextPageToken}")
+  @GetMapping("/devices/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
   @Query("""
       SELECT * AS devices, next_page_token() AS nextPageToken, has_more() AS hasMore
         FROM devices_by_location
@@ -37,7 +38,7 @@ public class DevicesByLocationView extends View<DevicesByLocationView.DeviceView
       @PathVariable Double topLeftLng,
       @PathVariable Double botRightLat,
       @PathVariable Double botRightLng,
-      @PathVariable String nextPageToken) {
+      @RequestParam(required = false) String nextPageToken) {
     return null;
   }
 

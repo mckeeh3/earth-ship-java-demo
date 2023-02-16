@@ -1,0 +1,23 @@
+@urlPrefia = http://localhost:9000
+@generatorId = generator_0_0
+@positionLat = 0
+@positionLng = 0
+@radiusKm = 10
+@deviceCountLimit = 100
+@ratePerSecond = 10
+
+### Create a new generator
+
+POST {{urlPrefia}}/generator/{{generatorId}}/create
+Content-Type: application/json
+
+{
+  "generatorId": "{{generatorId}}",
+  "position": {
+    "lat": {{positionLat}},
+    "lng": {{positionLng}}
+  },
+  "radiusKm": {{radiusKm}},
+  "deviceCountLimit": {{deviceCountLimit}},
+  "ratePerSecond": {{ratePerSecond}}
+}
