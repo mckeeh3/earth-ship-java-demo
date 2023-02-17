@@ -2,6 +2,8 @@ package io.example.map;
 
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -16,7 +18,7 @@ import kalix.springsdk.annotations.ViewId;
 @Table("regions_by_location")
 @Subscribe.EventSourcedEntity(value = RegionEntity.class, ignoreUnknown = true)
 public class RegionByLocationView extends View<RegionByLocationView.RegionViewRow> {
-  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RegionByLocationView.class);
+  private static final Logger log = LoggerFactory.getLogger(RegionByLocationView.class);
 
   // x-min = topLeft.lng
   // x-max = botRight.lng
@@ -37,7 +39,7 @@ public class RegionByLocationView extends View<RegionByLocationView.RegionViewRo
          AND region.topLeft.lng <= :botRightLng
          AND region.botRight.lat <= :topLeftLat
          AND region.botRight.lng >= :topLeftLng
-         AND deviceCount > 0
+         AND geoOrderCount > 0
       """)
   public Regions getRegionsByLocation(@PathVariable Integer zoom, @PathVariable Double topLeftLat, @PathVariable Double topLeftLng, @PathVariable Double botRightLat, @PathVariable Double botRightLng) {
     return null;
@@ -48,10 +50,10 @@ public class RegionByLocationView extends View<RegionByLocationView.RegionViewRo
     return effects().updateState(RegionViewRow.on(event));
   }
 
-  public record RegionViewRow(Region region, int deviceCount, int deviceAlarmCount) {
+  public record RegionViewRow(Region region, int geoOrderCount, int geoOrderAlarmCount) {
 
     static RegionViewRow on(RegionEntity.ReleasedCurrentStateEvent event) {
-      return new RegionViewRow(event.region(), event.region().deviceCount(), event.region().deviceAlarmCount());
+      return new RegionViewRow(event.region(), event.region().geoOrderCount(), event.region().geoOrderAlarmCount());
     }
   }
 

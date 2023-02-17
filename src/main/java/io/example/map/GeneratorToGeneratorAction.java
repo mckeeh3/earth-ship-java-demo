@@ -1,12 +1,15 @@
 package io.example.map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = GeneratorEntity.class, ignoreUnknown = true)
 public class GeneratorToGeneratorAction extends Action {
-  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeneratorToGeneratorAction.class);
+  private static final Logger log = LoggerFactory.getLogger(GeneratorToGeneratorAction.class);
   private final KalixClient kalixClient;
 
   public GeneratorToGeneratorAction(KalixClient kalixClient) {

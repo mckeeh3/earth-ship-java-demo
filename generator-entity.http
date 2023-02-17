@@ -1,9 +1,9 @@
-@urlPrefia = http://localhost:9000
-@generatorId = generator_0_0
-@positionLat = 0
-@positionLng = 0
+@urlPrefia = http://localhost:80
+@generatorId = generator_10_10
+@positionLat = 10
+@positionLng = 10
 @radiusKm = 10
-@deviceCountLimit = 100
+@geoOrderCountLimit = 100
 @ratePerSecond = 10
 
 ### Create a new generator
@@ -18,6 +18,6 @@ Content-Type: application/json
     "lng": {{positionLng}}
   },
   "radiusKm": {{radiusKm}},
-  "deviceCountLimit": {{deviceCountLimit}},
+  "geoOrderCountLimit": {{geoOrderCountLimit}},
   "ratePerSecond": {{ratePerSecond}}
 }

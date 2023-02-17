@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +19,7 @@ import kalix.springsdk.KalixClient;
 
 @RequestMapping("/region-ping")
 public class RegionPingAction extends Action {
-  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RegionPingAction.class);
+  private static final Logger log = LoggerFactory.getLogger(RegionPingAction.class);
   private final KalixClient kalixClient;
 
   public RegionPingAction(KalixClient kalixClient) {
@@ -78,8 +80,8 @@ public class RegionPingAction extends Action {
 
   private void pingSubRegion(Region subRegion) {
     if (subRegion.zoom() > WorldMap.zoomMax) {
-      var deviceId = DeviceEntity.deviceIdFor(subRegion.topLeft());
-      var path = "/device/%s/ping".formatted(deviceId);
+      var geoOrderId = GeoOrderEntity.geoOrderIdFor(subRegion.topLeft());
+      var path = "/geo-order/%s/ping".formatted(geoOrderId);
       var returnType = String.class;
 
       kalixClient.put(path, returnType).execute();

@@ -2,6 +2,8 @@ package io.example.map;
 
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -16,7 +18,7 @@ import kalix.springsdk.annotations.ViewId;
 @Table("generators_by_location")
 @Subscribe.EventSourcedEntity(value = GeneratorEntity.class, ignoreUnknown = true)
 public class GeneratorsByLocationView extends View<GeneratorsByLocationView.GeneratorViewRow> {
-  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeneratorsByLocationView.class);
+  private static final Logger log = LoggerFactory.getLogger(GeneratorsByLocationView.class);
 
   @GetMapping("/generators/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
   @Query("""
@@ -39,7 +41,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
         event.radiusKm(),
         event.ratePerSecond(),
         event.startTimeMs(),
-        event.deviceCountLimit(),
+        event.geoOrderCountLimit(),
         0));
   }
 
@@ -54,8 +56,8 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
       double radiusKm,
       int ratePerSecond,
       long startTimeMs,
-      int deviceCountLimit,
-      int deviceCountCurrent) {
+      int geoOrderCountLimit,
+      int geoOrderCountCurrent) {
 
     GeneratorViewRow on(GeneratorEntity.GeneratedEvent event) {
       return new GeneratorViewRow(
@@ -64,8 +66,8 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
           radiusKm,
           ratePerSecond,
           startTimeMs,
-          deviceCountLimit,
-          event.deviceCountCurrent());
+          geoOrderCountLimit,
+          event.geoOrderCountCurrent());
     }
   }
 

@@ -2,13 +2,16 @@ package io.example.map;
 
 import static io.example.map.WorldMap.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = RegionEntity.class, ignoreUnknown = true)
 public class RegionToRegionAction extends Action {
-  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RegionToRegionAction.class);
+  private static Logger log = LoggerFactory.getLogger(RegionToRegionAction.class);
   private final KalixClient kalixClient;
 
   public RegionToRegionAction(KalixClient kalixClient) {

@@ -1467,7 +1467,7 @@
                   google.maps.event.addListener(this.map, 'bounds_changed', function () {
                     var center = overlay.getProjection().fromLatLngToDivPixel(_this2.map.getCenter());
                     var pixels = 2;
-                    if (window.devicePixelRatio >= 2) {
+                    if (window.geoOrderPixelRatio >= 2) {
                       pixels = 4;
                     }
                     var offsetX = -Math.round(_this2.canvas.width / pixels - center.x);

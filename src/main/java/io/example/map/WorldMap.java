@@ -110,7 +110,7 @@ interface WorldMap {
         region.topLeft.lng + (region.botRight.lng - region.topLeft.lng) / 2);
   }
 
-  record Region(int zoom, LatLng topLeft, LatLng botRight, int deviceCount, int deviceAlarmCount) {
+  record Region(int zoom, LatLng topLeft, LatLng botRight, int geoOrderCount, int geoOrderAlarmCount) {
     static Region empty() {
       return from(0, 0, 0, 0, 0);
     }
@@ -128,13 +128,13 @@ interface WorldMap {
     }
 
     Region updateCounts(List<Region> subRegions) {
-      var deviceCount = subRegions.stream().mapToInt(Region::deviceCount).sum();
-      var deviceAlarmCount = subRegions.stream().mapToInt(Region::deviceAlarmCount).sum();
-      return new Region(zoom, topLeft, botRight, deviceCount, deviceAlarmCount);
+      var geoOrderCount = subRegions.stream().mapToInt(Region::geoOrderCount).sum();
+      var geoOrderAlarmCount = subRegions.stream().mapToInt(Region::geoOrderAlarmCount).sum();
+      return new Region(zoom, topLeft, botRight, geoOrderCount, geoOrderAlarmCount);
     }
 
-    Region updateCounts(int deviceCount, int deviceAlarmCount) {
-      return new Region(zoom, topLeft, botRight, deviceCount, deviceAlarmCount);
+    Region updateCounts(int geoOrderCount, int geoOrderAlarmCount) {
+      return new Region(zoom, topLeft, botRight, geoOrderCount, geoOrderAlarmCount);
     }
 
     boolean contains(LatLng latLng) {

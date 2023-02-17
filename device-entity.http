@@ -1,5 +1,5 @@
-@urlPrefix = https://green-voice-3640.us-east1.kalix.app
-@deviceId = device-id_36.1202610336205_-115.1386047020768
+@urlPrefix = http://localhost:9000
+@geoOrderId = geoOrder-id_36.1202610336205_-115.1386047020768
 
 # @topLeftLat = 11.0
 # @topLeftLng = 9.0
@@ -13,19 +13,20 @@
 
 ###
 
-GET {{urlPrefix}}/device/{{deviceId}}
+GET {{urlPrefix}}/geo-order/{{geoOrderId}}
 
 ###
 
-PUT {{urlPrefix}}/device/{{deviceId}}/ping
+PUT {{urlPrefix}}/geo-order/{{geoOrderId}}/ping
 Content-Type: application/json
 
 {
-  "deviceId":"{{deviceId}}"
+  "geoOrderId":"{{geoOrderId}}"
 }
 
 ### TODO for testing
-PUT {{urlPrefix}}/device/{{deviceId}}/toggle-alarm
+PUT {{urlPrefix}}/geo-order/{{geoOrderId}}/toggle-alarm
 
-###
-GET {{urlPrefix}}/devices/by-location/{{topLeftLat}}/{{topLeftLng}}/{{botRightLat}}/{{botRightLng}}/{{nextPageToken}}
+### Get geoOrders by location
+
+GET {{urlPrefix}}/geo-orders/by-location/{{topLeftLat}}/{{topLeftLng}}/{{botRightLat}}/{{botRightLng}}?nextPageToken={{nextPageToken}}

@@ -8564,7 +8564,7 @@
             e = function (a, b, c) {
               2 === arguments.length && 'boolean' == typeof b && ((c = b), (b = void 0)),
                 (this._setupDone = !1),
-                (this._pixelDensity = Math.ceil(window.devicePixelRatio) || 1),
+                (this._pixelDensity = Math.ceil(window.geoOrderPixelRatio) || 1),
                 (this._userNode = b),
                 (this._curElement = null),
                 (this._elements = []),
@@ -8594,8 +8594,8 @@
                 }),
                 (this._events.wheel = null),
                 (this._loadingScreenId = 'p5_loading'),
-                window.DeviceOrientationEvent && (this._events.deviceorientation = null),
-                window.DeviceMotionEvent && !window._isNodeWebkit && (this._events.devicemotion = null),
+                window.GeoOrderOrientationEvent && (this._events.geoOrderorientation = null),
+                window.GeoOrderMotionEvent && !window._isNodeWebkit && (this._events.geoOrdermotion = null),
                 (this._start = function () {
                   this._userNode && 'string' == typeof this._userNode && (this._userNode = document.getElementById(this._userNode));
                   var a = this.preload || window.preload;
@@ -8927,7 +8927,7 @@
               (this._pixelDensity = a), this.resizeCanvas(this.width, this.height, !0);
             }),
             (h.prototype.displayDensity = function () {
-              return window.devicePixelRatio;
+              return window.geoOrderPixelRatio;
             }),
             (h.prototype.getURL = function () {
               return location.href;
@@ -10181,7 +10181,7 @@
         function (a, b, c) {
           'use strict';
           var d = a('../core/core');
-          (d.prototype.deviceOrientation = void 0),
+          (d.prototype.geoOrderOrientation = void 0),
             (d.prototype.accelerationX = 0),
             (d.prototype.accelerationY = 0),
             (d.prototype.accelerationZ = 0),
@@ -10218,10 +10218,10 @@
             (d.prototype.setShakeThreshold = function (a) {
               'number' == typeof a && (o = a);
             }),
-            (d.prototype._ondeviceorientation = function (a) {
+            (d.prototype._ongeoOrderorientation = function (a) {
               this._updatePRotations(), this._setProperty('rotationX', a.beta), this._setProperty('rotationY', a.gamma), this._setProperty('rotationZ', a.alpha), this._handleMotion();
             }),
-            (d.prototype._ondevicemotion = function (a) {
+            (d.prototype._ongeoOrdermotion = function (a) {
               this._updatePAccelerations(),
                 this._setProperty('accelerationX', 2 * a.acceleration.x),
                 this._setProperty('accelerationY', 2 * a.acceleration.y),
@@ -10230,15 +10230,15 @@
             }),
             (d.prototype._handleMotion = function () {
               90 === window.orientation || -90 === window.orientation
-                ? this._setProperty('deviceOrientation', 'landscape')
+                ? this._setProperty('geoOrderOrientation', 'landscape')
                 : 0 === window.orientation
-                ? this._setProperty('deviceOrientation', 'portrait')
-                : void 0 === window.orientation && this._setProperty('deviceOrientation', 'undefined');
-              var a = this.deviceMoved || window.deviceMoved;
+                ? this._setProperty('geoOrderOrientation', 'portrait')
+                : void 0 === window.orientation && this._setProperty('geoOrderOrientation', 'undefined');
+              var a = this.geoOrderMoved || window.geoOrderMoved;
               'function' == typeof a &&
                 (Math.abs(this.accelerationX - this.pAccelerationX) > n || Math.abs(this.accelerationY - this.pAccelerationY) > n || Math.abs(this.accelerationZ - this.pAccelerationZ) > n) &&
                 a();
-              var b = this.deviceTurned || window.deviceTurned;
+              var b = this.geoOrderTurned || window.geoOrderTurned;
               if ('function' == typeof b) {
                 var c = this.rotationX + 180,
                   d = this.pRotationX + 180,
@@ -10264,7 +10264,7 @@
                   (g = m),
                   this._setProperty('turnAxis', void 0);
               }
-              var t = this.deviceShaken || window.deviceShaken;
+              var t = this.geoOrderShaken || window.geoOrderShaken;
               if ('function' == typeof t) {
                 var u, v;
                 null !== this.pAccelerationX && ((u = Math.abs(this.accelerationX - this.pAccelerationX)), (v = Math.abs(this.accelerationY - this.pAccelerationY))), u + v > o && t();

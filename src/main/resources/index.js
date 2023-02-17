@@ -1,4 +1,4 @@
-const devicesQueryIntervalMs = 1000;
+const geoOrdersQueryIntervalMs = 1000;
 const generatorQueryIntervalMs = 1000;
 const regionQueryIntervalMs = 1000;
 
@@ -15,7 +15,7 @@ const generatorRadiusStroke = [200, 0, 0, 255];
 const generatorCrossHairsStroke = [200, 0, 0, 255];
 const generatorRateStroke = [200, 0, 0, 255];
 const generatorLowResolutionStroke = [200, 0, 0, 255];
-const generatorDevicesStroke = [200, 0, 0, 255];
+const generatorGeoOrdersStroke = [200, 0, 0, 255];
 const generatorGeneratedStroke = [94, 115, 0, 255];
 const generateTotalStroke = [50, 255];
 const mapCrossHairsStroke = [0, 0, 150, 255];
@@ -32,7 +32,7 @@ const quadrantTopLeft = 4;
 
 // const urlPrefix = 'https://green-voice-3640.us-east1.kalix.app';
 const urlPrefix = 'http://localhost:80';
-let queryResponseDevices = [];
+let queryResponseGeoOrders = [];
 let queryResponseGenerators = [];
 let queryResponseRegions = [];
 
@@ -215,11 +215,11 @@ class Generator {
     this.radiusKm = 0.0;
     this.ratePerSecond = 0;
     this.rateAngle = 0.0;
-    this.deviceCountLimit = 0;
-    this.deviceCountLimitMin = 0;
-    this.deviceCountLimitMax = 0;
-    this.deviceCountCurrent = 0;
-    this.deviceCountAngle = 0.0;
+    this.geoOrderCountLimit = 0;
+    this.geoOrderCountLimitMin = 0;
+    this.geoOrderCountLimitMax = 0;
+    this.geoOrderCountCurrent = 0;
+    this.geoOrderCountAngle = 0.0;
     this.generatedAngle = 0.0;
   }
 
@@ -236,9 +236,9 @@ class Generator {
     return this;
   }
 
-  setDeviceCountLimits() {
-    this.deviceCountLimitMin = 1000;
-    this.deviceCountLimitMax = max(2000, round(this.radiusKm / 4) * 1000);
+  setGeoOrderCountLimits() {
+    this.geoOrderCountLimitMin = 1000;
+    this.geoOrderCountLimitMax = max(2000, round(this.radiusKm / 4) * 1000);
   }
 
   draw() {
@@ -254,14 +254,14 @@ class Generator {
       this.radiusLng = radiusLatLng.lng;
 
       this.#drawArea();
-    } else if (this.radiusKm > 0.0 && this.deviceCountLimit == 0) {
+    } else if (this.radiusKm > 0.0 && this.geoOrderCountLimit == 0) {
       this.#drawArea();
-      this.#drawDevicesToGenerate();
-    } else if (this.deviceCountLimit > 0 && this.ratePerSecond == 0) {
+      this.#drawGeoOrdersToGenerate();
+    } else if (this.geoOrderCountLimit > 0 && this.ratePerSecond == 0) {
       this.#drawArea();
-      this.#drawDevicesToGenerate();
+      this.#drawGeoOrdersToGenerate();
       this.#drawRatePerSecond();
-    } else if (this.deviceCountLimit > 0 && this.#isGeneratorVisible()) {
+    } else if (this.geoOrderCountLimit > 0 && this.#isGeneratorVisible()) {
       const centerXY = worldMap.latLngToPixel(this.lat, this.lng);
       const radiusXY = worldMap.latLngToPixel(this.radiusLat, this.radiusLng);
       const radiusInPixels = sqrt(pow(centerXY.x - radiusXY.x, 2) + pow(centerXY.y - radiusXY.y, 2));
@@ -270,9 +270,9 @@ class Generator {
         this.#drawAreaLowResolution();
       } else {
         this.#drawArea();
-        this.#drawDevicesToGenerate();
+        this.#drawGeoOrdersToGenerate();
         this.#drawRatePerSecond();
-        this.#drawDevicesGenerated();
+        this.#drawGeoOrdersGenerated();
       }
     }
   }
@@ -402,17 +402,17 @@ class Generator {
     });
   }
 
-  #drawDevicesToGenerate() {
+  #drawGeoOrdersToGenerate() {
     const centerXY = worldMap.latLngToPixel(this.lat, this.lng);
     const radiusXY = worldMap.latLngToPixel(this.radiusLat, this.radiusLng);
     const radiusInPixels = sqrt(pow(centerXY.x - radiusXY.x, 2) + pow(centerXY.y - radiusXY.y, 2));
     const radiusOffset = radiusInPixels + 10;
     const angles = this.quadrantAngles(quadrantTopLeft);
-    const angleDevices = this.deviceCountAngle > 0.0 ? this.deviceCountAngle : this.#mouseXtoAngle(angles.start, angles.stop);
-    const devices =
-      this.deviceCountLimit > 0.0
-        ? this.deviceCountLimit //
-        : max(this.deviceCountLimitMin, min(this.deviceCountLimitMax, round(map(angleDevices, angles.start, angles.stop, this.deviceCountLimitMin, this.deviceCountLimitMax))));
+    const angleGeoOrders = this.geoOrderCountAngle > 0.0 ? this.geoOrderCountAngle : this.#mouseXtoAngle(angles.start, angles.stop);
+    const geoOrders =
+      this.geoOrderCountLimit > 0.0
+        ? this.geoOrderCountLimit //
+        : max(this.geoOrderCountLimitMin, min(this.geoOrderCountLimitMax, round(map(angleGeoOrders, angles.start, angles.stop, this.geoOrderCountLimitMin, this.geoOrderCountLimitMax))));
 
     this.#drawAmountGauge({
       centerXY: centerXY,
@@ -421,26 +421,26 @@ class Generator {
       radiusOffset: radiusOffset,
       angleStart: angles.start,
       angleStop: angles.stop,
-      angle: angleDevices,
-      count: devices,
-      countMin: this.deviceCountLimitMin,
-      countMax: this.deviceCountLimitMax,
-      stroke: generatorDevicesStroke,
+      angle: angleGeoOrders,
+      count: geoOrders,
+      countMin: this.geoOrderCountLimitMin,
+      countMax: this.geoOrderCountLimitMax,
+      stroke: generatorGeoOrdersStroke,
       labelColor: labelColorGenerate,
-      labelText: `Generate ${devices.toLocaleString()}`,
+      labelText: `Generate ${geoOrders.toLocaleString()}`,
       labelAlign: RIGHT,
       textStyle: BOLD,
     });
   }
 
-  #drawDevicesGenerated() {
+  #drawGeoOrdersGenerated() {
     const centerXY = worldMap.latLngToPixel(this.lat, this.lng);
     const radiusXY = worldMap.latLngToPixel(this.radiusLat, this.radiusLng);
     const radiusInPixels = sqrt(pow(centerXY.x - radiusXY.x, 2) + pow(centerXY.y - radiusXY.y, 2));
     const radiusOffset = radiusInPixels + 10;
     const angles = this.quadrantAngles(quadrantBottomRight);
-    const angleGenerated = map(this.deviceCountCurrent, 0, this.deviceCountLimit, angles.start, angles.stop);
-    const generated = this.deviceCountCurrent;
+    const angleGenerated = map(this.geoOrderCountCurrent, 0, this.geoOrderCountLimit, angles.start, angles.stop);
+    const generated = this.geoOrderCountCurrent;
 
     this.#drawAmountGauge({
       centerXY: centerXY,
@@ -452,7 +452,7 @@ class Generator {
       angle: angleGenerated,
       count: generated,
       countMin: 0,
-      countMax: this.deviceCountLimit,
+      countMax: this.geoOrderCountLimit,
       stroke: generatorGeneratedStroke,
       labelColor: labelColorGenerated,
       labelText: `Generated ${generated.toLocaleString()}`,
@@ -544,15 +544,15 @@ class Generator {
       this.radiusLat = radiusLatLng.lat;
       this.radiusLng = radiusLatLng.lng;
       this.radiusKm = haversineDistance(this.lat, this.lng, radiusLatLng.lat, radiusLatLng.lng);
-      this.setDeviceCountLimits();
+      this.setGeoOrderCountLimits();
       return;
-    } else if (this.radiusKm > 0 && this.deviceCountLimit == 0.0) {
+    } else if (this.radiusKm > 0 && this.geoOrderCountLimit == 0.0) {
       const angles = this.quadrantAngles(quadrantTopLeft);
-      const angleDevices = this.#mouseXtoAngle(angles.start, angles.stop);
-      this.deviceCountAngle = angleDevices;
-      // this.deviceCountLimit = round(map(angleDevices, angles.start, angles.stop, generatorDevicesMin, generatorDevicesMax));
-      this.deviceCountLimit = round(map(angleDevices, angles.start, angles.stop, this.deviceCountLimitMin, this.deviceCountLimitMax));
-    } else if (this.deviceCountLimit > 0 && this.ratePerSecond == 0.0) {
+      const angleGeoOrders = this.#mouseXtoAngle(angles.start, angles.stop);
+      this.geoOrderCountAngle = angleGeoOrders;
+      // this.geoOrderCountLimit = round(map(angleGeoOrders, angles.start, angles.stop, generatorGeoOrdersMin, generatorGeoOrdersMax));
+      this.geoOrderCountLimit = round(map(angleGeoOrders, angles.start, angles.stop, this.geoOrderCountLimitMin, this.geoOrderCountLimitMax));
+    } else if (this.geoOrderCountLimit > 0 && this.ratePerSecond == 0.0) {
       const angles = this.quadrantAngles(quadrantBottomLeft);
       const angleRate = this.#mouseXtoAngle(angles.start, angles.stop);
       this.rateAngle = angleRate;
@@ -574,7 +574,7 @@ class RateGraph {
 
   draw() {
     const generatedTotal = generators.reduce((acc, generator) => acc + generator.generated, 0);
-    const generateTotal = generators.reduce((acc, generator) => acc + generator.devicesToGenerate, 0);
+    const generateTotal = generators.reduce((acc, generator) => acc + generator.geoOrdersToGenerate, 0);
 
     if (generatedTotal > 0) {
       this.#drawRates(generatedTotal);
@@ -727,7 +727,7 @@ const options = {
 const generators = [];
 
 let currentGenerator = generator();
-let worldWideDeviceCounts = { devices: 0, alarms: 0 };
+let worldWideGeoOrderCounts = { geoOrders: 0, alarms: 0 };
 
 function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
@@ -739,7 +739,7 @@ function setup() {
   worldMap.onChange(mapChanged);
   grid.resize();
 
-  scheduleNextDeviceQuery(0);
+  scheduleNextGeoOrderQuery(0);
   scheduleNextGeneratorQuery(0);
   scheduleNextRegionQuery(0);
   scheduleNextRegionGet();
@@ -756,12 +756,12 @@ const rateGraph = new RateGraph();
 function drawMapOverlay() {
   drawLatLngGrid();
   drawRegions();
-  drawDevices();
+  drawGeoOrders();
   drawCrossHairs();
   drawGenerators();
   drawMouseLocation();
   drawZoomAndMouseLocation();
-  drawDeviceCounts();
+  drawGeoOrderCounts();
   rateGraph.draw();
 }
 
@@ -843,19 +843,26 @@ function drawRegions() {
     const botRight = { lat: region.region.botRight.lat || 0.0, lng: region.region.botRight.lng || 0.0 };
     const topLeftXY = worldMap.latLngToPixel(topLeft);
     const botRightXY = worldMap.latLngToPixel(botRight);
-    fill(region.deviceAlarmCount && region.deviceAlarmCount > 0 ? [200, 0, 0, 50] : [0, 200, 200, 50]);
+    fill(region.geoOrderAlarmCount && region.geoOrderAlarmCount > 0 ? [200, 0, 0, 50] : [0, 200, 200, 50]);
     rect(topLeftXY.x, topLeftXY.y, botRightXY.x - topLeftXY.x, botRightXY.y - topLeftXY.y);
   });
 }
 
-function drawDevices() {
+function drawGeoOrders() {
   const zoom = worldMap.zoom();
   const weight = map(zoom, 1, 18, 0, 12);
   strokeWeight(weight);
-  queryResponseDevices.forEach((device) => {
-    const deviceXY = worldMap.latLngToPixel(device.position.lat, device.position.lng);
-    stroke(device.alarmOn ? [230, 0, 0] : [70, 110, 230]);
-    point(deviceXY.x, deviceXY.y);
+  queryResponseGeoOrders.forEach((geoOrder) => {
+    const geoOrderXY = worldMap.latLngToPixel(geoOrder.position.lat, geoOrder.position.lng);
+    // stroke(geoOrder.alarmOn ? [230, 0, 0] : [70, 110, 230]);
+    stroke(
+      geoOrder.readyToShipAt && geoOrder.readyToShipAt.length > 0 //
+        ? [100, 120, 10]
+        : geoOrder.backOrderedAt && geoOrder.backOrderedAt.length > 0
+        ? [230, 0, 0]
+        : [70, 110, 230]
+    );
+    point(geoOrderXY.x, geoOrderXY.y);
   });
 }
 
@@ -908,7 +915,7 @@ function drawZoomAndMouseLocation() {
     .draw();
 }
 
-function drawDeviceCounts() {
+function drawGeoOrderCounts() {
   const h = 1.2;
   const border = 0.2;
   const keyColor = color(255, 255, 0);
@@ -921,8 +928,8 @@ function drawDeviceCounts() {
     .y(0.1)
     .w(13)
     .h(h)
-    .key('World wide devices')
-    .value(worldWideDeviceCounts.devices.toLocaleString())
+    .key('World wide geoOrders')
+    .value(worldWideGeoOrderCounts.geoOrders.toLocaleString())
     .border(border)
     .bgColor(bgColor)
     .keyColor(keyColor)
@@ -935,23 +942,23 @@ function drawDeviceCounts() {
     .w(7)
     .h(h)
     .key('Alarms')
-    .value(worldWideDeviceCounts.alarms.toLocaleString())
+    .value(worldWideGeoOrderCounts.alarms.toLocaleString())
     .border(border)
     .bgColor(bgColorAlarms)
     .keyColor(keyColor)
     .valueColor(valueColor)
     .draw();
 
-  const inViewDevices = queryResponseRegions.reduce((acc, region) => acc + region.deviceCount, 0);
-  const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + (region.deviceAlarmCount || 0), 0);
+  const inViewGeoOrders = queryResponseRegions.reduce((acc, region) => acc + region.geoOrderCount, 0);
+  const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + (region.geoOrderAlarmCount || 0), 0);
 
   label() //
     .x(grid.ticksHorizontal - 21.13)
     .y(1.4)
     .w(13)
     .h(h)
-    .key('In view devices')
-    .value(inViewDevices.toLocaleString())
+    .key('In view geoOrders')
+    .value(inViewGeoOrders.toLocaleString())
     .border(border)
     .bgColor(bgColor)
     .keyColor(keyColor)
@@ -1008,45 +1015,45 @@ function drawMouseGridLocation() {
   }
 
   function drawRegion(region) {
-    const deviceCounts = { devices: region.region.deviceCount || 0.0, alarms: region.region.deviceAlarmCount || 0.0 };
+    const geoOrderCounts = { geoOrders: region.region.geoOrderCount || 0.0, alarms: region.region.geoOrderAlarmCount || 0.0 };
     const topLeft = { lat: region.region.topLeft.lat || 0.0, lng: region.region.topLeft.lng || 0.0 };
     const botRight = { lat: region.region.botRight.lat || 0.0, lng: region.region.botRight.lng || 0.0 };
     const topLeftXY = worldMap.latLngToPixel(topLeft);
     const botRightXY = worldMap.latLngToPixel(botRight);
     const x = grid.toGridX(topLeftXY.x);
-    const yDevices = grid.toGridY(topLeftXY.y) + 0.1;
+    const yGeoOrders = grid.toGridY(topLeftXY.y) + 0.1;
     const yAlarms = grid.toGridY(botRightXY.y) - 1.1;
     const w = grid.toGridLength(botRightXY.x - topLeftXY.x);
     const h = 1;
 
     const border = 0.1;
-    const bgColorDevices = color(255, 251, 51, 100);
+    const bgColorGeoOrders = color(255, 251, 51, 100);
     const bgColorAlarms = color(255, 51, 51, 100);
     const keyColor = color(10, 20, 0);
     const valueColor = color(10, 20, 0);
 
-    if (deviceCounts.devices > 0) {
+    if (geoOrderCounts.geoOrders > 0) {
       label() //
         .x(x)
-        .y(yDevices)
+        .y(yGeoOrders)
         .w(w)
         .h(h)
-        .key('Devices')
-        .value(deviceCounts.devices.toLocaleString())
+        .key('GeoOrders')
+        .value(geoOrderCounts.geoOrders.toLocaleString())
         .border(border)
-        .bgColor(bgColorDevices)
+        .bgColor(bgColorGeoOrders)
         .keyColor(keyColor)
         .valueColor(valueColor)
         .draw();
     }
-    if (deviceCounts.alarms >= 0) {
+    if (geoOrderCounts.alarms >= 0) {
       label() //
         .x(x)
         .y(yAlarms)
         .w(w)
         .h(h)
         .key('Alarms')
-        .value(deviceCounts.alarms.toLocaleString())
+        .value(geoOrderCounts.alarms.toLocaleString())
         .border(border)
         .bgColor(bgColorAlarms)
         .keyColor(keyColor)
@@ -1070,7 +1077,7 @@ function keyTyped() {
   if (key === 'g') {
     currentGenerator = generator().position();
   } else if (key === 't') {
-    toggleClickedDevice();
+    toggleClickedGeoOrder();
   }
 }
 
@@ -1180,7 +1187,7 @@ function postCreateGenerator(generator) {
     generatorId: generator.generatorId,
     position: { lat: generator.lat, lng: generator.lng },
     radiusKm: generator.radiusKm,
-    deviceCountLimit: generator.deviceCountLimit,
+    geoOrderCountLimit: generator.geoOrderCountLimit,
     ratePerSecond: generator.ratePerSecond,
   };
   httpPost(path, 'json', body, responseCreateGenerator, errorCreateGenerator);
@@ -1194,16 +1201,16 @@ function postCreateGenerator(generator) {
   }
 }
 
-function scheduleNextDeviceQuery(lastQueryDurationMs) {
-  const timeout = max(1, devicesQueryIntervalMs - lastQueryDurationMs);
-  setTimeout(queryDevices, timeout);
+function scheduleNextGeoOrderQuery(lastQueryDurationMs) {
+  const timeout = max(1, geoOrdersQueryIntervalMs - lastQueryDurationMs);
+  setTimeout(queryGeoOrders, timeout);
 }
 
-function queryDevices() {
+function queryGeoOrders() {
   const zoom = worldMap.getZoom();
   if (zoom < 10) {
-    queryResponseDevices = [];
-    scheduleNextDeviceQuery(0);
+    queryResponseGeoOrders = [];
+    scheduleNextGeoOrderQuery(0);
     return;
   }
   const startTimeMs = performance.now();
@@ -1212,39 +1219,39 @@ function queryDevices() {
   let nextPageToken = '';
   let hasMore = false;
   let path = '';
-  let devices = [];
+  let geoOrders = [];
 
-  path = `${urlPrefix}/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}?nextPageToken=${nextPageToken}`;
-  httpGet(path, 'json', responseDevices, errorDevices);
+  path = `${urlPrefix}/geo-orders/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}?nextPageToken=${nextPageToken}`;
+  httpGet(path, 'json', responseGeoOrders, errorGeoOrders);
 
   function isNotEmpty(json) {
-    return json && json.devices && json.devices.length > 0;
+    return json && json.geoOrders && json.geoOrders.length > 0;
   }
 
-  function responseDevices(json) {
+  function responseGeoOrders(json) {
     if (isNotEmpty(json)) {
       nextPageToken = json.nextPageToken || '';
       hasMore = json.hasMore || false;
-      devices = devices.concat(json.devices);
+      geoOrders = geoOrders.concat(json.geoOrders);
 
       if (hasMore) {
-        path = `${urlPrefix}/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}?nextPageToken=${nextPageToken}`;
-        httpGet(path, 'json', responseDevices, errorDevices);
+        path = `${urlPrefix}/geo-orders/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}?nextPageToken=${nextPageToken}`;
+        httpGet(path, 'json', responseGeoOrders, errorGeoOrders);
       } else {
-        queryResponseDevices = devices;
-        logQueryResponse(startTimeMs, queryResponseDevices, 'devices');
-        scheduleNextDeviceQuery(performance.now() - startTimeMs);
+        queryResponseGeoOrders = geoOrders;
+        logQueryResponse(startTimeMs, queryResponseGeoOrders, 'geoOrders');
+        scheduleNextGeoOrderQuery(performance.now() - startTimeMs);
       }
     } else {
-      queryResponseDevices = [];
-      logQueryResponse(startTimeMs, queryResponseDevices, 'devices');
-      scheduleNextDeviceQuery(performance.now() - startTimeMs);
+      queryResponseGeoOrders = [];
+      logQueryResponse(startTimeMs, queryResponseGeoOrders, 'geoOrders');
+      scheduleNextGeoOrderQuery(performance.now() - startTimeMs);
     }
   }
 
-  function errorDevices(error) {
-    console.log('HTTP error, query devices:', error);
-    scheduleNextDeviceQuery(0);
+  function errorGeoOrders(error) {
+    console.log('HTTP error, query geoOrders:', error);
+    scheduleNextGeoOrderQuery(0);
   }
 }
 
@@ -1281,16 +1288,16 @@ function queryGenerators() {
   }
 
   function updateGenerator(queryGenerator) {
-    if (!queryGenerator.deviceCountCurrent) {
-      queryGenerator.deviceCountCurrent = 0; // TODO remove this when the missing view fields issue is fixed
+    if (!queryGenerator.geoOrderCountCurrent) {
+      queryGenerator.geoOrderCountCurrent = 0; // TODO remove this when the missing view fields issue is fixed
     }
     const found = generators.find((g) => equal(g, queryGenerator));
     if (found) {
-      found.deviceCountCurrent = queryGenerator.deviceCountCurrent;
+      found.geoOrderCountCurrent = queryGenerator.geoOrderCountCurrent;
     } else {
       const newGenerator = new Generator();
       const radiusLatLng = radiusLocation(queryGenerator.position.lat, queryGenerator.position.lng, queryGenerator.radiusKm, 0);
-      const deviceAngles = newGenerator.quadrantAngles(quadrantTopLeft);
+      const geoOrderAngles = newGenerator.quadrantAngles(quadrantTopLeft);
       const rateAngles = newGenerator.quadrantAngles(quadrantBottomLeft);
       const rateAngle = map(queryGenerator.ratePerSecond, 100, 1000, rateAngles.start, rateAngles.stop);
       newGenerator.generatorId = queryGenerator.generatorId;
@@ -1300,14 +1307,14 @@ function queryGenerators() {
       newGenerator.radiusLat = radiusLatLng.lat;
       newGenerator.radiusLng = radiusLatLng.lng;
       newGenerator.radiusKm = queryGenerator.radiusKm;
-      newGenerator.setDeviceCountLimits();
+      newGenerator.setGeoOrderCountLimits();
       newGenerator.ratePerSecond = queryGenerator.ratePerSecond;
       newGenerator.rateAngle = rateAngle;
-      newGenerator.deviceCountLimit = queryGenerator.deviceCountLimit;
-      newGenerator.deviceCountCurrent = queryGenerator.deviceCountCurrent;
-      const deviceCountLimitMax = max(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMax);
-      const deviceAngle = map(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMin, deviceCountLimitMax, deviceAngles.start, deviceAngles.stop);
-      newGenerator.deviceCountAngle = deviceAngle;
+      newGenerator.geoOrderCountLimit = queryGenerator.geoOrderCountLimit;
+      newGenerator.geoOrderCountCurrent = queryGenerator.geoOrderCountCurrent;
+      const geoOrderCountLimitMax = max(queryGenerator.geoOrderCountLimit, newGenerator.geoOrderCountLimitMax);
+      const geoOrderAngle = map(queryGenerator.geoOrderCountLimit, newGenerator.geoOrderCountLimitMin, geoOrderCountLimitMax, geoOrderAngles.start, geoOrderAngles.stop);
+      newGenerator.geoOrderCountAngle = geoOrderAngle;
       generators.push(newGenerator);
     }
   }
@@ -1353,63 +1360,63 @@ function logQueryResponse(startTimeMs, response, label) {
 }
 
 function scheduleNextRegionGet() {
-  setTimeout(getWorldWideDeviceCounts, 1000);
+  setTimeout(getWorldWideGeoOrderCounts, 1000);
 }
 
-function getWorldWideDeviceCounts() {
+function getWorldWideGeoOrderCounts() {
   const startTimeMs = performance.now();
   const regionId = '0_90.0000000000000_-180.0000000000000_-90.0000000000000_180.0000000000000';
   const path = `${urlPrefix}/region/${regionId}`;
-  httpGet(path, 'json', responseWorldWideDeviceCount, errorWorldWideDeviceCount);
+  httpGet(path, 'json', responseWorldWideGeoOrderCount, errorWorldWideGeoOrderCount);
 
   function isNotEmpty(json) {
-    return json && json.region && json.region.deviceCount;
+    return json && json.region && json.region.geoOrderCount;
   }
 
-  function responseWorldWideDeviceCount(json) {
-    worldWideDeviceCounts = isNotEmpty(json) //
-      ? { devices: json.region.deviceCount, alarms: json.region.deviceAlarmCount }
-      : { devices: 0, alarms: 0 };
+  function responseWorldWideGeoOrderCount(json) {
+    worldWideGeoOrderCounts = isNotEmpty(json) //
+      ? { geoOrders: json.region.geoOrderCount, alarms: json.region.geoOrderAlarmCount }
+      : { geoOrders: 0, alarms: 0 };
     scheduleNextRegionGet();
     logGet(startTimeMs);
   }
 
-  function errorWorldWideDeviceCount(error) {
-    console.error('HTTP error, query world wide device count:', error);
+  function errorWorldWideGeoOrderCount(error) {
+    console.error('HTTP error, query world wide geoOrder count:', error);
     scheduleNextRegionGet();
   }
 
   function logGet(startTimeMs) {
     const endTimeMs = performance.now();
     const elapsedMs = endTimeMs - startTimeMs;
-    const counts = `${worldWideDeviceCounts.devices.toLocaleString()} devices, ${worldWideDeviceCounts.alarms.toLocaleString()} alarms`;
+    const counts = `${worldWideGeoOrderCounts.geoOrders.toLocaleString()} geoOrders, ${worldWideGeoOrderCounts.alarms.toLocaleString()} alarms`;
     console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${counts}`);
   }
 }
 
-function toggleClickedDevice() {
-  if (queryResponseDevices.length === 0) {
+function toggleClickedGeoOrder() {
+  if (queryResponseGeoOrders.length === 0) {
     return;
   }
   const mouseLetLng = worldMap.pixelToLatLng(mouseX, mouseY);
-  const distanceFromMouse = queryResponseDevices.map((device) => {
-    const distance = haversineDistance(mouseLetLng.lat, mouseLetLng.lng, device.position.lat, device.position.lng);
-    return { distance, device };
+  const distanceFromMouse = queryResponseGeoOrders.map((geoOrder) => {
+    const distance = haversineDistance(mouseLetLng.lat, mouseLetLng.lng, geoOrder.position.lat, geoOrder.position.lng);
+    return { distance, geoOrder };
   });
   const closest = distanceFromMouse.reduce((prev, curr) => (prev.distance < curr.distance ? prev : curr));
-  putToggleDeviceAlarm(closest.device);
+  putToggleGeoOrderAlarm(closest.geoOrder);
   console.log('closest', closest);
 }
 
-function putToggleDeviceAlarm(device) {
-  const path = `${urlPrefix}/device/${device.deviceId}/toggle-alarm`;
-  httpDo(path, 'PUT', '', responseToggleDeviceAlarm, errorToggleDeviceAlarm);
+function putToggleGeoOrderAlarm(geoOrder) {
+  const path = `${urlPrefix}/geo-order/${geoOrder.geoOrderId}/toggle-alarm`;
+  httpDo(path, 'PUT', '', responseToggleGeoOrderAlarm, errorToggleGeoOrderAlarm);
 
-  function responseToggleDeviceAlarm(json) {
-    console.log('HTTP response, toggle device alarm:', json);
+  function responseToggleGeoOrderAlarm(json) {
+    console.log('HTTP response, toggle geoOrder alarm:', json);
   }
 
-  function errorToggleDeviceAlarm(error) {
-    console.log('HTTP error, toggle device alarm', error);
+  function errorToggleGeoOrderAlarm(error) {
+    console.log('HTTP error, toggle geoOrder alarm', error);
   }
 }

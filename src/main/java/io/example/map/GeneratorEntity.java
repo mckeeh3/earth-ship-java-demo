@@ -35,7 +35,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     entityId = context.entityId();
   }
 
-  static int devicesPerGeneratorBatch = 32;
+  static int geoOrdersPerGeneratorBatch = 32;
 
   @Override
   public State emptyState() {
@@ -80,7 +80,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
   }
 
   @EventHandler
-  public State on(DevicesToGenerateEvent event) {
+  public State on(GeoOrdersToGenerateEvent event) {
     log.info("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
@@ -91,8 +91,8 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
       double radiusKm,
       int ratePerSecond,
       long startTimeMs,
-      int deviceCountLimit,
-      int deviceCountCurrent) {
+      int geoOrderCountLimit,
+      int geoOrderCountCurrent) {
 
     static State empty() {
       return new State(null, null, 0, 0, epochMsNow(), 0, 0);
@@ -110,7 +110,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
             radiusKm,
             ratePerSecond,
             startTimeMs,
-            deviceCountLimit));
+            geoOrderCountLimit));
       }
       var generatorCreatedEvent = new GeneratorCreatedEvent(
           command.generatorId,
@@ -118,38 +118,38 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           command.radiusKm,
           command.ratePerSecond,
           epochMsNow(),
-          command.deviceCountLimit);
+          command.geoOrderCountLimit);
       var events = new ArrayList<Object>();
       events.add(generatorCreatedEvent);
-      events.addAll(createDevicesToGenerateEvents(command.generatorId()));
+      events.addAll(createGeoOrdersToGenerateEvents(command.generatorId()));
       return events;
     }
 
     List<?> eventsFor(GenerateCommand command) {
-      if (deviceCountCurrent == deviceCountLimit) {
+      if (geoOrderCountCurrent == geoOrderCountLimit) {
         return List.of();
       }
-      var deviceBatches = createDevicesToGenerateEvents(command.generatorId());
-      var devicesToBeGenerated = deviceBatches.stream()
-          .map(e -> e.devices().size())
+      var geoOrderBatches = createGeoOrdersToGenerateEvents(command.generatorId());
+      var geoOrdersToBeGenerated = geoOrderBatches.stream()
+          .map(e -> e.geoOrders().size())
           .reduce(0, (a, n) -> a + n);
       var events = new ArrayList<Object>();
-      events.add(new GeneratedEvent(generatorId, devicesToBeGenerated, deviceCountCurrent + devicesToBeGenerated));
-      events.addAll(deviceBatches);
+      events.add(new GeneratedEvent(generatorId, geoOrdersToBeGenerated, geoOrderCountCurrent + geoOrdersToBeGenerated));
+      events.addAll(geoOrderBatches);
       return events;
     }
 
-    List<DevicesToGenerateEvent> createDevicesToGenerateEvents(String generatorId) {
+    List<GeoOrdersToGenerateEvent> createGeoOrdersToGenerateEvents(String generatorId) {
       var elapsedMs = epochMsNow() - startTimeMs;
-      var devicesPerBatch = devicesPerGeneratorBatch;
-      var devicesToBeCreated = (int) Math.min(deviceCountLimit - deviceCountCurrent, (elapsedMs * ratePerSecond / 1000) - deviceCountCurrent);
-      var deviceBatches = devicesToBeCreated / devicesPerBatch + (devicesToBeCreated % devicesPerBatch > 0 ? 1 : 0);
-      if (deviceBatches == 0) {
+      var geoOrdersPerBatch = geoOrdersPerGeneratorBatch;
+      var geoOrdersToBeCreated = (int) Math.min(geoOrderCountLimit - geoOrderCountCurrent, (elapsedMs * ratePerSecond / 1000) - geoOrderCountCurrent);
+      var geoOrderBatches = geoOrdersToBeCreated / geoOrdersPerBatch + (geoOrdersToBeCreated % geoOrdersPerBatch > 0 ? 1 : 0);
+      if (geoOrderBatches == 0) {
         return List.of();
       }
-      return IntStream.range(0, deviceBatches)
-          .mapToObj(i -> (i + 1) * devicesPerBatch > devicesToBeCreated ? devicesToBeCreated % devicesPerBatch : devicesPerBatch)
-          .map(i -> DevicesToGenerateEvent.with(generatorId, position, radiusKm, i))
+      return IntStream.range(0, geoOrderBatches)
+          .mapToObj(i -> (i + 1) * geoOrdersPerBatch > geoOrdersToBeCreated ? geoOrdersToBeCreated % geoOrdersPerBatch : geoOrdersPerBatch)
+          .map(i -> GeoOrdersToGenerateEvent.with(generatorId, position, radiusKm, i))
           .toList();
     }
 
@@ -163,7 +163,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           event.radiusKm(),
           event.ratePerSecond(),
           event.startTimeMs(),
-          event.deviceCountLimit(),
+          event.geoOrderCountLimit(),
           0);
     }
 
@@ -174,11 +174,11 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           radiusKm,
           ratePerSecond,
           startTimeMs,
-          deviceCountLimit,
-          event.deviceCountCurrent());
+          geoOrderCountLimit,
+          event.geoOrderCountCurrent());
     }
 
-    State on(DevicesToGenerateEvent event) {
+    State on(GeoOrdersToGenerateEvent event) {
       return this;
     }
 
@@ -187,27 +187,27 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     }
   }
 
-  public record CreateGeneratorCommand(String generatorId, LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {}
+  public record CreateGeneratorCommand(String generatorId, LatLng position, double radiusKm, int geoOrderCountLimit, int ratePerSecond) {}
 
   public record GenerateCommand(String generatorId) {}
 
-  public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int ratePerSecond, long startTimeMs, int deviceCountLimit) {}
+  public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int ratePerSecond, long startTimeMs, int geoOrderCountLimit) {}
 
-  public record GeneratedEvent(String generatorId, int devicesGenerated, int deviceCountCurrent) {}
+  public record GeneratedEvent(String generatorId, int geoOrdersGenerated, int geoOrderCountCurrent) {}
 
-  public record DevicesToGenerateEvent(String generatorId, int devicesToBeGenerated, List<Device> devices) {
-    static DevicesToGenerateEvent with(String generatorId, LatLng position, double radiusKm, int deviceCount) {
-      var devices = generateDevices(generatorId, position, radiusKm, deviceCount);
-      return new DevicesToGenerateEvent(generatorId, devices.size(), devices);
+  public record GeoOrdersToGenerateEvent(String generatorId, int geoOrdersToBeGenerated, List<GeoOrder> geoOrders) {
+    static GeoOrdersToGenerateEvent with(String generatorId, LatLng position, double radiusKm, int geoOrderCount) {
+      var geoOrders = generateGeoOrders(generatorId, position, radiusKm, geoOrderCount);
+      return new GeoOrdersToGenerateEvent(generatorId, geoOrders.size(), geoOrders);
     }
 
-    static List<Device> generateDevices(String generatorId, LatLng position, double radiusKm, int deviceCount) {
-      return IntStream.range(0, deviceCount)
-          .mapToObj(i -> nextDevice(generatorId, position, radiusKm))
+    static List<GeoOrder> generateGeoOrders(String generatorId, LatLng position, double radiusKm, int geoOrderCount) {
+      return IntStream.range(0, geoOrderCount)
+          .mapToObj(i -> nextGeoOrder(generatorId, position, radiusKm))
           .toList();
     }
 
-    static Device nextDevice(String generatorId, LatLng position, double radiusKm) {
+    static GeoOrder nextGeoOrder(String generatorId, LatLng position, double radiusKm) {
       final var angle = random.nextDouble() * 2 * Math.PI;
       final var distance = random.nextDouble() * radiusKm;
       final var lat = Math.toRadians(position.lat());
@@ -216,11 +216,11 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           Math.cos(lat) * Math.sin(distance / earthRadiusKm) * Math.cos(angle));
       final var lng2 = lng + Math.atan2(Math.sin(angle) * Math.sin(distance / earthRadiusKm) * Math.cos(lat),
           Math.cos(distance / earthRadiusKm) - Math.sin(lat) * Math.sin(lat2));
-      var devicePosition = LatLng.fromRadians(lat2, lng2);
-      var deviceId = DeviceEntity.deviceIdFor(devicePosition);
-      return new Device(deviceId, generatorId, devicePosition);
+      var geoOrderPosition = LatLng.fromRadians(lat2, lng2);
+      var geoOrderId = GeoOrderEntity.geoOrderIdFor(geoOrderPosition);
+      return new GeoOrder(geoOrderId, generatorId, geoOrderPosition);
     }
   }
 
-  public record Device(String deviceId, String generatorId, LatLng position) {}
+  public record GeoOrder(String geoOrderId, String generatorId, LatLng position) {}
 }

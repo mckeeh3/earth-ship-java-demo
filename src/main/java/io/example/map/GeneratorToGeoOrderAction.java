@@ -2,25 +2,28 @@ package io.example.map;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = GeneratorEntity.class, ignoreUnknown = true)
-public class GeneratorToDeviceAction extends Action {
-  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeneratorToDeviceAction.class);
+public class GeneratorToGeoOrderAction extends Action {
+  private static final Logger log = LoggerFactory.getLogger(GeneratorToGeoOrderAction.class);
   private final KalixClient kalixClient;
 
-  public GeneratorToDeviceAction(KalixClient kalixClient) {
+  public GeneratorToGeoOrderAction(KalixClient kalixClient) {
     this.kalixClient = kalixClient;
   }
 
-  public Effect<String> on(GeneratorEntity.DevicesToGenerateEvent event) {
+  public Effect<String> on(GeneratorEntity.GeoOrdersToGenerateEvent event) {
     log.info("Event: {}", event);
-    var results = event.devices().stream()
-        .map(device -> {
-          var path = "/device/%s/create".formatted(device.deviceId());
-          var command = new DeviceEntity.CreateDeviceCommand(device.deviceId(), device.position());
+    var results = event.geoOrders().stream()
+        .map(geoOrder -> {
+          var path = "/geo-order/%s/create".formatted(geoOrder.geoOrderId());
+          var command = new GeoOrderEntity.CreateGeoOrderCommand(geoOrder.geoOrderId(), geoOrder.position());
           var returnType = String.class;
           return kalixClient.post(path, command, returnType).execute();
         })
