@@ -1,6 +1,7 @@
 package io.example.product;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -63,10 +64,10 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
   }
 
   @PutMapping("/update-units-back-ordered")
-  public Effect<String> updateUnitsBackOrdered(@RequestBody UpdateProductUnitsBackOrderedCommand command) {
+  public Effect<String> updateUnitsBackOrdered(@RequestBody UpdateProductsBackOrderedCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
-        .emitEvent(currentState().eventFor(command))
+        .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
   }
 
@@ -96,6 +97,11 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
 
   @EventHandler
   public State on(UpdatedProductsBackOrderedEvent event) {
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(CreateStockOrderRequestedEvent event) {
     return currentState().on(event);
   }
 
@@ -129,8 +135,19 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
       return new UpdatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityOrdered());
     }
 
-    UpdatedProductsBackOrderedEvent eventFor(UpdateProductUnitsBackOrderedCommand command) {
-      return new UpdatedProductsBackOrderedEvent(command.skuId(), command.backOrderedLot());
+    List<?> eventsFor(UpdateProductsBackOrderedCommand command) {
+      var event = new UpdatedProductsBackOrderedEvent(command.skuId(), command.backOrderedLot());
+      var newState = on(event);
+
+      if (newState.backOrdered > newState.available) {
+        var stockOrderId = "%s-%d".formatted(command.skuId(), Instant.now().toEpochMilli());
+        var quantity = 100;
+        return List.of(
+            event,
+            new AddedStockOrderEvent(stockOrderId, skuId, quantity),
+            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantity));
+      }
+      return List.of(event);
     }
 
     State on(CreatedProductEvent event) {
@@ -146,10 +163,11 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
     }
 
     State on(AddedStockOrderEvent event) {
-      var filteredStockOrders = stockOrders.stream()
-          .filter(s -> !s.stockOrderId().equals(event.stockOrderId()));
+      if (stockOrders.stream().anyMatch(s -> s.stockOrderId().equals(event.stockOrderId()))) {
+        return this;
+      }
       var addStockOrder = Stream.of(new StockOrder(event.stockOrderId(), event.quantityTotal(), 0, event.quantityTotal()));
-      var newStockOrders = Stream.concat(filteredStockOrders, addStockOrder).toList();
+      var newStockOrders = Stream.concat(stockOrders.stream(), addStockOrder).toList();
       var quantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
 
       return new State(
@@ -200,6 +218,10 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
           stockOrders,
           newBackOrderedLots);
     }
+
+    State on(CreateStockOrderRequestedEvent event) {
+      return this;
+    }
   }
 
   public record StockOrder(String stockOrderId, int quantityTotal, int quantityOrdered, int quantityAvailable) {}
@@ -216,7 +238,9 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
 
   public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityOrdered) {}
 
-  public record UpdateProductUnitsBackOrderedCommand(String skuId, BackOrderedLot backOrderedLot) {}
+  public record UpdateProductsBackOrderedCommand(String skuId, BackOrderedLot backOrderedLot) {}
 
   public record UpdatedProductsBackOrderedEvent(String skuId, BackOrderedLot backOrderedLot) {}
+
+  public record CreateStockOrderRequestedEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) {}
 }

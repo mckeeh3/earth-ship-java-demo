@@ -854,10 +854,9 @@ function drawGeoOrders() {
   strokeWeight(weight);
   queryResponseGeoOrders.forEach((geoOrder) => {
     const geoOrderXY = worldMap.latLngToPixel(geoOrder.position.lat, geoOrder.position.lng);
-    // stroke(geoOrder.alarmOn ? [230, 0, 0] : [70, 110, 230]);
     stroke(
       geoOrder.readyToShipAt && geoOrder.readyToShipAt.length > 0 //
-        ? [100, 120, 10]
+        ? [50, 180, 80]
         : geoOrder.backOrderedAt && geoOrder.backOrderedAt.length > 0
         ? [230, 0, 0]
         : [70, 110, 230]
