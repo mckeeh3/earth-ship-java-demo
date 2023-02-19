@@ -1,4 +1,4 @@
-# order-processing-java-http-demo
+# EarthShip - a Kalix Java demo of a web app with a full earth map UI used to submit numerous order that are prepared for shipping 
 
 
 
