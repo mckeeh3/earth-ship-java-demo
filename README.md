@@ -2,7 +2,7 @@
 
 A Kalix Java demo of a web app with a full earth map UI used to submit numerous order that are prepared for shipping. Submitted orders are automatically allocated available stock, or if not stock is available, the orders are placed into a back ordered state. As new stock is added to the system, back ordered order items are automatically allocated.
 
-The full earth map UI is used to create bulk random order generators. The order generators are created at a specific location on the map. Generators are defined by location, radius, number of orders to be created within the circular map location.
+The full earth map UI is used to create bulk random order generators. The order generators are created at a specific location on the map. Generators are defined by location, radius, number of orders to be created within the circular map location, and the order generation rate.
 
 To create an order generator, zoom into any location on the map, then hit the 'g' key. A circular area appears on the map. Move the mouse right or left to increase or decrease the size of the circle. Click the left mouse button to set the circle size. Next, move the mouse right or left to incerease or decrease the number of orders to be created. Click the left mouse button to select the number. Next move the mouse to select the order generation rate. Click again, and the generator is created.
 
