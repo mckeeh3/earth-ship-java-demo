@@ -31,10 +31,20 @@ const quadrantBottomLeft = 3;
 const quadrantTopLeft = 4;
 
 // const urlPrefix = 'https://green-voice-3640.us-east1.kalix.app';
-const urlPrefix = 'http://localhost:80';
+const urlPrefix = assignUrlPrefix();
 let queryResponseGeoOrders = [];
 let queryResponseGenerators = [];
 let queryResponseRegions = [];
+
+function assignUrlPrefix() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('host') && params.has('port')) {
+    const host = params.get('host');
+    const port = params.get('port');
+    return `http://${host}:${port}`;
+  }
+  return 'http://localhost:80';
+}
 
 const grid = {
   borderWidth: 20,
@@ -856,10 +866,10 @@ function drawGeoOrders() {
     const geoOrderXY = worldMap.latLngToPixel(geoOrder.position.lat, geoOrder.position.lng);
     stroke(
       geoOrder.readyToShipAt && geoOrder.readyToShipAt.length > 0 //
-        ? [50, 180, 80]
+        ? [35, 65, 235]
         : geoOrder.backOrderedAt && geoOrder.backOrderedAt.length > 0
         ? [230, 0, 0]
-        : [70, 110, 230]
+        : [65, 75, 125]
     );
     point(geoOrderXY.x, geoOrderXY.y);
   });
