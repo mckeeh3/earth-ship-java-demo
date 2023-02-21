@@ -933,11 +933,11 @@ function drawGeoOrderCounts() {
   const bgColorAlarms = color(255, 0, 0, 150);
 
   label() //
-    .x(grid.ticksHorizontal - 21.13)
+    .x(grid.ticksHorizontal - 23.13)
     .y(0.1)
     .w(13)
     .h(h)
-    .key('World wide geoOrders')
+    .key('World wide orders')
     .value(worldWideGeoOrderCounts.geoOrders.toLocaleString())
     .border(border)
     .bgColor(bgColor)
@@ -946,11 +946,11 @@ function drawGeoOrderCounts() {
     .draw();
 
   label() //
-    .x(grid.ticksHorizontal - 8)
+    .x(grid.ticksHorizontal - 10)
     .y(0.1)
-    .w(7)
+    .w(9)
     .h(h)
-    .key('Alarms')
+    .key('Back ordered')
     .value(worldWideGeoOrderCounts.alarms.toLocaleString())
     .border(border)
     .bgColor(bgColorAlarms)
@@ -962,11 +962,11 @@ function drawGeoOrderCounts() {
   const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + (region.geoOrderAlarmCount || 0), 0);
 
   label() //
-    .x(grid.ticksHorizontal - 21.13)
+    .x(grid.ticksHorizontal - 23.13)
     .y(1.4)
     .w(13)
     .h(h)
-    .key('In view geoOrders')
+    .key('In view orders')
     .value(inViewGeoOrders.toLocaleString())
     .border(border)
     .bgColor(bgColor)
@@ -975,9 +975,9 @@ function drawGeoOrderCounts() {
     .draw();
 
   label() //
-    .x(grid.ticksHorizontal - 8)
+    .x(grid.ticksHorizontal - 10)
     .y(1.4)
-    .w(7)
+    .w(9)
     .h(h)
     .key('')
     .value(inViewAlarms.toLocaleString())
