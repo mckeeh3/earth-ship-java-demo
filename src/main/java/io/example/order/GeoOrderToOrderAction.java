@@ -87,16 +87,17 @@ public class GeoOrderToOrderAction extends Action {
   }
 
   private CompletionStage<OrderEntity.OrderItem> orderItem(String productId) {
-    return product(productId).thenApply(product -> {
-      return new OrderEntity.OrderItem(
-          product.skuId(),
-          product.skuName(),
-          product.skuDescription(),
-          product.skuPrice(),
-          randomQuantity(),
-          null,
-          null);
-    });
+    return product(productId)
+        .thenApply(product -> {
+          return new OrderEntity.OrderItem(
+              product.skuId(),
+              product.skuName(),
+              product.skuDescription(),
+              product.skuPrice(),
+              randomQuantity(),
+              null,
+              null);
+        });
   }
 
   private CompletionStage<State> product(String productId) {

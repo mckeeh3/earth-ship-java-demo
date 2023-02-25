@@ -6,6 +6,18 @@
 @orderItemsOrdered = 5
 @orderItemsAvailable = 5
 
+### UI Create a new stock order
+
+PUT {{urlPrefix}}/stock-order-ui/{{stockOrderId}}/create
+Content-Type: application/json
+
+{
+  "stockOrderId": "{{stockOrderId}}",
+  "skuId": "{{skuId}}",
+  "skuName": "{{skuName}}",
+  "quantityTotal": {{quantityTotal}}
+}
+
 ### Create a new stock order
 
 PUT {{urlPrefix}}/stock-order/{{stockOrderId}}/create
