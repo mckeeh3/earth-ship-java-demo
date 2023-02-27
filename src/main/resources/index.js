@@ -406,7 +406,7 @@ class Generator {
       countMax: generatorRateMax,
       stroke: generatorRateStroke,
       labelColor: labelColorRate,
-      labelText: `Rate ${rate.toLocaleString()}`,
+      labelText: `Rate ${rate.toLocaleString()}/s`,
       labelAlign: RIGHT,
       textStyle: BOLD,
     });
@@ -1033,13 +1033,13 @@ function drawMouseGridLocation() {
     const yGeoOrders = grid.toGridY(topLeftXY.y) + 0.1;
     const yAlarms = grid.toGridY(botRightXY.y) - 1.1;
     const w = grid.toGridLength(botRightXY.x - topLeftXY.x);
-    const h = 1;
+    const h = 0.9;
 
     const border = 0.1;
     const bgColorGeoOrders = color(255, 251, 51, 100);
     const bgColorAlarms = color(255, 51, 51, 100);
     const keyColor = color(10, 20, 0);
-    const valueColor = color(10, 20, 0);
+    const valueColor = color(0, 0, 0);
 
     if (geoOrderCounts.geoOrders > 0) {
       label() //
@@ -1047,7 +1047,7 @@ function drawMouseGridLocation() {
         .y(yGeoOrders)
         .w(w)
         .h(h)
-        .key('GeoOrders')
+        .key('Orders')
         .value(geoOrderCounts.geoOrders.toLocaleString())
         .border(border)
         .bgColor(bgColorGeoOrders)
@@ -1061,7 +1061,7 @@ function drawMouseGridLocation() {
         .y(yAlarms)
         .w(w)
         .h(h)
-        .key('Alarms')
+        .key('BckOrds')
         .value(geoOrderCounts.alarms.toLocaleString())
         .border(border)
         .bgColor(bgColorAlarms)

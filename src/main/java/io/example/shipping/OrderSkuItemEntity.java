@@ -90,7 +90,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}\n_GetOrderSkuItem", entityId, currentState());
     return Validator.<Effect<State>>start()
-        .isTrue(currentState().isEmpty(), "OrderSkuItem not found")
+        .isTrue(currentState().isEmpty(), "OrderSkuItem '%s' not found".formatted(entityId))
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects().reply(currentState()));
   }

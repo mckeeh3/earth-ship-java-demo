@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import io.example.Validator;
 import io.example.shipping.OrderSkuItemId;
+import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.springsdk.annotations.EntityKey;
@@ -78,8 +80,11 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}", entityId, currentState());
-    return effects().reply(currentState());
+    log.info("EntityId: {}\n_State: {}\n_GetStockSkuItem", entityId, currentState());
+    return Validator.<Effect<State>>start()
+        .isTrue(currentState().isEmpty(), "StockSkuItem '%s' not found".formatted(entityId))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
+        .onSuccess(() -> effects().reply(currentState()));
   }
 
   @EventHandler
