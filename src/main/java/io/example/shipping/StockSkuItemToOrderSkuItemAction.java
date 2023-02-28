@@ -1,7 +1,6 @@
 package io.example.shipping;
 
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.google.protobuf.any.Any;
 
 import io.example.stock.StockSkuItemEntity;
+import io.example.stock.StockSkuItemEntity.StockRequestedJoinToOrderEvent;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
@@ -57,14 +57,15 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     var count = queryReply.orderSkuItemRows().size();
     if (count > 0) {
       log.info("Found {} back-ordered order sku items, skuId: {}, stock sku item: {}", count, event.skuId(), event.stockSkuItemId());
-      return stockRequestsJoinToOrder(event, queryReply.orderSkuItemRows().get(random.nextInt(count)));
+      return callFor(event, queryReply.orderSkuItemRows().get(random.nextInt(count)));
     } else {
       log.info("No back-ordered order sku items, skuId: {}, stock sku item: {}", event.skuId(), event.stockSkuItemId());
-      return CompletableFuture.completedFuture("OK");
+      // return CompletableFuture.completedFuture("OK");
+      return callFor(event);
     }
   }
 
-  private CompletionStage<String> stockRequestsJoinToOrder(StockSkuItemEntity.StockRequestedJoinToOrderEvent event, OrderSkuItemsBackOrderedView.OrderSkuItemRow orderSkuItemRow) {
+  private CompletionStage<String> callFor(StockSkuItemEntity.StockRequestedJoinToOrderEvent event, OrderSkuItemsBackOrderedView.OrderSkuItemRow orderSkuItemRow) {
     var path = "/order-sku-item/%s/stock-requests-join-to-order".formatted(orderSkuItemRow.orderSkuItemId().toEntityId());
     var command = toCommand(event, orderSkuItemRow);
     var returnType = String.class;
@@ -78,6 +79,21 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
         orderSkuItemRow.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId());
+  }
+
+  private CompletionStage<String> callFor(StockSkuItemEntity.StockRequestedJoinToOrderEvent event) {
+    var path = "/stock-sku-item/%s/activate".formatted(event.stockSkuItemId().toEntityId());
+    var command = toCommand(event);
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
+
+    return deferredCall.execute();
+  }
+
+  private StockSkuItemEntity.StockSkuItemActivateCommand toCommand(StockRequestedJoinToOrderEvent event) {
+    return new StockSkuItemEntity.StockSkuItemActivateCommand(
+        event.stockSkuItemId(),
+        event.skuId());
   }
 
   private DeferredCall<Any, String> callFor(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {

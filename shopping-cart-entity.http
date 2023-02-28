@@ -1,6 +1,6 @@
 
 # @urlPrefix = https://empty-moon-4960.us-east1.kalix.app
-@urlPrefix = http://localhost:80
+@urlPrefix = http://localhost:9000
 @customerId = customer-1
 @skuId = P0001
 @skuName = sku name 1

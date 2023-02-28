@@ -1,7 +1,7 @@
 package io.example.stock;
 
 public record StockSkuItemId(StockOrderLotId stockOrderLotId, int stockSkuItemNumber) {
-  String toEntityId() {
+  public String toEntityId() {
     return "%s_%d".formatted(stockOrderLotId.toEntityId(), stockSkuItemNumber);
   }
 

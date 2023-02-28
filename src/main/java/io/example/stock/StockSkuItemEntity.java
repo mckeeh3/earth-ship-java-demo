@@ -46,6 +46,17 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
     return effects().reply("OK");
   }
 
+  @PutMapping("/activate")
+  public Effect<String> activate(@RequestBody StockSkuItemActivateCommand command) {
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    if (currentState().createdAt() == null) {
+      return effects()
+          .emitEvent(currentState().eventFor(command))
+          .thenReply(__ -> "OK");
+    }
+    return effects().reply("OK");
+  }
+
   @PutMapping("/order-requests-join-to-stock")
   public Effect<String> orderRequestsJoinToStock(@RequestBody OrderRequestsJoinToStockCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
@@ -94,6 +105,12 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
   }
 
   @EventHandler
+  public State on(StockSkuItemActivatedEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
+  @EventHandler
   public State on(StockRequestedJoinToOrderEvent event) {
     log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
@@ -134,10 +151,11 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
       String skuId,
       String skuName,
       OrderSkuItemId orderSkuItemId,
-      Instant readyToShipAt) {
+      Instant readyToShipAt,
+      Instant createdAt) {
 
     static State emptyState() {
-      return new State(null, null, null, null, null);
+      return new State(null, null, null, null, null, null);
     }
 
     boolean isEmpty() {
@@ -153,6 +171,12 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
           new StockRequestedJoinToOrderEvent(
               command.stockSkuItemId,
               command.skuId));
+    }
+
+    StockSkuItemActivatedEvent eventFor(StockSkuItemActivateCommand command) {
+      return new StockSkuItemActivatedEvent(
+          command.stockSkuItemId,
+          command.skuId);
     }
 
     Object eventFor(OrderRequestsJoinToStockCommand command) {
@@ -208,7 +232,18 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
           event.skuId,
           event.skuName,
           null,
+          null,
           null);
+    }
+
+    State on(StockSkuItemActivatedEvent event) {
+      return new State(
+          stockSkuItemId,
+          skuId,
+          skuName,
+          null,
+          null,
+          Instant.now());
     }
 
     State on(StockRequestedJoinToOrderEvent event) {
@@ -221,7 +256,8 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
           skuId,
           skuName,
           event.orderSkuItemId,
-          event.readyToShipAt);
+          event.readyToShipAt,
+          createdAt);
     }
 
     State on(OrderRequestedJoinToStockRejectedEvent event) {
@@ -231,7 +267,8 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
             skuId,
             skuName,
             null,
-            null);
+            null,
+            createdAt);
       }
       return this;
     }
@@ -242,7 +279,8 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
           skuId,
           skuName,
           event.orderSkuItemId,
-          event.readyToShipAt);
+          event.readyToShipAt,
+          createdAt);
     }
 
     State on(OrderRequestedJoinToStockReleasedEvent event) {
@@ -252,7 +290,8 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
             skuId,
             skuName,
             null,
-            null);
+            null,
+            createdAt);
       }
       return this;
     }
@@ -264,7 +303,8 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
             skuId,
             skuName,
             null,
-            null);
+            null,
+            createdAt);
       }
       return this;
     }
@@ -273,6 +313,10 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
   public record CreateStockSkuItemCommand(StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
 
   public record CreatedStockSkuItemEvent(StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
+
+  public record StockSkuItemActivateCommand(StockSkuItemId stockSkuItemId, String skuId) {}
+
+  public record StockSkuItemActivatedEvent(StockSkuItemId stockSkuItemId, String skuId) {}
 
   public record StockRequestedJoinToOrderEvent(StockSkuItemId stockSkuItemId, String skuId) {}
 
