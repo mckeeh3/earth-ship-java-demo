@@ -34,7 +34,13 @@ public class StockSkuItemsAvailableView extends View<StockSkuItemsAvailableView.
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.CreatedStockSkuItemEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), event.skuName(), true));
+        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), event.skuName(), false));
+  }
+
+  public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.StockSkuItemActivatedEvent event) {
+    log.info("State: {}\n_Event: {}", viewState(), event);
+    return effects()
+        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), viewState().skuName(), true));
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
