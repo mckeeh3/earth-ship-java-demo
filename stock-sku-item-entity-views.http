@@ -1,5 +1,6 @@
-@urlPrefix = http://localhost:9000
-@skuId = sku-1
+# @urlPrefix = http://localhost:9000
+@urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
+@skuId = P0021
 
 ### query for available stock sku items
 

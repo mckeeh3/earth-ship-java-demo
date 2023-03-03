@@ -1,12 +1,12 @@
 
-# @urlPrefix = https://empty-moon-4960.us-east1.kalix.app
-@urlPrefix = http://localhost:9000
+# @urlPrefix = http://localhost:9000
+@urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
 @customerId = customer-1
 @skuId = P0001
 @skuName = sku name 1
 @skuDescription = sku description 1
 @skuPrice = 199.99
-@quantity = 2
+@quantity = 5
 
 ### ==================== Call cart UI controller action directly ====================
 

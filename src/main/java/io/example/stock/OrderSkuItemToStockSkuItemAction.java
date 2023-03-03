@@ -55,10 +55,12 @@ public class OrderSkuItemToStockSkuItemAction extends Action {
   private CompletionStage<String> processQueryResults(OrderSkuItemEntity.OrderRequestedJoinToStockEvent event, StockSkuItemsAvailableView.StockSkuItemRows queryReply) {
     var count = queryReply.stockSkuItemRows().size();
     if (count > 0) {
-      log.info("Found {} stock sku items, skuId: {}, for order sku item: {}", count, event.skuId(), event.orderSkuItemId());
-      return callFor(event, queryReply.stockSkuItemRows().get(random.nextInt(count)));
+      var stockSkuItemRow = queryReply.stockSkuItemRows().get(random.nextInt(count));
+      log.info("Found {} stock sku items, skuId: {}\n_for order sku item: {}\n_attempt join to stock order item: {}",
+          count, event.skuId(), event.orderSkuItemId().toEntityId(), stockSkuItemRow.stockSkuItemId().toEntityId());
+      return callFor(event, stockSkuItemRow);
     } else {
-      log.info("No stock available, skuId: {}, back-ordering order sku item: {}", event.skuId(), event.orderSkuItemId());
+      log.info("No stock available, skuId: {}, back-ordering order sku item: {}", event.skuId(), event.orderSkuItemId().toEntityId());
       return callFor(event);
     }
   }

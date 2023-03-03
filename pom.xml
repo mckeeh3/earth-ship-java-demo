@@ -3,15 +3,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.example</groupId>
-  <artifactId>order-processing-java-http-demo</artifactId>
+  <artifactId>earth-ship-java-demo</artifactId>
   <version>v1</version>
   <packaging>jar</packaging>
 
-  <name>order-processing-java-http-demo</name>
+  <name>earth-ship-java-demo</name>
   <properties>
 
     <!-- TODO Update to your own Docker repository or Docker Hub scope -->
-    <dockerImage>my-docker-repo/${project.artifactId}</dockerImage>
+    <dockerImage>mckeeh3/${project.artifactId}</dockerImage>
     <dockerTag>${project.version}-${build.timestamp}</dockerTag>
     <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
     <mainClass>io.example.Main</mainClass>

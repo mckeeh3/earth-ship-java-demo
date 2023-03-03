@@ -38,6 +38,9 @@ let queryResponseRegions = [];
 
 function assignUrlPrefix() {
   const params = new URLSearchParams(window.location.search);
+  if (params.has('urlPrefix')) {
+    return params.get('urlPrefix');
+  }
   if (params.has('host') && params.has('port')) {
     const host = params.get('host');
     const port = params.get('port');
@@ -753,11 +756,15 @@ function setup() {
   scheduleNextGeneratorQuery(0);
   scheduleNextRegionQuery(0);
   scheduleNextRegionGet();
+
+  stopwatch.setup();
 }
 
 function draw() {
   clear();
   drawMapOverlay();
+
+  stopwatch.draw();
 }
 
 const rateGraph = new RateGraph();
@@ -1079,6 +1086,7 @@ function drawMouseGridLocation() {
 
 function mouseClicked(event) {
   currentGenerator.click();
+  stopwatch.mouseClicked();
   return false;
 }
 
@@ -1087,6 +1095,8 @@ function keyTyped() {
     currentGenerator = generator().position();
   } else if (key === 't') {
     toggleClickedGeoOrder();
+  } else if (key === 's' || key === 'r') {
+    stopwatch.keyTyped();
   }
 }
 

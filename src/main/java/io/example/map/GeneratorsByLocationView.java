@@ -34,7 +34,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
   }
 
   public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.GeneratorCreatedEvent event) {
-    log.debug("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\n_Event: {}", viewState(), event);
     return effects().updateState(new GeneratorViewRow(
         event.generatorId(),
         event.position(),
@@ -46,7 +46,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
   }
 
   public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.GeneratedEvent event) {
-    log.debug("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\n_Event: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
   }
 

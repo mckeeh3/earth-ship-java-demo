@@ -1,11 +1,16 @@
-@urlPrefix = http://localhost:9000
+# @urlPrefix = http://localhost:9000
+@urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
 @stockOrderId = stock-order-1
 @lotLevel = 1
 @lotNumber = 1
 @skuId = sku-1
 @skuName = sku-name-1
 @stockSkuItemNumber = 9
-@entityId = stock-order-1_2_3_9
+@entityId = P0001-1677688509303_2_2_2
+
+### Get a stock sku item
+
+GET {{urlPrefix}}/stock-sku-item/{{entityId}}
 
 ### Create a stock sku item
 
@@ -24,7 +29,3 @@ Content-Type: application/json
   "skuId": "{{skuId}}",
   "skuName": "{{skuName}}"
 }
-
-### Get a stock sku item
-
-GET {{urlPrefix}}/stock-sku-item/{{entityId}}

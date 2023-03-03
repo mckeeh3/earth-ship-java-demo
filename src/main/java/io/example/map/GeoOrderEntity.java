@@ -38,7 +38,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State> {
 
   @PostMapping("/create")
   public Effect<String> create(@RequestBody CreateGeoOrderCommand command) {
-    log.debug("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.debug("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -46,7 +46,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State> {
 
   @PutMapping("/ready-to-ship")
   public Effect<String> readyToShip(@RequestBody GeoOrderReadyToShipCommand command) {
-    log.debug("EntityId: {}\nState: {}", entityId, currentState());
+    log.debug("EntityId: {}\n_State: {}", entityId, currentState());
     if (currentState().isEmpty()) {
       return effects().reply("OK");
     }
@@ -57,7 +57,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State> {
 
   @PutMapping("/back-ordered")
   public Effect<String> alarm(@RequestBody GeoOrderBackOrderedCommand command) {
-    log.debug("EntityId: {}\nState: {}", entityId, currentState());
+    log.debug("EntityId: {}\n_State: {}", entityId, currentState());
     if (currentState().isEmpty()) {
       return effects().reply("OK");
     }
@@ -68,7 +68,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State> {
 
   @GetMapping()
   public Effect<GeoOrderEntity.State> get(@PathVariable String geoOrderId) {
-    log.debug("EntityId: {}\nGeoOrderId: {}\nState: {}", entityId, geoOrderId, currentState());
+    log.debug("EntityId: {}\n_GeoOrderId: {}\n_State: {}", entityId, geoOrderId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("GeoOrder: '%s' not created".formatted(geoOrderId));
     }
@@ -77,19 +77,19 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State> {
 
   @EventHandler
   public State on(GeoOrderCreatedEvent event) {
-    log.debug("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\n_Event: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeoOrderReadyToShipEvent event) {
-    log.debug("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\n_Event: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeoOrderBackOrderedEvent event) {
-    log.debug("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\n_Event: {}", currentState(), event);
     return currentState().on(event);
   }
 

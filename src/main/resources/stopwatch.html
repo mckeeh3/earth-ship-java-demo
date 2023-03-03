@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=geoOrder-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta charset="utf-8">
+    <title>Stopwatch with p5js</title>
     <style>
-      body {
-        padding: 0;
-        margin: 0;
+      canvas {
+        display: block;
       }
       .stopwatch {
         text-align: center;
@@ -26,7 +24,7 @@
         cursor: pointer;
       }
       .stopwatch button:hover {
-        background-color: #4caf50;
+        background-color: #4CAF50;
       }
       .stopwatch button:active {
         background-color: #3e8e41;
@@ -36,21 +34,16 @@
         outline: none;
       }
     </style>
-    <title>EarthShip</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-    <!-- <script src="p5.js"></script> -->
-    <script src="mappa.js"></script>
   </head>
-
   <body>
-    <script src="index.js"></script>
-    <script src="stopwatch.js"></script>
-    <!-- <div class="stopwatch">
+    <script src="sketch.js"></script>
+    <div class="stopwatch">
       <span class="minutes">00</span>:<span class="seconds">00</span>:<span class="milliseconds">00</span>
-      <br />
+      <br>
       <button class="start">Start</button>
       <button class="stop">Stop</button>
       <button class="reset">Reset</button>
-    </div> -->
+    </div>
   </body>
 </html>
+

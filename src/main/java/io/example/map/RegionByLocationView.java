@@ -46,7 +46,7 @@ public class RegionByLocationView extends View<RegionByLocationView.RegionViewRo
   }
 
   public UpdateEffect<RegionViewRow> on(RegionEntity.ReleasedCurrentStateEvent event) {
-    log.debug("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\n_Event: {}", viewState(), event);
     return effects().updateState(RegionViewRow.on(event));
   }
 

@@ -44,7 +44,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @PostMapping("/{generatorId}/create")
   public Effect<String> create(@RequestBody CreateGeneratorCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -52,7 +52,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @PutMapping("/{generatorId}/generate")
   public Effect<String> generate(@RequestBody GenerateCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -60,7 +60,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @GetMapping("/{generatorId}")
   public Effect<GeneratorEntity.State> get(@PathVariable String generatorId) {
-    log.info("EntityId: {}\nGeneratorId: {}\nState: {}", entityId, generatorId, currentState());
+    log.info("EntityId: {}\n_GeneratorId: {}\n_State: {}", entityId, generatorId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Generator: '%s', not created".formatted(generatorId));
     }
@@ -69,19 +69,19 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @EventHandler
   public State on(GeneratorCreatedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.info("State: {}\n_Event: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeneratedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.info("State: {}\n_Event: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeoOrdersToGenerateEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.info("State: {}\n_Event: {}", currentState(), event);
     return currentState().on(event);
   }
 

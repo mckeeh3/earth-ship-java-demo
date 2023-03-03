@@ -46,17 +46,17 @@ public class GeoOrdersByLocationView extends View<GeoOrderEntity.State> {
   }
 
   public UpdateEffect<GeoOrderEntity.State> on(GeoOrderEntity.GeoOrderCreatedEvent event) {
-    log.debug("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\n_Event: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
   }
 
   public UpdateEffect<GeoOrderEntity.State> on(GeoOrderEntity.GeoOrderReadyToShipEvent event) {
-    log.debug("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\n_Event: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
   }
 
   public UpdateEffect<GeoOrderEntity.State> on(GeoOrderEntity.GeoOrderBackOrderedEvent event) {
-    log.debug("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\n_Event: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
   }
 
