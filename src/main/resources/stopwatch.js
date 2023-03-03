@@ -45,8 +45,8 @@ const stopwatch = {
   },
 
   showStopwatchStartTimer: function () {
-    this.locationX = mouseX;
-    this.locationY = mouseY;
+    // this.locationX = mouseX;
+    // this.locationY = mouseY;
     this.stopwatchVisible = true;
     this.startTimer();
   },

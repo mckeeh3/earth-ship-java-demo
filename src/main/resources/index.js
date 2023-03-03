@@ -250,7 +250,7 @@ class Generator {
   }
 
   setGeoOrderCountLimits() {
-    this.geoOrderCountLimitMin = 1000;
+    this.geoOrderCountLimitMin = 100;
     this.geoOrderCountLimitMax = max(2000, round(this.radiusKm / 4) * 1000);
   }
 
