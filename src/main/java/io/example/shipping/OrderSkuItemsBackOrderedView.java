@@ -25,7 +25,7 @@ public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedV
         FROM order_sku_items_back_ordered
        WHERE skuId = :skuId
          AND backOrdered = true
-       LIMIT 100
+       LIMIT 1000
       """)
   public OrderSkuItemRows getOrderSkuItemsBackOrdered(@PathVariable String skuId) {
     return null;

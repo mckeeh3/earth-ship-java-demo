@@ -14,7 +14,7 @@ const generatorAreaStroke = [200, 0, 0, 255];
 const generatorRadiusStroke = [200, 0, 0, 255];
 const generatorCrossHairsStroke = [200, 0, 0, 255];
 const generatorRateStroke = [200, 0, 0, 255];
-const generatorLowResolutionStroke = [200, 0, 0, 255];
+const generatorLowResolutionStroke = [0, 0, 200, 255];
 const generatorGeoOrdersStroke = [200, 0, 0, 255];
 const generatorGeneratedStroke = [94, 115, 0, 255];
 const generateTotalStroke = [50, 255];
@@ -30,7 +30,6 @@ const quadrantBottomRight = 2;
 const quadrantBottomLeft = 3;
 const quadrantTopLeft = 4;
 
-// const urlPrefix = 'https://green-voice-3640.us-east1.kalix.app';
 const urlPrefix = assignUrlPrefix();
 let queryResponseGeoOrders = [];
 let queryResponseGenerators = [];
@@ -46,7 +45,7 @@ function assignUrlPrefix() {
     const port = params.get('port');
     return `http://${host}:${port}`;
   }
-  return 'http://localhost:80';
+  return 'http://localhost:9000';
 }
 
 const grid = {
@@ -563,8 +562,7 @@ class Generator {
       const angles = this.quadrantAngles(quadrantTopLeft);
       const angleGeoOrders = this.#mouseXtoAngle(angles.start, angles.stop);
       this.geoOrderCountAngle = angleGeoOrders;
-      // this.geoOrderCountLimit = round(map(angleGeoOrders, angles.start, angles.stop, generatorGeoOrdersMin, generatorGeoOrdersMax));
-      this.geoOrderCountLimit = round(map(angleGeoOrders, angles.start, angles.stop, this.geoOrderCountLimitMin, this.geoOrderCountLimitMax));
+      this.geoOrderCountLimit = round(map(angleGeoOrders, angles.start, angles.stop, this.geoOrderCountLimitMin, this.geoOrderCountLimitMax) / 10) * 10;
     } else if (this.geoOrderCountLimit > 0 && this.ratePerSecond == 0.0) {
       const angles = this.quadrantAngles(quadrantBottomLeft);
       const angleRate = this.#mouseXtoAngle(angles.start, angles.stop);
