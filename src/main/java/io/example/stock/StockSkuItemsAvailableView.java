@@ -31,37 +31,31 @@ public class StockSkuItemsAvailableView extends View<StockSkuItemsAvailableView.
     return null;
   }
 
-  public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.CreatedStockSkuItemEvent event) {
-    log.info("State: {}\n_Event: {}", viewState(), event);
-    return effects()
-        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), event.skuName(), false));
-  }
-
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.StockSkuItemActivatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), viewState().skuName(), true));
+        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), true));
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new StockSkuItemRow(viewState().stockSkuItemId(), viewState().skuId(), viewState().skuName(), false));
+        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), false));
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new StockSkuItemRow(viewState().stockSkuItemId(), viewState().skuId(), viewState().skuName(), false));
+        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), false));
   }
 
   public UpdateEffect<StockSkuItemRow> on(StockSkuItemEntity.StockRequestedJoinToOrderReleasedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new StockSkuItemRow(viewState().stockSkuItemId(), viewState().skuId(), viewState().skuName(), true));
+        .updateState(new StockSkuItemRow(event.stockSkuItemId(), event.skuId(), true));
   }
 
-  public record StockSkuItemRow(StockSkuItemId stockSkuItemId, String skuId, String skuName, boolean available) {}
+  public record StockSkuItemRow(StockSkuItemId stockSkuItemId, String skuId, boolean available) {}
 
   public record StockSkuItemRows(List<StockSkuItemRow> stockSkuItemRows) {}
 }
