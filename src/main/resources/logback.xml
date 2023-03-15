@@ -30,9 +30,12 @@
     <logger name="akka.http" level="INFO"/>
     <logger name="io.grpc" level="INFO"/>
 
-    <logger name="io.example.order.OrderEntity" level="INFO"/>
+    <logger name="io.example.shipping.OrderSkuItemEntity" level="INFO"/>
+    <logger name="io.example.product.ProductEntity" level="WARN"/>
+    <logger name="io.example.stock.StockOrderEntity" level="INFO"/>
+    <logger name="io.example.stock.StockSkuItemEntity" level="INFO"/>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

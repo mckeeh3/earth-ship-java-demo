@@ -1,8 +1,8 @@
 package io.example.product;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -26,6 +26,7 @@ import kalix.springsdk.annotations.EventHandler;
 public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
+  private static final int stockOrderSize = 100;
 
   public ProductEntity(EventSourcedEntityContext context) {
     this.entityId = context.entityId();
@@ -59,7 +60,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
   public Effect<String> updateStockOrder(@RequestBody UpdateStockOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
-        .emitEvent(currentState().eventFor(command))
+        .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
   }
 
@@ -82,26 +83,31 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
 
   @EventHandler
   public State on(CreatedProductEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(AddedStockOrderEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedStockOrderEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedProductsBackOrderedEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(CreateStockOrderRequestedEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
@@ -131,8 +137,17 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
       return new AddedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityTotal());
     }
 
-    UpdatedStockOrderEvent eventFor(UpdateStockOrderCommand command) {
-      return new UpdatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityOrdered());
+    List<?> eventsFor(UpdateStockOrderCommand command) {
+      var event = new UpdatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityOrdered());
+      var newState = on(event);
+      if (newState.available < stockOrderSize / 2) {
+        var stockOrderId = generateStockOrderId(skuId);
+        return List.of(
+            event,
+            new AddedStockOrderEvent(stockOrderId, skuId, stockOrderSize),
+            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, stockOrderSize));
+      }
+      return List.of(event);
     }
 
     List<?> eventsFor(UpdateProductsBackOrderedCommand command) {
@@ -140,12 +155,11 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
       var newState = on(event);
 
       if (newState.backOrdered > newState.available) {
-        var stockOrderId = "%s-%d".formatted(command.skuId(), Instant.now().toEpochMilli());
-        var quantity = 100;
+        var stockOrderId = generateStockOrderId(skuId);
         return List.of(
             event,
-            new AddedStockOrderEvent(stockOrderId, skuId, quantity),
-            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantity));
+            new AddedStockOrderEvent(stockOrderId, skuId, stockOrderSize),
+            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, stockOrderSize));
       }
       return List.of(event);
     }
@@ -221,6 +235,10 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
 
     State on(CreateStockOrderRequestedEvent event) {
       return this;
+    }
+
+    String generateStockOrderId(String skuId) {
+      return "%s-%s".formatted(skuId(), UUID.randomUUID().toString());
     }
   }
 

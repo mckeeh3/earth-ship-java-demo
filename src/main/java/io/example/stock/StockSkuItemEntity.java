@@ -38,9 +38,12 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
   @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateStockSkuItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return effects()
-        .emitEvents(currentState().eventsFor(command))
-        .thenReply(__ -> "OK");
+    if (currentState().isEmpty()) {
+      return effects()
+          .emitEvents(currentState().eventsFor(command))
+          .thenReply(__ -> "OK");
+    }
+    return effects().reply("OK");
   }
 
   @PutMapping("/activate")

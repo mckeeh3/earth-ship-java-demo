@@ -1,9 +1,9 @@
 package io.example.map;
 
-import static io.example.map.WorldMap.*;
+import static io.example.map.WorldMap.regionAbove;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import io.example.map.WorldMap.Region;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.springsdk.annotations.EntityKey;
@@ -162,9 +163,8 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
       if (subRegions.isEmpty()) {
         return List.of(subRegion);
       }
-      var newSubRegions = new ArrayList<Region>(subRegions.stream().filter(r -> !(r.eqShape(subRegion))).toList());
-      newSubRegions.add(subRegion);
-      return newSubRegions;
+      var filteredSubREgions = subRegions.stream().filter(r -> !(r.eqShape(subRegion)));
+      return Stream.concat(filteredSubREgions, Stream.of(subRegion)).toList();
     }
   }
 
