@@ -220,6 +220,8 @@
           <dockerImage>${dockerImage}:${dockerTag}</dockerImage>
           <mainClass>${mainClass}</mainClass>
           <integrationTestSourceDirectory>src/it/java</integrationTestSourceDirectory>
+          <logConfig>src/main/resources/logback-dev-mode.xml</logConfig>
+          <proxyImage>gcr.io/kalix-public/kalix-proxy:1.1.7</proxyImage>
         </configuration>
       </plugin>
       <plugin>
