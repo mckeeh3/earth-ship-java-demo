@@ -15,14 +15,14 @@ import io.example.stock.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("orderSkuItemId")
 @EntityType("orderSkuItem")
 @RequestMapping("/order-sku-item/{orderSkuItemId}")
-public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.State> {
+public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.State, OrderSkuItemEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(OrderSkuItemEntity.class);
   private final String entityId;
 
@@ -161,7 +161,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
       return orderSkuItemId == null;
     }
 
-    List<?> eventsFor(CreateOrderSkuItemCommand command) {
+    List<? extends Event> eventsFor(CreateOrderSkuItemCommand command) {
       if (!isEmpty()) {
         return List.of(); // already created
       }
@@ -178,7 +178,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
               command.skuId));
     }
 
-    List<?> eventsFor(OrderRequestsJoinToStockAcceptedCommand command) {
+    List<? extends Event> eventsFor(OrderRequestsJoinToStockAcceptedCommand command) {
       if (command.stockSkuItemId.equals(stockSkuItemId)) {
         return List.of(); // already joined
       }
@@ -209,7 +209,7 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
           command.skuId);
     }
 
-    Object eventFor(StockRequestsJoinToOrderCommand command) {
+    Event eventFor(StockRequestsJoinToOrderCommand command) {
       if (stockSkuItemId == null || stockSkuItemId.equals(command.stockSkuItemId)) {
         return new StockRequestedJoinToOrderAcceptedEvent(
             command.orderSkuItemId,
@@ -341,31 +341,33 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
     }
   }
 
+  public interface Event {}
+
   public record CreateOrderSkuItemCommand(OrderSkuItemId orderSkuItemId, String customerId, String skuId, String skuName, Instant orderedAt) {}
 
-  public record CreatedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, String customerId, String skuId, String skuName, Instant orderedAt) {}
+  public record CreatedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, String customerId, String skuId, String skuName, Instant orderedAt) implements Event {}
 
-  public record OrderRequestedJoinToStockEvent(OrderSkuItemId orderSkuItemId, String skuId) {}
+  public record OrderRequestedJoinToStockEvent(OrderSkuItemId orderSkuItemId, String skuId) implements Event {}
 
   public record StockRequestsJoinToOrderCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record StockRequestedJoinToOrderAcceptedEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
+  public record StockRequestedJoinToOrderAcceptedEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) implements Event {}
 
-  public record StockRequestedJoinToOrderRejectedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
+  public record StockRequestedJoinToOrderRejectedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) implements Event {}
 
   public record OrderRequestsJoinToStockAcceptedCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record OrderRequestedJoinToStockAcceptedEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) {}
+  public record OrderRequestedJoinToStockAcceptedEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, StockSkuItemId stockSkuItemId, Instant readyToShipAt) implements Event {}
 
   public record OrderRequestsJoinToStockRejectedCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
   public record StockRequestsJoinToOrderReleasedCommand(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
 
-  public record StockRequestedJoinToOrderReleasedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
+  public record StockRequestedJoinToOrderReleasedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) implements Event {}
 
-  public record OrderRequestedJoinToStockReleasedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) {}
+  public record OrderRequestedJoinToStockReleasedEvent(OrderSkuItemId orderSkuItemId, String skuId, StockSkuItemId stockSkuItemId) implements Event {}
 
   public record BackOrderOrderSkuItemCommand(OrderSkuItemId orderSkuItemId, String skuId) {}
 
-  public record BackOrderedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, Instant backOrderedAt) {}
+  public record BackOrderedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, Instant backOrderedAt) implements Event {}
 }

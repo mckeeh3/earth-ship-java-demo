@@ -15,7 +15,7 @@ import static io.example.map.WorldMap.*;
 
 import akka.Done;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
+import kalix.spring.KalixClient;
 
 @RequestMapping("/region-ping")
 public class RegionPingAction extends Action {

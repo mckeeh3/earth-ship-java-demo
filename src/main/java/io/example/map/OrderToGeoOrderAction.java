@@ -10,8 +10,8 @@ import io.example.order.OrderEntity.BackOrderedOrderEvent;
 import io.example.order.OrderEntity.ReadyToShipOrderEvent;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
-import kalix.springsdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
+import kalix.javasdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = OrderEntity.class, ignoreUnknown = true)
 public class OrderToGeoOrderAction extends Action {

@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.map.WorldMap.LatLng;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("geoOrderId")
 @EntityType("geoOrder")
 @RequestMapping("/geo-order/{geoOrderId}")
-public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State> {
+public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, GeoOrderEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(GeoOrderEntity.class);
   private final String entityId;
 
@@ -138,15 +138,17 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State> {
     return "geoOrder-id_%1.13f_%1.13f".formatted(position.lat(), position.lng());
   }
 
+  public interface Event {}
+
   public record CreateGeoOrderCommand(String geoOrderId, LatLng position) {}
 
-  public record GeoOrderCreatedEvent(String geoOrderId, LatLng position) {}
+  public record GeoOrderCreatedEvent(String geoOrderId, LatLng position) implements Event {}
 
   public record GeoOrderReadyToShipCommand(String geoOrderId, Instant readyToShipAt) {}
 
-  public record GeoOrderReadyToShipEvent(String geoOrderId, LatLng position, Instant readyToShipAt) {}
+  public record GeoOrderReadyToShipEvent(String geoOrderId, LatLng position, Instant readyToShipAt) implements Event {}
 
   public record GeoOrderBackOrderedCommand(String geoOrderId, Instant backOrderedAt) {}
 
-  public record GeoOrderBackOrderedEvent(String geoOrderId, LatLng position, Instant backOrderedAt) {}
+  public record GeoOrderBackOrderedEvent(String geoOrderId, LatLng position, Instant backOrderedAt) implements Event {}
 }

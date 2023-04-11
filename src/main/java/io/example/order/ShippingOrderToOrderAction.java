@@ -8,8 +8,8 @@ import com.google.protobuf.any.Any;
 import io.example.shipping.ShippingOrderEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
-import kalix.springsdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
+import kalix.javasdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = ShippingOrderEntity.class, ignoreUnknown = true)
 public class ShippingOrderToOrderAction extends Action {

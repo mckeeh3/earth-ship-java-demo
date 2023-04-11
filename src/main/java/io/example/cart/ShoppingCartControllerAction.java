@@ -16,7 +16,7 @@ import io.example.product.ProductEntity;
 import io.example.product.ProductEntity.State;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
+import kalix.spring.KalixClient;
 
 @RequestMapping("/cart-ui/{customerId}")
 public class ShoppingCartControllerAction extends Action {

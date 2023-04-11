@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import kalix.javasdk.view.View;
-import kalix.springsdk.annotations.Query;
-import kalix.springsdk.annotations.Subscribe;
-import kalix.springsdk.annotations.Table;
-import kalix.springsdk.annotations.ViewId;
+import kalix.javasdk.annotations.Query;
+import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.annotations.Table;
+import kalix.javasdk.annotations.ViewId;
 
 @ViewId("orders-by-ordered-at")
 @Table("orders_by_ordered_at")

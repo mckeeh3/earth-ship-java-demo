@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
+import kalix.spring.KalixClient;
 
 @RequestMapping("/product-ui")
 public class ProductControllerAction extends Action {

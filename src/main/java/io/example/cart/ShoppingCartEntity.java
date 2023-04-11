@@ -16,14 +16,14 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("customerId")
 @EntityType("shoppingCart")
 @RequestMapping("/cart/{customerId}")
-public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.State> {
+public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.State, ShoppingCartEntity.Event> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
 
@@ -194,21 +194,23 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
     }
   }
 
+  public interface Event {}
+
   public record LineItem(String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity) {}
 
   public record AddLineItemCommand(String customerId, String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity) {}
 
-  public record AddedLineItemEvent(String customerId, String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity) {}
+  public record AddedLineItemEvent(String customerId, String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity) implements Event {}
 
   public record ChangeLineItemCommand(String customerId, String skuId, int quantity) {}
 
-  public record ChangedLineItemEvent(String customerId, String skuId, int quantity) {}
+  public record ChangedLineItemEvent(String customerId, String skuId, int quantity) implements Event {}
 
   public record RemoveLineItemCommand(String customerId, String skuId) {}
 
-  public record RemovedLineItemEvent(String customerId, String skuId) {}
+  public record RemovedLineItemEvent(String customerId, String skuId) implements Event {}
 
   public record CheckoutCommand(String customerId) {}
 
-  public record CheckedOutEvent(String customerId, Instant checkOutAt, List<LineItem> items) {}
+  public record CheckedOutEvent(String customerId, Instant checkOutAt, List<LineItem> items) implements Event {}
 }

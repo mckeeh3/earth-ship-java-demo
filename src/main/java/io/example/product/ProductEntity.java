@@ -16,14 +16,14 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("skuId")
 @EntityType("product")
 @RequestMapping("/product/{skuId}")
-public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
+public class ProductEntity extends EventSourcedEntity<ProductEntity.State, ProductEntity.Event> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
   private static final int stockOrderSize = 100;
@@ -137,7 +137,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
       return new AddedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityTotal());
     }
 
-    List<?> eventsFor(UpdateStockOrderCommand command) {
+    List<? extends Event> eventsFor(UpdateStockOrderCommand command) {
       var event = new UpdatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityOrdered());
       var newState = on(event);
       if (newState.available < stockOrderSize / 2) {
@@ -150,7 +150,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
       return List.of(event);
     }
 
-    List<?> eventsFor(UpdateProductsBackOrderedCommand command) {
+    List<? extends Event> eventsFor(UpdateProductsBackOrderedCommand command) {
       var event = new UpdatedProductsBackOrderedEvent(command.skuId(), command.backOrderedLot());
       var newState = on(event);
 
@@ -242,23 +242,25 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State> {
     }
   }
 
+  public interface Event {}
+
   public record StockOrder(String stockOrderId, int quantityTotal, int quantityOrdered, int quantityAvailable) {}
 
   public record CreateProductCommand(String skuId, String skuName, String skuDescription, BigDecimal skuPrice) {}
 
-  public record CreatedProductEvent(String skuId, String skuName, String skuDescription, BigDecimal skuPrice) {}
+  public record CreatedProductEvent(String skuId, String skuName, String skuDescription, BigDecimal skuPrice) implements Event {}
 
   public record AddStockOrderCommand(String stockOrderId, String skuId, int quantityTotal) {}
 
-  public record AddedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal) {}
+  public record AddedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal) implements Event {}
 
   public record UpdateStockOrderCommand(String stockOrderId, String skuId, int quantityOrdered) {}
 
-  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityOrdered) {}
+  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityOrdered) implements Event {}
 
   public record UpdateProductsBackOrderedCommand(String skuId, BackOrderedLot backOrderedLot) {}
 
-  public record UpdatedProductsBackOrderedEvent(String skuId, BackOrderedLot backOrderedLot) {}
+  public record UpdatedProductsBackOrderedEvent(String skuId, BackOrderedLot backOrderedLot) implements Event {}
 
-  public record CreateStockOrderRequestedEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) {}
+  public record CreateStockOrderRequestedEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) implements Event {}
 }

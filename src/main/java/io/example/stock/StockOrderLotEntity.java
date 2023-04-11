@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.Validator;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("stockOrderLotId")
 @EntityType("stockOrderLot")
 @RequestMapping("/stock-order-lot/{stockOrderLotId}")
-public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.State> {
+public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.State, StockOrderLotEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(StockOrderLotEntity.class);
   private final String entityId;
 
@@ -87,7 +87,7 @@ public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.
       return stockOrderLot == null;
     }
 
-    List<?> eventsFor(UpdateSubStockOrderLotCommand command) {
+    List<? extends Event> eventsFor(UpdateSubStockOrderLotCommand command) {
       if (hasChanged) {
         return List.of(new UpdatedSubStockOrderLotEvent(command.subStockOrderLotId, command.subStockOrderLot));
       } else {
@@ -120,13 +120,15 @@ public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.
     }
   }
 
+  public interface Event {}
+
   public record UpdateSubStockOrderLotCommand(StockOrderLotId subStockOrderLotId, StockOrderLot subStockOrderLot) {}
 
-  public record UpdatedSubStockOrderLotEvent(StockOrderLotId subStockOrderLotId, StockOrderLot subStockOrderLot) {}
+  public record UpdatedSubStockOrderLotEvent(StockOrderLotId subStockOrderLotId, StockOrderLot subStockOrderLot) implements Event {}
 
-  public record UpdatedStockOrderLotEvent(StockOrderLotId stockOrderLotId) {}
+  public record UpdatedStockOrderLotEvent(StockOrderLotId stockOrderLotId) implements Event {}
 
   public record ReleaseStockOrderLotCommand(StockOrderLotId stockOrderLotId) {}
 
-  public record ReleasedStockOrderLotEvent(StockOrderLotId stockOrderLotId, StockOrderLot stockOrderLot) {}
+  public record ReleasedStockOrderLotEvent(StockOrderLotId stockOrderLotId, StockOrderLot stockOrderLot) implements Event {}
 }

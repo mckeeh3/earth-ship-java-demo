@@ -7,8 +7,8 @@ import com.google.protobuf.any.Any;
 
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
-import kalix.springsdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
+import kalix.javasdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = StockOrderEntity.class, ignoreUnknown = true)
 public class StockOrderToStockOrderAction extends Action {

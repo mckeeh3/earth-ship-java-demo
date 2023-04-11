@@ -12,8 +12,8 @@ import io.example.shipping.OrderSkuItemEntity;
 import io.example.shipping.OrderSkuItemId;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
-import kalix.springsdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
+import kalix.javasdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = OrderSkuItemEntity.class, ignoreUnknown = true)
 public class OrderSkuItemToBackOrderedLotAction extends Action {

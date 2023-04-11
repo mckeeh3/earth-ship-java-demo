@@ -11,8 +11,8 @@ import com.google.protobuf.any.Any;
 import io.example.shipping.OrderSkuItemEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
-import kalix.springsdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
+import kalix.javasdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = OrderSkuItemEntity.class, ignoreUnknown = true)
 public class OrderSkuItemToStockSkuItemAction extends Action {

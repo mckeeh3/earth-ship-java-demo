@@ -15,14 +15,14 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("orderId")
 @EntityType("order")
 @RequestMapping("/order/{orderId}")
-public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
+public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(OrderEntity.class);
   private final String entityId;
 
@@ -439,45 +439,47 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State> {
     }
   }
 
+  public interface Event {}
+
   public record OrderItem(String skuId, String skuName, String skuDescription, BigDecimal skuPrice, int quantity, Instant readyToShipAt, Instant backOrderedAt) {}
 
   public record CreateOrderCommand(String orderId, String customerId, List<OrderItem> orderItems) {}
 
-  public record CreatedOrderEvent(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) {}
+  public record CreatedOrderEvent(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) implements Event {}
 
-  public record ReadyToShipOrderCommand(String orderId, Instant readyToShipAt) {}
+  public record ReadyToShipOrderCommand(String orderId, Instant readyToShipAt) implements Event {}
 
-  public record ReadyToShipOrderEvent(String orderId, Instant readyToShipAt) {}
+  public record ReadyToShipOrderEvent(String orderId, Instant readyToShipAt) implements Event {}
 
   public record ReleaseOrderCommand(String orderId) {}
 
-  public record ReleasedOrderEvent(String orderId) {}
+  public record ReleasedOrderEvent(String orderId) implements Event {}
 
   public record BackOrderOrderCommand(String orderId, Instant backOrderedAt) {}
 
-  public record BackOrderedOrderEvent(String orderId, Instant backOrderedAt) {}
+  public record BackOrderedOrderEvent(String orderId, Instant backOrderedAt) implements Event {}
 
   public record ReadyToShipOrderItemCommand(String orderId, String skuId, Instant readyToShipAt) {}
 
-  public record ReadyToShipOrderItemEvent(String orderId, String skuId, Instant readyToShipAt) {}
+  public record ReadyToShipOrderItemEvent(String orderId, String skuId, Instant readyToShipAt) implements Event {}
 
   public record ReleaseOrderItemCommand(String orderId, String skuId) {}
 
-  public record ReleasedOrderItemEvent(String orderId, String skuId) {}
+  public record ReleasedOrderItemEvent(String orderId, String skuId) implements Event {}
 
   public record BackOrderOrderItemCommand(String orderId, String skuId, Instant backOrderedAt) {}
 
-  public record BackOrderedOrderItemEvent(String orderId, String skuId, Instant backOrderedAt, boolean test) {}
+  public record BackOrderedOrderItemEvent(String orderId, String skuId, Instant backOrderedAt, boolean test) implements Event {}
 
   public record DeliverOrderCommand(String orderId) {}
 
-  public record DeliveredOrderEvent(String orderId) {}
+  public record DeliveredOrderEvent(String orderId) implements Event {}
 
   public record ReturnOrderCommand(String orderId) {}
 
-  public record ReturnedOrderEvent(String orderId) {}
+  public record ReturnedOrderEvent(String orderId) implements Event {}
 
   public record CancelOrderCommand(String orderId) {}
 
-  public record CanceledOrderEvent(String orderId) {}
+  public record CanceledOrderEvent(String orderId) implements Event {}
 }

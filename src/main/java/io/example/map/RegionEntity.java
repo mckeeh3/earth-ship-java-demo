@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.map.WorldMap.Region;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("regionId")
 @EntityType("region")
 @RequestMapping("/region")
-public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
+public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(RegionEntity.class);
   private final String entityId;
 
@@ -92,7 +92,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
       return region.isEmpty();
     }
 
-    List<?> eventsFor(UpdateSubRegionCommand command) {
+    List<? extends Event> eventsFor(UpdateSubRegionCommand command) {
       var newRegion = regionFor(region, command);
       var updatedSubRegionEvent = new UpdatedSubRegionEvent(command.subRegion());
 
@@ -168,15 +168,17 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
     }
   }
 
+  public interface Event {}
+
   public record UpdateSubRegionCommand(Region subRegion) {}
 
-  public record UpdatedSubRegionEvent(Region subRegion) {}
+  public record UpdatedSubRegionEvent(Region subRegion) implements Event {}
 
-  public record UpdatedRegionEvent(Region region) {}
+  public record UpdatedRegionEvent(Region region) implements Event {}
 
   public record ReleaseCurrentStateCommand(Region region) {}
 
-  public record ReleasedCurrentStateEvent(Region region) {}
+  public record ReleasedCurrentStateEvent(Region region) implements Event {}
 
   public record PingRequest(Region region) {}
 

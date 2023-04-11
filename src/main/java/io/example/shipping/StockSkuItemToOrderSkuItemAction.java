@@ -12,8 +12,8 @@ import io.example.stock.StockSkuItemEntity;
 import io.example.stock.StockSkuItemEntity.StockRequestedJoinToOrderEvent;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
-import kalix.springsdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
+import kalix.javasdk.annotations.Subscribe;
 
 @Subscribe.EventSourcedEntity(value = StockSkuItemEntity.class, ignoreUnknown = true)
 public class StockSkuItemToOrderSkuItemAction extends Action {

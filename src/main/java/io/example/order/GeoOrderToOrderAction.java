@@ -17,8 +17,8 @@ import io.example.product.ProductEntity;
 import io.example.product.ProductEntity.State;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
-import kalix.springsdk.annotations.Subscribe;
+import kalix.javasdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
 
 @Subscribe.EventSourcedEntity(value = GeoOrderEntity.class, ignoreUnknown = true)
 public class GeoOrderToOrderAction extends Action {

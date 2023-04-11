@@ -15,14 +15,14 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("stockOrderId")
 @EntityType("stockOrder")
 @RequestMapping("/stock-order/{stockOrderId}")
-public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State> {
+public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State, StockOrderEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(StockOrderEntity.class);
   private final String entityId;
   private static final int generateBatchSize = 32;
@@ -172,17 +172,19 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State>
     }
   }
 
+  public interface Event {}
+
   public record CreateStockOrderCommand(String stockOrderId, String skuId, String skuName, int quantityTotal) {}
 
-  public record CreatedStockOrderEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) {}
+  public record CreatedStockOrderEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) implements Event {}
 
   public record UpdateStockOrderCommand(String stockOrderId, int quantityTotal, int quantityOrdered) {}
 
-  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal, int quantityOrdered) {}
+  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal, int quantityOrdered) implements Event {}
 
   public record GenerateStockSkuItemIdsCommand(String stockOrderId) {}
 
-  public record GeneratedStockSkuItemIdsEvent(String stockOrderId, List<GenerateStockSkuItem> generateStockSkuItems) {}
+  public record GeneratedStockSkuItemIdsEvent(String stockOrderId, List<GenerateStockSkuItem> generateStockSkuItems) implements Event {}
 
   public record GenerateStockSkuItem(StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
 }

@@ -13,14 +13,14 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 
 @EntityKey("backOrderedLotId")
 @EntityType("backOrderedLot")
 @RequestMapping("/back-ordered-lot/{backOrderedLotId}")
-public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntity.State> {
+public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntity.State, BackOrderedLotEntity.Event> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
 
@@ -37,7 +37,7 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
   public Effect<String> create(@RequestBody UpdateSubBackOrderedLotCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
-        .emitEvents(currentState().eventFor(command))
+        .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
   }
 
@@ -85,7 +85,7 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
       return backOrderedLot == null;
     }
 
-    List<?> eventFor(UpdateSubBackOrderedLotCommand command) {
+    List<? extends Event> eventsFor(UpdateSubBackOrderedLotCommand command) {
       if (hasChanged) {
         return List.of(new UpdatedSubBackOrderedLotEvent(command.subBackOrderedLotId(), command.subBackOrderedLot()));
       } else {
@@ -117,13 +117,15 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
     }
   }
 
+  public interface Event {}
+
   public record UpdateSubBackOrderedLotCommand(BackOrderedLotId subBackOrderedLotId, BackOrderedLot subBackOrderedLot) {}
 
-  public record UpdatedSubBackOrderedLotEvent(BackOrderedLotId subBackOrderedLotId, BackOrderedLot subBackOrderedLot) {}
+  public record UpdatedSubBackOrderedLotEvent(BackOrderedLotId subBackOrderedLotId, BackOrderedLot subBackOrderedLot) implements Event {}
 
-  public record UpdatedBackOrderedLotEvent(BackOrderedLotId backOrderedLotId) {}
+  public record UpdatedBackOrderedLotEvent(BackOrderedLotId backOrderedLotId) implements Event {}
 
   public record ReleaseBackOrderedLotCommand(BackOrderedLotId backOrderedLotId) {}
 
-  public record ReleasedBackOrderedLotEvent(BackOrderedLotId backOrderedLotId, BackOrderedLot backOrderedLot) {}
+  public record ReleasedBackOrderedLotEvent(BackOrderedLotId backOrderedLotId, BackOrderedLot backOrderedLot) implements Event {}
 }

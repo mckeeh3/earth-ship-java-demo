@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.product.ProductEntity;
 import io.example.product.ProductEntity.State;
 import kalix.javasdk.action.Action;
-import kalix.springsdk.KalixClient;
+import kalix.spring.KalixClient;
 
 @RequestMapping("/stock-order-ui/{stockOrderId}")
 public class StockOrderControllerAction extends Action {

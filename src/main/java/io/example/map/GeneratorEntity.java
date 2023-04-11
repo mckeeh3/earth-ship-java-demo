@@ -1,10 +1,12 @@
 package io.example.map;
 
+import static io.example.map.WorldMap.earthRadiusKm;
+
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,18 +17,17 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import io.example.map.WorldMap.LatLng;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
-import kalix.springsdk.annotations.EventHandler;
-
-import static io.example.map.WorldMap.*;
 
 @EntityKey("generatorId")
 @EntityType("generator")
 @RequestMapping("/generator")
-public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
+public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, GeneratorEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(GeneratorEntity.class);
   private static final Random random = new Random();
   private final String entityId;
@@ -102,7 +103,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
       return generatorId == null;
     }
 
-    List<?> eventsFor(CreateGeneratorCommand command) {
+    List<? extends Event> eventsFor(CreateGeneratorCommand command) {
       if (!isEmpty()) {
         return List.of(new GeneratorCreatedEvent(
             generatorId,
@@ -119,13 +120,14 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           command.ratePerSecond,
           epochMsNow(),
           command.geoOrderCountLimit);
-      var events = new ArrayList<Object>();
-      events.add(generatorCreatedEvent);
-      events.addAll(createGeoOrdersToGenerateEvents(command.generatorId()));
-      return events;
+      // var events = new ArrayList<Event>();
+      // events.add(generatorCreatedEvent);
+      // events.addAll(createGeoOrdersToGenerateEvents(command.generatorId()));
+      // return events; TODO remove this line and above
+      return Stream.of(List.of(generatorCreatedEvent), createGeoOrdersToGenerateEvents(command.generatorId())).flatMap(List::stream).toList();
     }
 
-    List<?> eventsFor(GenerateCommand command) {
+    List<? extends Event> eventsFor(GenerateCommand command) {
       if (geoOrderCountCurrent == geoOrderCountLimit) {
         return List.of();
       }
@@ -133,10 +135,12 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
       var geoOrdersToBeGenerated = geoOrderBatches.stream()
           .map(e -> e.geoOrders().size())
           .reduce(0, (a, n) -> a + n);
-      var events = new ArrayList<Object>();
-      events.add(new GeneratedEvent(generatorId, geoOrdersToBeGenerated, geoOrderCountCurrent + geoOrdersToBeGenerated));
-      events.addAll(geoOrderBatches);
-      return events;
+      // var events = new ArrayList<Event>();
+      // events.add(new GeneratedEvent(generatorId, geoOrdersToBeGenerated, geoOrderCountCurrent + geoOrdersToBeGenerated));
+      // events.addAll(geoOrderBatches);
+      // return events; TODO remove this line and above
+      var generatedEvent = new GeneratedEvent(generatorId, geoOrdersToBeGenerated, geoOrderCountCurrent + geoOrdersToBeGenerated);
+      return Stream.of(List.of(generatedEvent), geoOrderBatches).flatMap(List::stream).toList();
     }
 
     List<GeoOrdersToGenerateEvent> createGeoOrdersToGenerateEvents(String generatorId) {
@@ -187,15 +191,17 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     }
   }
 
+  public interface Event {}
+
   public record CreateGeneratorCommand(String generatorId, LatLng position, double radiusKm, int geoOrderCountLimit, int ratePerSecond) {}
 
   public record GenerateCommand(String generatorId) {}
 
-  public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int ratePerSecond, long startTimeMs, int geoOrderCountLimit) {}
+  public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int ratePerSecond, long startTimeMs, int geoOrderCountLimit) implements Event {}
 
-  public record GeneratedEvent(String generatorId, int geoOrdersGenerated, int geoOrderCountCurrent) {}
+  public record GeneratedEvent(String generatorId, int geoOrdersGenerated, int geoOrderCountCurrent) implements Event {}
 
-  public record GeoOrdersToGenerateEvent(String generatorId, int geoOrdersToBeGenerated, List<GeoOrder> geoOrders) {
+  public record GeoOrdersToGenerateEvent(String generatorId, int geoOrdersToBeGenerated, List<GeoOrder> geoOrders) implements Event {
     static GeoOrdersToGenerateEvent with(String generatorId, LatLng position, double radiusKm, int geoOrderCount) {
       var geoOrders = generateGeoOrders(generatorId, position, radiusKm, geoOrderCount);
       return new GeoOrdersToGenerateEvent(generatorId, geoOrders.size(), geoOrders);

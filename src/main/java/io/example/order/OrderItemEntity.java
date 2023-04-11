@@ -13,8 +13,8 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.valueentity.ValueEntity;
 import kalix.javasdk.valueentity.ValueEntityContext;
-import kalix.springsdk.annotations.EntityKey;
-import kalix.springsdk.annotations.EntityType;
+import kalix.javasdk.annotations.EntityKey;
+import kalix.javasdk.annotations.EntityType;
 
 @EntityKey("orderItemId")
 @EntityType("orderItem")
