@@ -120,10 +120,6 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
           command.ratePerSecond,
           epochMsNow(),
           command.geoOrderCountLimit);
-      // var events = new ArrayList<Event>();
-      // events.add(generatorCreatedEvent);
-      // events.addAll(createGeoOrdersToGenerateEvents(command.generatorId()));
-      // return events; TODO remove this line and above
       return Stream.of(List.of(generatorCreatedEvent), createGeoOrdersToGenerateEvents(command.generatorId())).flatMap(List::stream).toList();
     }
 
@@ -135,10 +131,6 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
       var geoOrdersToBeGenerated = geoOrderBatches.stream()
           .map(e -> e.geoOrders().size())
           .reduce(0, (a, n) -> a + n);
-      // var events = new ArrayList<Event>();
-      // events.add(new GeneratedEvent(generatorId, geoOrdersToBeGenerated, geoOrderCountCurrent + geoOrdersToBeGenerated));
-      // events.addAll(geoOrderBatches);
-      // return events; TODO remove this line and above
       var generatedEvent = new GeneratedEvent(generatorId, geoOrdersToBeGenerated, geoOrderCountCurrent + geoOrdersToBeGenerated);
       return Stream.of(List.of(generatedEvent), geoOrderBatches).flatMap(List::stream).toList();
     }
