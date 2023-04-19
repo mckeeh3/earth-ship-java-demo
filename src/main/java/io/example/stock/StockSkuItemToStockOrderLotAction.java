@@ -27,7 +27,7 @@ public class StockSkuItemToStockOrderLotAction extends Action {
     return effects().forward(callFor(event.stockSkuItemId().stockOrderLotId(), true));
   }
 
-  public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
+  public Effect<String> on(StockSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     log.info("Event: {}", event);
     return effects().forward(callFor(event.stockSkuItemId().stockOrderLotId(), true));
   }

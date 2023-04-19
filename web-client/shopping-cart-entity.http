@@ -1,6 +1,5 @@
-
-# @urlPrefix = http://localhost:9000
-@urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
+@urlPrefix = http://localhost:9000
+# @urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
 @customerId = customer-1
 @skuId = P0001
 @skuName = sku name 1
