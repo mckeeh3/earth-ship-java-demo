@@ -35,11 +35,11 @@ public class OrderToShippingOrderAction extends Action {
     return deferredCall;
   }
 
-  private ShippingOrderEntity.CreateOrderCommand toCommand(OrderEntity.CreatedOrderEvent event) {
-    return new ShippingOrderEntity.CreateOrderCommand(event.orderId(), event.customerId(), event.orderedAt(), toOrderItems(event.orderItems()));
+  private ShippingOrderEntity.CreateShippingOrderCommand toCommand(OrderEntity.CreatedOrderEvent event) {
+    return new ShippingOrderEntity.CreateShippingOrderCommand(event.orderId(), event.customerId(), event.orderedAt(), toOrderItems(event.orderItems()));
   }
 
   private List<ShippingOrderEntity.OrderItem> toOrderItems(List<OrderEntity.OrderItem> items) {
-    return items.stream().map(i -> new ShippingOrderEntity.OrderItem(i.skuId(), i.skuName(), i.quantity(), null, null, List.of())).toList();
+    return items.stream().map(i -> new ShippingOrderEntity.OrderItem(i.skuId(), i.skuName(), i.quantity(), null, null)).toList();
   }
 }
