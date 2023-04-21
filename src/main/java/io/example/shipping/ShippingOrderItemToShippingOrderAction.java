@@ -35,24 +35,24 @@ public class ShippingOrderItemToShippingOrderAction extends Action {
   }
 
   private DeferredCall<Any, String> callFor(ShippingOrderItemEntity.ReadyToShipOrderItemEvent event) {
-    var path = "/shipping-order/%s/ready-to-ship-order-item".formatted(event.orderId());
-    var command = new ShippingOrderEntity.ReadyToShipOrderItemCommand(event.orderId(), event.skuId(), event.readyToShipAt());
+    var path = "/shipping-order/%s/ready-to-ship-order-item".formatted(event.shippingOrderItemId().orderId());
+    var command = new ShippingOrderEntity.ReadyToShipOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId(), event.readyToShipAt());
     var returnType = String.class;
 
     return kalixClient.put(path, command, returnType);
   }
 
   private DeferredCall<Any, String> callFor(ShippingOrderItemEntity.ReleasedOrderItemEvent event) {
-    var path = "/shipping-order/%s/release-order-item".formatted(event.orderId());
-    var command = new ShippingOrderEntity.ReleaseOrderItemCommand(event.orderId(), event.skuId());
+    var path = "/shipping-order/%s/release-order-item".formatted(event.shippingOrderItemId().orderId());
+    var command = new ShippingOrderEntity.ReleaseOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId());
     var returnType = String.class;
 
     return kalixClient.put(path, command, returnType);
   }
 
   private DeferredCall<Any, String> callFor(ShippingOrderItemEntity.BackOrderedOrderItemEvent event) {
-    var path = "/shipping-order/%s/back-order-order-item".formatted(event.orderId());
-    var command = new ShippingOrderEntity.BackOrderOrderItemCommand(event.orderId(), event.skuId(), event.backOrderedAt());
+    var path = "/shipping-order/%s/back-order-order-item".formatted(event.shippingOrderItemId().orderId());
+    var command = new ShippingOrderEntity.BackOrderOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId(), event.backOrderedAt());
     var returnType = String.class;
 
     return kalixClient.put(path, command, returnType);

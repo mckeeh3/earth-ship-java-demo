@@ -5,10 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.shipping.OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent;
+import io.example.shipping.OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent;
+import io.example.shipping.OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.spring.KalixClient;
 
 @Subscribe.EventSourcedEntity(value = OrderSkuItemEntity.class, ignoreUnknown = true)
 public class OrderSkuItemToShippingOrderItemAction extends Action {
@@ -40,7 +43,7 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
   }
 
   private DeferredCall<Any, String> callFor(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
-    var path = "/shipping-order-item/%s/ready-to-ship".formatted(event.orderSkuItemId().orderId());
+    var path = "/shipping-order-item/%s/ready-to-ship".formatted(shippingOrderItemEntityId(event));
     var command = toCommand(event);
     var returnType = String.class;
 
@@ -56,7 +59,7 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
   }
 
   private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
-    var path = "/shipping-order-item/%s/ready-to-ship".formatted(event.orderSkuItemId().orderId());
+    var path = "/shipping-order-item/%s/ready-to-ship".formatted(shippingOrderItemEntityId(event));
     var command = toCommand(event);
     var returnType = String.class;
 
@@ -72,7 +75,7 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
   }
 
   private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
-    var path = "/shipping-order-item/%s/release".formatted(event.orderSkuItemId().orderId());
+    var path = "/shipping-order-item/%s/release".formatted(shippingOrderItemEntityId(event));
     var command = toCommand(event);
     var returnType = String.class;
 
@@ -87,7 +90,7 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
   }
 
   private DeferredCall<Any, String> callFor(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
-    var path = "/shipping-order-item/%s/back-order".formatted(event.orderSkuItemId().orderId());
+    var path = "/shipping-order-item/%s/back-order".formatted(shippingOrderItemEntityId(event));
     var command = toCommand(event);
     var returnType = String.class;
 
@@ -99,5 +102,21 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
         event.orderSkuItemId(),
         event.skuId(),
         event.backOrderedAt());
+  }
+
+  private String shippingOrderItemEntityId(StockRequestedJoinToOrderAcceptedEvent event) {
+    return new ShippingOrderItemEntity.ShippingOrderItemId(event.orderSkuItemId().orderId(), event.skuId()).toEntityId();
+  }
+
+  private String shippingOrderItemEntityId(OrderRequestedJoinToStockAcceptedEvent event) {
+    return new ShippingOrderItemEntity.ShippingOrderItemId(event.orderSkuItemId().orderId(), event.skuId()).toEntityId();
+  }
+
+  private String shippingOrderItemEntityId(OrderRequestedJoinToStockReleasedEvent event) {
+    return new ShippingOrderItemEntity.ShippingOrderItemId(event.orderSkuItemId().orderId(), event.skuId()).toEntityId();
+  }
+
+  private String shippingOrderItemEntityId(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
+    return new ShippingOrderItemEntity.ShippingOrderItemId(event.orderSkuItemId().orderId(), event.skuId()).toEntityId();
   }
 }

@@ -34,16 +34,15 @@ public class ShippingOrderToShippingOrderItemAction extends Action {
   }
 
   private CompletionStage<String> callFor(CreatedShippingOrderEvent event, OrderItem orderItem) {
-    var path = "/shipping-order-item/%s/create".formatted(event.orderId());
     var command = toCommand(event, orderItem);
+    var path = "/shipping-order-item/%s/create".formatted(command.shippingOrderItemId().toEntityId());
     var returnType = String.class;
     return kalixClient.put(path, command, returnType).execute();
   }
 
   private ShippingOrderItemEntity.CreateShippingOrderItemCommand toCommand(CreatedShippingOrderEvent event, ShippingOrderEntity.OrderItem orderItem) {
     return new ShippingOrderItemEntity.CreateShippingOrderItemCommand(
-        event.orderId(),
-        orderItem.skuId(),
+        ShippingOrderItemEntity.ShippingOrderItemId.of(event.orderId(), orderItem.skuId()),
         orderItem.skuName(),
         orderItem.quantity(),
         event.customerId(),

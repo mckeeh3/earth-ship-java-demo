@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.google.protobuf.any.Any;
 
 import io.example.shipping.OrderSkuItemEntity;
-import io.example.shipping.OrderSkuItemId;
+import io.example.shipping.OrderSkuItemEntity.OrderSkuItemId;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.spring.KalixClient;
