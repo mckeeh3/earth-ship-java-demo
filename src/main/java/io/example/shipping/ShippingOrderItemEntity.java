@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
 import io.example.shipping.OrderSkuItemEntity.OrderSkuItemId;
-import io.example.stock.StockSkuItemId;
+import io.example.stock.StockSkuItemEntity.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
