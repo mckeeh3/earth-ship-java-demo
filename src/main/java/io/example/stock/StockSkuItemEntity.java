@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
-import io.example.shipping.OrderSkuItemId;
+import io.example.shipping.OrderSkuItemEntity.OrderSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -353,4 +353,25 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
   public record OrderRequestedJoinToStockReleasedEvent(StockSkuItemId stockSkuItemId, String skuId, OrderSkuItemId orderSkuItemId) implements Event {}
 
   public record StockRequestedJoinToOrderReleasedEvent(StockSkuItemId stockSkuItemId, String skuId, OrderSkuItemId orderSkuItemId) implements Event {}
+
+  public record StockSkuItemId(StockOrderLotId stockOrderLotId, int stockSkuItemNumber) {
+    public String toEntityId() {
+      return "%s_%d".formatted(stockOrderLotId.toEntityId(), stockSkuItemNumber);
+    }
+
+    private static int lotLevelsFor(int stockOrderItemsTotal) {
+      return (int) Math.ceil(Math.log(stockOrderItemsTotal) / Math.log(StockOrderLotId.subLotsPerLot));
+    }
+
+    static StockSkuItemId of(String stockOrderId, int stockOrderItemsTotal, int stockOrderItemNumber) {
+      var lotLevel = lotLevelsFor(stockOrderItemsTotal);
+      var lotNumber = stockOrderItemNumber;
+      var stockOrderLotId = new StockOrderLotId(stockOrderId, lotLevel, lotNumber);
+      return new StockSkuItemId(stockOrderLotId, stockOrderItemNumber);
+    }
+
+    StockOrderLotId levelUp() {
+      return stockOrderLotId.levelUp();
+    }
+  }
 }

@@ -2,6 +2,7 @@ package io.example.shipping;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
-import io.example.stock.StockSkuItemId;
+import io.example.stock.StockSkuItemEntity.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -370,4 +371,14 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
   public record BackOrderOrderSkuItemCommand(OrderSkuItemId orderSkuItemId, String skuId) {}
 
   public record BackOrderedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, Instant backOrderedAt) implements Event {}
+
+  public record OrderSkuItemId(String orderId, UUID uuid) {
+    public static OrderSkuItemId of(String orderId) {
+      return new OrderSkuItemId(orderId, UUID.randomUUID());
+    }
+
+    public String toEntityId() {
+      return "%s_%s".formatted(orderId, uuid);
+    }
+  }
 }
