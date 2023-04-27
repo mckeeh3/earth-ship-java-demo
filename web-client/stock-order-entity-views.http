@@ -1,9 +1,13 @@
 @urlPrefix = http://localhost:9000
-@stockOrderId = stock-order-1
-@skuId = sku-1
-@skuName = sku name 1
-@quantityTotal = 5
-@orderItemsOrdered = 5
-@orderItemsAvailable = 5
+@stockOrderReceivedAtFrom = 2023-01-01T00:00:00.000Z
+@stockOrderReceivedAtTo = 2024-01-01T00:00:00.999Z
 
-### Create a new stock order
+### Query all stock orders
+
+POST {{urlPrefix}}/stock-orders-by-received-at
+Content-Type: application/json
+
+{
+  "stockOrderReceivedAtFrom": "{{stockOrderReceivedAtFrom}}",
+  "stockOrderReceivedAtTo": "{{stockOrderReceivedAtTo}}"
+}

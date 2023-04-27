@@ -40,8 +40,10 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
   @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateStockOrderCommand command) {
     log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    if (currentState().stockOrderId() != null) {
+      return effects().reply("OK");
+    }
     return Validator.<Effect<String>>start()
-        .isNotEmpty(currentState().stockOrderId(), "StockOrder already exists")
         .isLtEqZero(command.quantityTotal(), "quantityTotal must be greater than 0")
         .isGtLimit(command.quantityTotal(), 1_000, "quantityTotal must be less than or equal to 1_000")
         .isEmpty(command.skuId, "SkuId must not be empty")
