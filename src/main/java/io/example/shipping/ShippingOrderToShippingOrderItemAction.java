@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.example.LogEvent;
 import io.example.shipping.ShippingOrderEntity.CreatedShippingOrderEvent;
 import io.example.shipping.ShippingOrderEntity.OrderItem;
 import kalix.javasdk.action.Action;
@@ -35,6 +36,7 @@ public class ShippingOrderToShippingOrderItemAction extends Action {
 
   private CompletionStage<String> callFor(CreatedShippingOrderEvent event, OrderItem orderItem) {
     var command = toCommand(event, orderItem);
+    LogEvent.log("ShippingOrder", event.orderId(), "ShippingOrderItem", command.shippingOrderItemId().toEntityId());
     var path = "/shipping-order-item/%s/create".formatted(command.shippingOrderItemId().toEntityId());
     var returnType = String.class;
     return kalixClient.put(path, command, returnType).execute();

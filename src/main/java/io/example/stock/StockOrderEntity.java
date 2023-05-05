@@ -40,7 +40,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
   @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateStockOrderCommand command) {
     log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    if (currentState().stockOrderId() != null) {
+    if (currentState().stockOrderId() != null && !currentState().stockOrderId().isEmpty()) {
       return effects().reply("OK");
     }
     return Validator.<Effect<String>>start()

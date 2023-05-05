@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.example.LogEvent;
 import kalix.javasdk.action.Action;
 import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
@@ -29,7 +30,7 @@ public class StockOrderToStockSkuItemAction extends Action {
   private Effect<String> onOneEventInToManyCommandsOut(StockOrderEntity.GeneratedStockSkuItemIdsEvent event) {
     var results = event.generateStockSkuItems().stream()
         .map(id -> toCommand(id))
-        .map(command -> callFor(command))
+        .map(command -> callFor(command, event.stockOrderId()))
         .toList();
 
     return effects().asyncReply(waitForCallsToFinish(results));
@@ -39,10 +40,12 @@ public class StockOrderToStockSkuItemAction extends Action {
     return new StockSkuItemEntity.CreateStockSkuItemCommand(id.stockSkuItemId(), id.skuId(), id.skuName());
   }
 
-  private CompletionStage<String> callFor(StockSkuItemEntity.CreateStockSkuItemCommand command) {
+  private CompletionStage<String> callFor(StockSkuItemEntity.CreateStockSkuItemCommand command, String stockOrderId) {
     var path = "/stock-sku-item/%s/create".formatted(command.stockSkuItemId().toEntityId());
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
+
+    LogEvent.log("StockOrder", stockOrderId, "StockSkuItem", command.stockSkuItemId().toEntityId());
 
     return deferredCall.execute();
   }

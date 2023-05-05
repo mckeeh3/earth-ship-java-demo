@@ -5,6 +5,7 @@ import static io.example.map.WorldMap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.example.LogEvent;
 import kalix.javasdk.action.Action;
 import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
@@ -37,6 +38,9 @@ public class RegionToRegionAction extends Action {
     if (region == null) {
       return effects().reply("OK"); // there are no more regions above zoom level 1
     }
+
+    LogEvent.log("Region", regionIdFor(subRegion), "Region", regionIdFor(region));
+
     var regionId = regionIdFor(region);
     var path = "/region/%s/update-sub-region".formatted(regionId);
     var command = new RegionEntity.UpdateSubRegionCommand(subRegion);

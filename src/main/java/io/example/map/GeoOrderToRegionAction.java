@@ -5,6 +5,7 @@ import static io.example.map.WorldMap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.example.LogEvent;
 import kalix.javasdk.action.Action;
 import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
@@ -20,23 +21,25 @@ public class GeoOrderToRegionAction extends Action {
 
   public Effect<String> on(GeoOrderEntity.GeoOrderCreatedEvent event) {
     log.info("Event: {}", event);
-    return updateSubRegion(event.position(), false);
+    return updateSubRegion(event.geoOrderId(), event.position(), false);
   }
 
   public Effect<String> on(GeoOrderEntity.GeoOrderReadyToShipEvent event) {
     log.info("Event: {}", event);
-    return updateSubRegion(event.position(), false);
+    return updateSubRegion(event.geoOrderId(), event.position(), false);
   }
 
   public Effect<String> on(GeoOrderEntity.GeoOrderBackOrderedEvent event) {
     log.info("Event: {}", event);
-    return updateSubRegion(event.position(), true);
+    return updateSubRegion(event.geoOrderId(), event.position(), true);
   }
 
-  private Effect<String> updateSubRegion(LatLng position, boolean alarmOn) {
+  private Effect<String> updateSubRegion(String geoOrderId, LatLng position, boolean alarmOn) {
     var subRegion = new Region(zoomMax + 1, position, position, 1, alarmOn ? 1 : 0);
     var region = regionAbove(subRegion);
     var regionId = regionIdFor(region);
+
+    LogEvent.log("GeoOrder", geoOrderId, "Region", regionId);
 
     var path = "/region/%s/update-sub-region".formatted(regionId);
     var command = new RegionEntity.UpdateSubRegionCommand(subRegion);

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.order.OrderEntity;
 import io.example.order.OrderEntity.BackOrderedOrderEvent;
 import io.example.order.OrderEntity.ReadyToShipOrderEvent;
@@ -24,11 +25,13 @@ public class OrderToGeoOrderAction extends Action {
 
   public Effect<String> on(OrderEntity.ReadyToShipOrderEvent event) {
     log.info("Event: {}", event);
+    LogEvent.log("Order", event.orderId(), "GeoOrder", event.orderId());
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderEntity.BackOrderedOrderEvent event) {
     log.info("Event: {}", event);
+    LogEvent.log("Order", event.orderId(), "GeoOrder", event.orderId());
     return effects().forward(callFor(event));
   }
 

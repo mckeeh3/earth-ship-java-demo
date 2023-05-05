@@ -22,7 +22,7 @@
     <logger name="io.example.shipping.ShippingOrderEntity" level="INFO"/>
 
     <!-- Silence some details from Akka, should not be important to user/SDK dev mode -->
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
 

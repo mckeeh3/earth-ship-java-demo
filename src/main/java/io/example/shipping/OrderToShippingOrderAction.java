@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.order.OrderEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
@@ -24,6 +25,7 @@ public class OrderToShippingOrderAction extends Action {
 
   public Effect<String> on(OrderEntity.CreatedOrderEvent event) {
     log.info("Event: {}", event);
+    LogEvent.log("Order", event.orderId(), "ShippingOrder", event.orderId());
     return effects().forward(callFor(event));
   }
 

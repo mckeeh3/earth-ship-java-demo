@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.map.GeoOrderEntity;
 import io.example.map.GeoOrderEntity.GeoOrderCreatedEvent;
 import io.example.product.ProductEntity;
@@ -31,6 +32,7 @@ public class GeoOrderToOrderAction extends Action {
 
   public Effect<String> on(GeoOrderEntity.GeoOrderCreatedEvent event) {
     log.info("Event: {}", event);
+    LogEvent.log("GeoOrder", event.geoOrderId(), "Order", event.geoOrderId());
     try {
       return effects().forward(callFor(event));
     } catch (Exception e) {

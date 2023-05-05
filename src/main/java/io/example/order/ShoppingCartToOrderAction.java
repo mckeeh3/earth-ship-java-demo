@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.cart.ShoppingCartEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
@@ -33,6 +34,8 @@ public class ShoppingCartToOrderAction extends Action {
     var path = "/order/%s/create".formatted(orderId);
     var command = new OrderEntity.CreateOrderCommand(orderId, event.customerId(), toOrderItems(event.items()));
     var returnType = String.class;
+
+    LogEvent.log("ShoppingCart", event.customerId(), "Order", orderId);
 
     return kalixClient.put(path, command, returnType);
   }

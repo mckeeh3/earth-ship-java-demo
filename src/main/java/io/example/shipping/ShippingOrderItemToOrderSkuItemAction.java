@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.example.LogEvent;
 import io.example.shipping.ShippingOrderItemEntity.CreatedShippingOrderItemEvent;
 import io.example.shipping.ShippingOrderItemEntity.OrderSkuItem;
 import kalix.javasdk.action.Action;
@@ -34,6 +35,7 @@ public class ShippingOrderItemToOrderSkuItemAction extends Action {
   }
 
   private OrderSkuItemEntity.CreateOrderSkuItemCommand toCommands(CreatedShippingOrderItemEvent event, OrderSkuItem orderSkuItem) {
+    LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "OrderSkuItem", orderSkuItem.orderSkuItemId().toEntityId());
     return new OrderSkuItemEntity.CreateOrderSkuItemCommand(
         orderSkuItem.orderSkuItemId(),
         orderSkuItem.customerId(),

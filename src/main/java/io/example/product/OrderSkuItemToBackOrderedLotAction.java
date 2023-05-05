@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.shipping.OrderSkuItemEntity;
 import io.example.shipping.OrderSkuItemEntity.OrderSkuItemId;
 import kalix.javasdk.DeferredCall;
@@ -45,6 +46,10 @@ public class OrderSkuItemToBackOrderedLotAction extends Action {
     var path = "/back-ordered-lot/%s/update".formatted(upperBackOrderedLotId.toEntityId());
     var command = toCommand(backOrderedLotId, backOrdered);
     var returnType = String.class;
+
+    if (backOrdered) {
+      LogEvent.log("OrderSkuItem", orderSkuItemId.toEntityId(), "BackOrderedLot", upperBackOrderedLotId.toEntityId());
+    }
 
     return kalixClient.put(path, command, returnType);
   }

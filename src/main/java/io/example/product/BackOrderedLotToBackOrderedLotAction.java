@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.spring.KalixClient;
@@ -48,6 +49,8 @@ public class BackOrderedLotToBackOrderedLotAction extends Action {
     var command = new BackOrderedLotEntity.UpdateSubBackOrderedLotCommand(event.backOrderedLotId(), event.backOrderedLot());
     var returnType = String.class;
 
+    LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "BackOrderedLot", upperBackOrderedLotId.toEntityId());
+
     return kalixClient.put(path, command, returnType);
   }
 
@@ -56,6 +59,8 @@ public class BackOrderedLotToBackOrderedLotAction extends Action {
     var path = "/product/%s/update-units-back-ordered".formatted(skuId);
     var command = new ProductEntity.UpdateProductsBackOrderedCommand(skuId, event.backOrderedLot());
     var returnType = String.class;
+
+    LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "Product", skuId);
 
     return kalixClient.put(path, command, returnType);
   }

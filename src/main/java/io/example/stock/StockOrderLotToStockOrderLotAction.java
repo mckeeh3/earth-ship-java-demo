@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.spring.KalixClient;
@@ -48,6 +49,8 @@ public class StockOrderLotToStockOrderLotAction extends Action {
     var command = new StockOrderLotEntity.UpdateSubStockOrderLotCommand(event.stockOrderLotId(), event.stockOrderLot());
     var returnType = String.class;
 
+    LogEvent.log("StockOrderLot", event.stockOrderLotId().toEntityId(), "StockOrderLot", upperStockOrderLotId.toEntityId());
+
     return kalixClient.put(path, command, returnType);
   }
 
@@ -56,6 +59,8 @@ public class StockOrderLotToStockOrderLotAction extends Action {
     var path = "/stock-order/%s/update".formatted(stockOrderId);
     var command = new StockOrderEntity.UpdateStockOrderCommand(stockOrderId, event.stockOrderLot().quantityTotal(), event.stockOrderLot().quantityOrdered());
     var returnType = String.class;
+
+    LogEvent.log("StockOrderLot", event.stockOrderLotId().toEntityId(), "StockOrder", stockOrderId);
 
     return kalixClient.put(path, command, returnType);
   }

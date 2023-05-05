@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.example.LogEvent;
 import kalix.javasdk.action.Action;
 import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
@@ -22,6 +23,7 @@ public class GeneratorToGeoOrderAction extends Action {
     log.info("Event: {}", event);
     var results = event.geoOrders().stream()
         .map(geoOrder -> {
+          LogEvent.log("Generator", event.generatorId(), "GeoOrder", geoOrder.geoOrderId());
           var path = "/geo-order/%s/create".formatted(geoOrder.geoOrderId());
           var command = new GeoOrderEntity.CreateGeoOrderCommand(geoOrder.geoOrderId(), geoOrder.position());
           var returnType = String.class;

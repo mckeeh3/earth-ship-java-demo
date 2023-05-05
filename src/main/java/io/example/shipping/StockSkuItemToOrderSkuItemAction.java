@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.stock.StockSkuItemEntity;
 import io.example.stock.StockSkuItemEntity.StockRequestedJoinToOrderEvent;
 import kalix.javasdk.DeferredCall;
@@ -32,6 +33,7 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
 
   public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     log.info("Event: {}", event);
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "StockSkuItem", event.stockSkuItemId().toEntityId());
     return effects().forward(callFor(event));
   }
 
