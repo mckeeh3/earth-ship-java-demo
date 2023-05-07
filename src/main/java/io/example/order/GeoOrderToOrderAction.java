@@ -32,7 +32,7 @@ public class GeoOrderToOrderAction extends Action {
 
   public Effect<String> on(GeoOrderEntity.GeoOrderCreatedEvent event) {
     log.info("Event: {}", event);
-    LogEvent.log("GeoOrder", event.geoOrderId(), "Order", event.geoOrderId());
+    LogEvent.log("GeoOrder", event.geoOrderId(), "Order", event.geoOrderId(), "");
     try {
       return effects().forward(callFor(event));
     } catch (Exception e) {

@@ -25,13 +25,13 @@ public class OrderToGeoOrderAction extends Action {
 
   public Effect<String> on(OrderEntity.ReadyToShipOrderEvent event) {
     log.info("Event: {}", event);
-    LogEvent.log("Order", event.orderId(), "GeoOrder", event.orderId());
+    LogEvent.log("Order", event.orderId(), "GeoOrder", event.orderId(), "");
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderEntity.BackOrderedOrderEvent event) {
     log.info("Event: {}", event);
-    LogEvent.log("Order", event.orderId(), "GeoOrder", event.orderId());
+    LogEvent.log("Order", event.orderId(), "GeoOrder", event.orderId(), "");
     return effects().forward(callFor(event));
   }
 

@@ -49,7 +49,7 @@ public class StockOrderLotToStockOrderLotAction extends Action {
     var command = new StockOrderLotEntity.UpdateSubStockOrderLotCommand(event.stockOrderLotId(), event.stockOrderLot());
     var returnType = String.class;
 
-    LogEvent.log("StockOrderLot", event.stockOrderLotId().toEntityId(), "StockOrderLot", upperStockOrderLotId.toEntityId());
+    LogEvent.log("StockOrderLot", event.stockOrderLotId().toEntityId(), "StockOrderLot", upperStockOrderLotId.toEntityId(), "");
 
     return kalixClient.put(path, command, returnType);
   }
@@ -60,7 +60,7 @@ public class StockOrderLotToStockOrderLotAction extends Action {
     var command = new StockOrderEntity.UpdateStockOrderCommand(stockOrderId, event.stockOrderLot().quantityTotal(), event.stockOrderLot().quantityOrdered());
     var returnType = String.class;
 
-    LogEvent.log("StockOrderLot", event.stockOrderLotId().toEntityId(), "StockOrder", stockOrderId);
+    LogEvent.log("StockOrderLot", event.stockOrderLotId().toEntityId(), "StockOrder", stockOrderId, "");
 
     return kalixClient.put(path, command, returnType);
   }

@@ -25,7 +25,7 @@ public class OrderToShippingOrderAction extends Action {
 
   public Effect<String> on(OrderEntity.CreatedOrderEvent event) {
     log.info("Event: {}", event);
-    LogEvent.log("Order", event.orderId(), "ShippingOrder", event.orderId());
+    LogEvent.log("Order", event.orderId(), "ShippingOrder", event.orderId(), "");
     return effects().forward(callFor(event));
   }
 

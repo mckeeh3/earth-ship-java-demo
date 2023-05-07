@@ -39,7 +39,7 @@ public class GeoOrderToRegionAction extends Action {
     var region = regionAbove(subRegion);
     var regionId = regionIdFor(region);
 
-    LogEvent.log("GeoOrder", geoOrderId, "Region", regionId);
+    LogEvent.log("GeoOrder", geoOrderId, "Region", regionId, "");
 
     var path = "/region/%s/update-sub-region".formatted(regionId);
     var command = new RegionEntity.UpdateSubRegionCommand(subRegion);

@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 public class LogEvent {
   private static final Logger log = LoggerFactory.getLogger(LogEvent.class);
 
-  public static void log(String fromType, String fromId, String toType, String toId) {
+  public static void log(String fromType, String fromId, String toType, String toId, String message) {
     log.info("LogEvent: {}, {}, {}, {}, {}", Instant.now().toEpochMilli(), fromType, fromId, toType, toId);
   }
 }

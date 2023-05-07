@@ -35,7 +35,7 @@ public class ShoppingCartToOrderAction extends Action {
     var command = new OrderEntity.CreateOrderCommand(orderId, event.customerId(), toOrderItems(event.items()));
     var returnType = String.class;
 
-    LogEvent.log("ShoppingCart", event.customerId(), "Order", orderId);
+    LogEvent.log("ShoppingCart", event.customerId(), "Order", orderId, "");
 
     return kalixClient.put(path, command, returnType);
   }

@@ -23,7 +23,7 @@ public class GeneratorToGeoOrderAction extends Action {
     log.info("Event: {}", event);
     var results = event.geoOrders().stream()
         .map(geoOrder -> {
-          LogEvent.log("Generator", event.generatorId(), "GeoOrder", geoOrder.geoOrderId());
+          LogEvent.log("Generator", event.generatorId(), "GeoOrder", geoOrder.geoOrderId(), "");
           var path = "/geo-order/%s/create".formatted(geoOrder.geoOrderId());
           var command = new GeoOrderEntity.CreateGeoOrderCommand(geoOrder.geoOrderId(), geoOrder.position());
           var returnType = String.class;

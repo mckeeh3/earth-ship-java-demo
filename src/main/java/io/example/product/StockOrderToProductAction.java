@@ -36,7 +36,7 @@ public class StockOrderToProductAction extends Action {
     var command = new ProductEntity.AddStockOrderCommand(event.stockOrderId(), event.skuId(), event.quantityTotal());
     var returnType = String.class;
 
-    LogEvent.log("StockOrder", event.stockOrderId(), "Product", event.skuId());
+    LogEvent.log("StockOrder", event.stockOrderId(), "Product", event.skuId(), "");
 
     return kalixClient.put(path, command, returnType);
   }
@@ -46,7 +46,7 @@ public class StockOrderToProductAction extends Action {
     var command = new ProductEntity.UpdateStockOrderCommand(event.stockOrderId(), event.skuId(), event.quantityOrdered());
     var returnType = String.class;
 
-    LogEvent.log("StockOrder", event.stockOrderId(), "Product", event.skuId());
+    LogEvent.log("StockOrder", event.stockOrderId(), "Product", event.skuId(), "");
 
     return kalixClient.put(path, command, returnType);
   }

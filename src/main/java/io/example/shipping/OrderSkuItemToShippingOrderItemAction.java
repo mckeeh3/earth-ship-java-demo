@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.shipping.OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent;
 import io.example.shipping.OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent;
 import io.example.shipping.OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent;
@@ -24,21 +25,25 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
 
   public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     logger.info("Event: {}", event);
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemStockYes");
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     logger.info("Event: {}", event);
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemStockYes");
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     logger.info("Event: {}", event);
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemStockNo");
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
     logger.info("Event: {}", event);
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemBackOrdered");
     return effects().forward(callFor(event));
   }
 

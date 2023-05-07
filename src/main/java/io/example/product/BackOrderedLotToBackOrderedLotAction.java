@@ -49,7 +49,7 @@ public class BackOrderedLotToBackOrderedLotAction extends Action {
     var command = new BackOrderedLotEntity.UpdateSubBackOrderedLotCommand(event.backOrderedLotId(), event.backOrderedLot());
     var returnType = String.class;
 
-    LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "BackOrderedLot", upperBackOrderedLotId.toEntityId());
+    LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "BackOrderedLot", upperBackOrderedLotId.toEntityId(), "");
 
     return kalixClient.put(path, command, returnType);
   }
@@ -60,7 +60,7 @@ public class BackOrderedLotToBackOrderedLotAction extends Action {
     var command = new ProductEntity.UpdateProductsBackOrderedCommand(skuId, event.backOrderedLot());
     var returnType = String.class;
 
-    LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "Product", skuId);
+    LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "Product", skuId, "");
 
     return kalixClient.put(path, command, returnType);
   }

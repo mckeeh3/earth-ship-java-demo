@@ -33,7 +33,7 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
 
   public Effect<String> on(StockSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     log.info("Event: {}", event);
-    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "StockSkuItem", event.stockSkuItemId().toEntityId());
+    LogEvent.log("StockSkuItem", event.stockSkuItemId().toEntityId(), "OrderSkuItem", event.orderSkuItemId().toEntityId(), "");
     return effects().forward(callFor(event));
   }
 

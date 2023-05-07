@@ -48,7 +48,7 @@ public class OrderSkuItemToBackOrderedLotAction extends Action {
     var returnType = String.class;
 
     if (backOrdered) {
-      LogEvent.log("OrderSkuItem", orderSkuItemId.toEntityId(), "BackOrderedLot", upperBackOrderedLotId.toEntityId());
+      LogEvent.log("OrderSkuItem", orderSkuItemId.toEntityId(), "BackOrderedLot", upperBackOrderedLotId.toEntityId(), "");
     }
 
     return kalixClient.put(path, command, returnType);

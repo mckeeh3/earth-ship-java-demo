@@ -35,7 +35,7 @@ public class ShippingOrderItemToOrderSkuItemAction extends Action {
   }
 
   private OrderSkuItemEntity.CreateOrderSkuItemCommand toCommands(CreatedShippingOrderItemEvent event, OrderSkuItem orderSkuItem) {
-    LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "OrderSkuItem", orderSkuItem.orderSkuItemId().toEntityId());
+    LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "OrderSkuItem", orderSkuItem.orderSkuItemId().toEntityId(), "");
     return new OrderSkuItemEntity.CreateOrderSkuItemCommand(
         orderSkuItem.orderSkuItemId(),
         orderSkuItem.customerId(),

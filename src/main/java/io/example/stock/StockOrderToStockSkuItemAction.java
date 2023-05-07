@@ -45,7 +45,7 @@ public class StockOrderToStockSkuItemAction extends Action {
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 
-    LogEvent.log("StockOrder", stockOrderId, "StockSkuItem", command.stockSkuItemId().toEntityId());
+    LogEvent.log("StockOrder", stockOrderId, "StockSkuItem", command.stockSkuItemId().toEntityId(), "");
 
     return deferredCall.execute();
   }
