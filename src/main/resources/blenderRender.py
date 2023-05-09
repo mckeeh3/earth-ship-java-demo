@@ -17,7 +17,7 @@ from math import radians
 from mathutils import Vector, Quaternion, Euler
 
 # Define the path to your data file
-data_file_path = '/tmp/earth-ship-events-201-orders.csv'
+data_file_path = '/tmp/earth-ship-events-200-orders.csv'
 video_file_path = '~/Downloads/earth-ship-events-201-orders-01-1'
 
 # Define the positions and radii for the event types
@@ -60,7 +60,10 @@ material_settings = {
     'Order': ('#10FFA1', 10),
     'ShippingOrder': ('#05E8FF', 10),
     'ShippingOrderItem': ('#1662FF', 10),
-    'OrderSkuItem': ('#009CFF', 20),
+    'OrderSkuItem': ('#FFFF00', 20),
+    'OrderSkuItemStockNo': ('#FFFF00', 15),
+    'OrderSkuItemStockYes': ('#00FF00', 15),
+    'OrderSkuItemBackOrdered': ('#FF0000', 15),
     'StockSkuItem': ('#FF491C', 15),
     'StockOrderLot': ('#FF9E34', 15),
     'StockOrder':   ('#FFBF00', 15),
@@ -178,22 +181,22 @@ def add_camera():
 
 
 def add_labels():
-    add_text('Generator', (0, 1, 0))
-    add_text('ShoppingCart', (0, -2.5, 0))
-    add_text('Region', (5.75, 4, 0))
-    add_text('GeoOrder', (4.75, 0.5, 0))
-    add_text('Order', (3, -3.5, 0))
-    add_text('ShippingOrder', (5.5, -3.5, 0))
-    add_text('ShippingOrderItem', (9, -4.5, 0))
-    add_text('OrderSkuItem', (14.5, -5.5, 0))
-    add_text('StockSkuItem', (21.5, -5.5, 0))
-    add_text('StockOrder', (18, 3, 0))
-    add_text('Product', (18, 5, 0))
-    add_text('BackOrderedLot', (14.5, 6, 0))
-    add_text('StockOrderedLot', (21.5, 6, 0))
+    add_label('Generator', (0, 1, 0))
+    add_label('ShoppingCart', (0, -2.5, 0))
+    add_label('Region', (5.75, 4, 0))
+    add_label('GeoOrder', (4.75, 0.5, 0))
+    add_label('Order', (3, -3.5, 0))
+    add_label('ShippingOrder', (5.5, -3.5, 0))
+    add_label('ShippingOrderItem', (9, -4.5, 0))
+    add_label('OrderSkuItem', (14.5, -5.5, 0))
+    add_label('StockSkuItem', (21.5, -5.5, 0))
+    add_label('StockOrder', (18, 3, 0))
+    add_label('Product', (18, 5, 0))
+    add_label('BackOrderedLot', (14.5, 6, 0))
+    add_label('StockOrderedLot', (21.5, 6, 0))
 
 
-def add_text(text, location):
+def add_label(text, location):
     bpy.ops.object.text_add(location=location)
     text_object = bpy.context.object
     text_object.data.body = text
@@ -351,7 +354,7 @@ def path_key_for(event_from_type, event_from_id, event_to_type, event_to_id):
     return f'{event_from_type}_{event_from_id}_{event_to_type}_{event_to_id}'
 
 
-# Animate the path to appear at the specified time
+# Animate the object to appear at the specified frame
 def insert_key_frame(frame, obj):
     if frame > 1:
         obj.hide_render = True
@@ -391,10 +394,54 @@ def view_360(frame_from, frames):
             kf.interpolation = 'BEZIER'
 
 
+def create_from_point(frame, event_from_type, event_from_id):
+    # Check if the from_point already exists, otherwise create it
+    from_key = point_key_for(event_from_type, event_from_id)
+    if from_key in created_points:
+        from_point = created_points[from_key].location
+    else:
+        from_location = random_point_in_sphere(
+            event_positions[event_from_type], event_radii[event_from_type])
+        from_point_obj = create_point(
+            from_location, from_key, event_from_type)
+        created_points[from_key] = from_point_obj
+        from_point = from_location
+        insert_key_frame(frame, from_point_obj)
+
+    return from_point
+
+
+def create_to_point(frame, event_to_type, event_to_id):
+    # Check if the to_point already exists, otherwise create it
+    to_key = point_key_for(event_to_type, event_to_id)
+    if to_key in created_points:
+        to_point = created_points[to_key].location
+    else:
+        to_location = random_point_in_sphere(
+            event_positions[event_to_type], event_radii[event_to_type])
+        to_point_obj = create_point(to_location, to_key, event_to_type)
+        created_points[to_key] = to_point_obj
+        to_point = to_location
+        insert_key_frame(frame, to_point_obj)
+
+    return to_point
+
+
+def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, event_to_id):
+    # Create the path (line) between the points
+    path_key = path_key_for(
+        event_from_type, event_from_id, event_to_type, event_to_id)
+    if path_key not in created_paths:
+        created_paths[path_key] = [from_point, to_point]
+        path = create_path(from_point, to_point, path_key)
+        assign_material('Path', path)
+        insert_key_frame(frame, path)
+
+
 # Setup the scene
 scene_setup()
 
-# Read data from file
+# Read data from file, the file must be sorted by column 1 (time_in_ms)
 with open(data_file_path, 'r') as file:
     reader = csv.reader(file)
     row_count = 0
@@ -402,7 +449,7 @@ with open(data_file_path, 'r') as file:
     start_time = time.time()
 
     for row in reader:
-        time_in_ms, event_from_type, event_from_id, event_to_type, event_to_id = [
+        time_in_ms, event_from_type, event_from_id, event_to_type, event_to_id, message = [
             cell.strip() for cell in row]
         if row_count == 0:
             first_frame_time = int(time_in_ms)
@@ -410,39 +457,10 @@ with open(data_file_path, 'r') as file:
         frame = 1 + (int(time_in_ms) - first_frame_time) * \
             bpy.context.scene.render.fps // video_playback_speed
 
-        # Check if the from_point already exists, otherwise create it
-        from_key = point_key_for(event_from_type, event_from_id)
-        if from_key in created_points:
-            from_point = created_points[from_key].location
-        else:
-            from_location = random_point_in_sphere(
-                event_positions[event_from_type], event_radii[event_from_type])
-            from_point_obj = create_point(
-                from_location, from_key, event_from_type)
-            created_points[from_key] = from_point_obj
-            from_point = from_location
-            insert_key_frame(frame, from_point_obj)
-
-        # Check if the to_point already exists, otherwise create it
-        to_key = point_key_for(event_to_type, event_to_id)
-        if to_key in created_points:
-            to_point = created_points[to_key].location
-        else:
-            to_location = random_point_in_sphere(
-                event_positions[event_to_type], event_radii[event_to_type])
-            to_point_obj = create_point(to_location, to_key, event_to_type)
-            created_points[to_key] = to_point_obj
-            to_point = to_location
-            insert_key_frame(frame, to_point_obj)
-
-        # Create the path (line) between the points
-        path_key = path_key_for(
-            event_from_type, event_from_id, event_to_type, event_to_id)
-        if path_key not in created_paths:
-            created_paths[path_key] = [from_point, to_point]
-            path = create_path(from_point, to_point, path_key)
-            assign_material('Path', path)
-            insert_key_frame(frame, path)
+        from_point = create_from_point(frame, event_from_type, event_from_id)
+        to_point = create_to_point(frame, event_to_type, event_to_id)
+        create_from_to_path(frame, event_from_type, event_from_id,
+                            event_to_type, event_to_id)
 
     end_time = time.time()
     print(f'Processed {row_count} rows')
