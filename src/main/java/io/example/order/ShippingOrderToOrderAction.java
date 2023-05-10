@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.any.Any;
 
+import io.example.LogEvent;
 import io.example.shipping.ShippingOrderEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
@@ -63,6 +64,8 @@ public class ShippingOrderToOrderAction extends Action {
     var command = new OrderEntity.ReadyToShipOrderCommand(event.orderId(), event.readyToShipAt());
     var returnType = String.class;
 
+    LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), "color green");
+
     return kalixClient.put(path, command, returnType);
   }
 
@@ -79,6 +82,8 @@ public class ShippingOrderToOrderAction extends Action {
     var command = new OrderEntity.ReleaseOrderCommand(event.orderId());
     var returnType = String.class;
 
+    LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), "color yellow");
+
     return kalixClient.put(path, command, returnType);
   }
 
@@ -94,6 +99,8 @@ public class ShippingOrderToOrderAction extends Action {
     var path = "/order/%s/back-order".formatted(event.orderId());
     var command = new OrderEntity.BackOrderOrderCommand(event.orderId(), event.backOrderedAt());
     var returnType = String.class;
+
+    LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), "color red");
 
     return kalixClient.put(path, command, returnType);
   }

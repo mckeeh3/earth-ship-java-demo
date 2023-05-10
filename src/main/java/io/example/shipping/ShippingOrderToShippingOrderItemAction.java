@@ -36,7 +36,7 @@ public class ShippingOrderToShippingOrderItemAction extends Action {
 
   private CompletionStage<String> callFor(CreatedShippingOrderEvent event, OrderItem orderItem) {
     var command = toCommand(event, orderItem);
-    LogEvent.log("ShippingOrder", event.orderId(), "ShippingOrderItem", command.shippingOrderItemId().toEntityId(), "");
+    LogEvent.log("ShippingOrder", event.orderId(), "ShippingOrderItem", command.shippingOrderItemId().toEntityId(), "color yellow");
     var path = "/shipping-order-item/%s/create".formatted(command.shippingOrderItemId().toEntityId());
     var returnType = String.class;
     return kalixClient.put(path, command, returnType).execute();

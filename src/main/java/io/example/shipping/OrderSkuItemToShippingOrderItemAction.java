@@ -25,25 +25,25 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
 
   public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     logger.info("Event: {}", event);
-    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemStockYes");
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color green");
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     logger.info("Event: {}", event);
-    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemStockYes");
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color green");
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     logger.info("Event: {}", event);
-    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemStockNo");
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color yellow");
     return effects().forward(callFor(event));
   }
 
   public Effect<String> on(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
     logger.info("Event: {}", event);
-    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "OrderSkuItemBackOrdered");
+    LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color red");
     return effects().forward(callFor(event));
   }
 

@@ -163,8 +163,8 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionE
       if (subRegions.isEmpty()) {
         return List.of(subRegion);
       }
-      var filteredSubREgions = subRegions.stream().filter(r -> !(r.eqShape(subRegion)));
-      return Stream.concat(filteredSubREgions, Stream.of(subRegion)).toList();
+      var filteredSubRegions = subRegions.stream().filter(r -> !(r.eqShape(subRegion)));
+      return Stream.concat(filteredSubRegions, Stream.of(subRegion)).toList();
     }
   }
 

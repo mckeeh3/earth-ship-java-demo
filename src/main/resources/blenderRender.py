@@ -13,6 +13,7 @@ import random
 import math
 import os
 import time
+import uuid
 from math import radians
 from mathutils import Vector, Quaternion, Euler
 
@@ -61,8 +62,8 @@ material_settings = {
     'ShippingOrder': ('#05E8FF', 10),
     'ShippingOrderItem': ('#1662FF', 10),
     'OrderSkuItem': ('#FFFF00', 20),
-    'OrderSkuItemStockNo': ('#FFFF00', 15),
-    'OrderSkuItemStockYes': ('#00FF00', 15),
+    'OrderSkuItemShipNo': ('#FFFF00', 15),
+    'OrderSkuItemShipYes': ('#00FF00', 15),
     'OrderSkuItemBackOrdered': ('#FF0000', 15),
     'StockSkuItem': ('#FF491C', 15),
     'StockOrderLot': ('#FF9E34', 15),
@@ -75,10 +76,25 @@ material_settings = {
     'Text': ('#FFFFFF', 2),
 }
 
+multi_color_materials = [
+    'OrderSkuItem',
+    'StockSkuItem',
+    'ShippingOrderItem',
+    'ShippingOrder',
+    'Order',
+    'GeoOrder',
+    "Region",
+]
+
 
 # Dictionaries to keep track of created points and paths
 created_points = {}
 created_paths = {}
+
+red_yellow_green_material_name = 'RedYellowGreen'
+red_yellow_green_material_red_value = 0.0
+red_yellow_green_material_yellow_value = 0.5
+red_yellow_green_material_green_value = 1.0
 
 video_fps = 60
 video_file_path = os.path.expanduser(video_file_path)
@@ -147,6 +163,8 @@ def scene_setup():
 
     # Setup the scene
     add_scene_objects()
+
+    create_red_yellow_green_material(red_yellow_green_material_name)
 
 
 def add_scene_objects():
@@ -239,7 +257,15 @@ def create_point(location, name, material_name):
     bm.free()
 
     # Assign the material to the point
-    assign_material(material_name, point)
+    # assign_material(material_name, point)
+    if material_name in multi_color_materials:
+        new_material_name = f'{material_name}:{uuid.uuid4()}'
+        copy_material(red_yellow_green_material_name, new_material_name)
+        assign_material(new_material_name, point)
+        set_material_value(new_material_name,
+                           red_yellow_green_material_yellow_value)
+    else:
+        assign_material(material_name, point)
 
     point.location = location
     return point
@@ -322,6 +348,131 @@ def hex_to_rgba(hex_color, alpha=1):
     linear_rgb = srgb_to_linear(srgb)
 
     return (*linear_rgb, alpha)
+
+
+def create_red_yellow_green_material(material_name: str):
+    red = (1, 0, 0, 1)
+    green = (0, 1, 0, 1)
+    red_strength = 15
+    green_strength = 15
+
+    return create_emission_mixed_material(material_name, red, red_strength, green, green_strength)
+
+
+def create_emission_mixed_material(name: str, emission_1_color, emission_1_strength, emission_2_color, emission_2_strength) -> bpy.types.Material:
+    if name in bpy.data.materials:
+        return bpy.data.materials[name]
+
+    # Create a new material and assign the name
+    material = bpy.data.materials.new(name)
+    material.use_nodes = True
+
+    # Get the node tree and create a shortcut to the nodes
+    node_tree = material.node_tree
+    nodes = node_tree.nodes
+
+    # Clear default nodes
+    nodes.clear()
+
+    # Create Output, Mix Shader, and Value nodes
+    output_node = nodes.new("ShaderNodeOutputMaterial")
+    mix_shader_node = nodes.new("ShaderNodeMixShader")
+    value_node = nodes.new("ShaderNodeValue")
+
+    # Set the value node to 0.5
+    value_node.outputs[0].default_value = 0.5
+
+    # Create Emission nodes
+    emission_node1 = nodes.new("ShaderNodeEmission")
+    emission_node2 = nodes.new("ShaderNodeEmission")
+
+    # Set emission node colors and strengths
+    emission_node1.inputs[0].default_value = emission_1_color
+    emission_node1.inputs[1].default_value = emission_1_strength
+    emission_node2.inputs[0].default_value = emission_2_color
+    emission_node2.inputs[1].default_value = emission_2_strength
+
+    # Position nodes (optional)
+    output_node.location = (400, 0)
+    mix_shader_node.location = (200, 0)
+    value_node.location = (0, 150)
+    emission_node1.location = (0, 0)
+    emission_node2.location = (0, -150)
+
+    # Connect the nodes
+    node_tree.links.new(mix_shader_node.outputs[0], output_node.inputs[0])
+    node_tree.links.new(value_node.outputs[0], mix_shader_node.inputs[0])
+    node_tree.links.new(emission_node1.outputs[0], mix_shader_node.inputs[1])
+    node_tree.links.new(emission_node2.outputs[0], mix_shader_node.inputs[2])
+
+    return material
+
+
+def copy_material(material_name_from: str, material_name_to: str) -> bpy.types.Material:
+    # Check if the source material exists
+    if material_name_from not in bpy.data.materials:
+        print(f"Material '{material_name_from}' not found.")
+        return None
+
+    # Get the source material
+    source_material = bpy.data.materials[material_name_from]
+
+    # Copy the source material
+    new_material = source_material.copy()
+    new_material.name = material_name_to
+
+    return new_material
+
+
+def set_material_value(material_name: str, kf_value: float):
+    # Check if the material exists
+    if material_name not in bpy.data.materials:
+        print(f"Material '{material_name}' not found.")
+        return
+
+    # Get the material
+    material = bpy.data.materials[material_name]
+    node_tree = material.node_tree
+    nodes = node_tree.nodes
+
+    # Set value node
+    value_node = nodes.get("Value")
+    if value_node:
+        value_node.outputs[0].default_value = kf_value
+    else:
+        print(f"Value node not found in '{material_name}'.")
+
+
+def set_material_value_keyframe(material_name: str, kf_value: float, frame: int):
+    # Check if the material exists
+    if material_name not in bpy.data.materials:
+        print(f"Material '{material_name}' not found.")
+        return
+
+    # Get the material
+    material = bpy.data.materials[material_name]
+    node_tree = material.node_tree
+    nodes = node_tree.nodes
+
+    # Set value node
+    value_node = nodes.get("Value")
+    if value_node:
+        value_node.outputs[0].default_value = kf_value
+
+        # Add a keyframe to the Value node output
+        value_node.outputs[0].keyframe_insert(
+            data_path="default_value", frame=frame)
+
+        # Set interpolation to Constant
+        action = node_tree.animation_data.action
+        fcurves = action.fcurves
+        for fcurve in fcurves:
+            for kf in fcurve.keyframe_points:
+                if kf.co.x == frame:
+                    kf.interpolation = 'CONSTANT'
+                    break
+    else:
+        print(f"Value node not found in '{material_name}'.")
 
 
 def assign_material(material_name, shape):
@@ -431,11 +582,28 @@ def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, ev
     # Create the path (line) between the points
     path_key = path_key_for(
         event_from_type, event_from_id, event_to_type, event_to_id)
-    if path_key not in created_paths:
+    if path_key not in created_paths and not event_from_type + event_from_id == event_to_type + event_to_id:
         created_paths[path_key] = [from_point, to_point]
         path = create_path(from_point, to_point, path_key)
         assign_material('Path', path)
         insert_key_frame(frame, path)
+
+
+def adjust_point_color(event_type, event_id, message, frame):
+    if message.startswith('color'):
+        from_point_key = point_key_for(event_type, event_id)
+        from_point_obj = created_points[from_point_key]
+        from_point_material_name = from_point_obj.material_slots[0].material.name
+
+        if message == 'color yellow':
+            set_material_value_keyframe(
+                from_point_material_name, red_yellow_green_material_yellow_value, frame)
+        elif message == 'color red':
+            set_material_value_keyframe(
+                from_point_material_name, red_yellow_green_material_red_value, frame)
+        elif message == 'color green':
+            set_material_value_keyframe(
+                from_point_material_name, red_yellow_green_material_green_value, frame)
 
 
 # Setup the scene
@@ -458,9 +626,12 @@ with open(data_file_path, 'r') as file:
             bpy.context.scene.render.fps // video_playback_speed
 
         from_point = create_from_point(frame, event_from_type, event_from_id)
-        to_point = create_to_point(frame, event_to_type, event_to_id)
-        create_from_to_path(frame, event_from_type, event_from_id,
-                            event_to_type, event_to_id)
+        if not event_to_type == 'NA':
+            to_point = create_to_point(frame, event_to_type, event_to_id)
+            create_from_to_path(frame, event_from_type, event_from_id,
+                                event_to_type, event_to_id)
+
+        adjust_point_color(event_from_type, event_from_id, message, frame)
 
     end_time = time.time()
     print(f'Processed {row_count} rows')

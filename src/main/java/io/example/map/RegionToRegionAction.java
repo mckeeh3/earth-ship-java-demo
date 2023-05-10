@@ -39,7 +39,8 @@ public class RegionToRegionAction extends Action {
       return effects().reply("OK"); // there are no more regions above zoom level 1
     }
 
-    LogEvent.log("Region", regionIdFor(subRegion), "Region", regionIdFor(region), "");
+    var message = "color %s".formatted(event.region().geoOrderAlarmCount() > 0 ? "red" : "green");
+    LogEvent.log("Region", regionIdFor(subRegion), "Region", regionIdFor(region), message);
 
     var regionId = regionIdFor(region);
     var path = "/region/%s/update-sub-region".formatted(regionId);

@@ -21,25 +21,25 @@ public class GeoOrderToRegionAction extends Action {
 
   public Effect<String> on(GeoOrderEntity.GeoOrderCreatedEvent event) {
     log.info("Event: {}", event);
-    return updateSubRegion(event.geoOrderId(), event.position(), false);
+    return updateSubRegion(event.geoOrderId(), event.position(), false, "color yellow");
   }
 
   public Effect<String> on(GeoOrderEntity.GeoOrderReadyToShipEvent event) {
     log.info("Event: {}", event);
-    return updateSubRegion(event.geoOrderId(), event.position(), false);
+    return updateSubRegion(event.geoOrderId(), event.position(), false, "color green");
   }
 
   public Effect<String> on(GeoOrderEntity.GeoOrderBackOrderedEvent event) {
     log.info("Event: {}", event);
-    return updateSubRegion(event.geoOrderId(), event.position(), true);
+    return updateSubRegion(event.geoOrderId(), event.position(), true, "color red");
   }
 
-  private Effect<String> updateSubRegion(String geoOrderId, LatLng position, boolean alarmOn) {
+  private Effect<String> updateSubRegion(String geoOrderId, LatLng position, boolean alarmOn, String message) {
     var subRegion = new Region(zoomMax + 1, position, position, 1, alarmOn ? 1 : 0);
     var region = regionAbove(subRegion);
     var regionId = regionIdFor(region);
 
-    LogEvent.log("GeoOrder", geoOrderId, "Region", regionId, "");
+    LogEvent.log("GeoOrder", geoOrderId, "Region", regionId, message);
 
     var path = "/region/%s/update-sub-region".formatted(regionId);
     var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
