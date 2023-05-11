@@ -19,7 +19,7 @@ from mathutils import Vector, Quaternion, Euler
 
 # Define the path to your data file
 data_file_path = '/tmp/earth-ship-events-200-orders.csv'
-video_file_path = '~/Downloads/earth-ship-events-201-orders-01-1'
+video_file_path = '~/Downloads/earth-ship-events-200-orders-01-1'
 
 # Define the positions and radii for the event types
 event_positions = {
@@ -56,19 +56,19 @@ event_radii = {
 
 material_settings = {
     'Generator': ('#FFFFFF', 20),
-    'Region': ('#20FF11', 10),
-    'GeoOrder': ('#FFFA21', 10),
-    'Order': ('#10FFA1', 10),
-    'ShippingOrder': ('#05E8FF', 10),
-    'ShippingOrderItem': ('#1662FF', 10),
-    'OrderSkuItem': ('#FFFF00', 20),
-    'OrderSkuItemShipNo': ('#FFFF00', 15),
-    'OrderSkuItemShipYes': ('#00FF00', 15),
-    'OrderSkuItemBackOrdered': ('#FF0000', 15),
-    'StockSkuItem': ('#FF491C', 15),
-    'StockOrderLot': ('#FF9E34', 15),
-    'StockOrder':   ('#FFBF00', 15),
-    'BackOrderedLot': ('#FF2110', 10),
+    # 'Region': ('#20FF11', 10),
+    # 'GeoOrder': ('#FFFA21', 10),
+    # 'Order': ('#10FFA1', 10),
+    # 'ShippingOrder': ('#05E8FF', 10),
+    # 'ShippingOrderItem': ('#1662FF', 10),
+    # 'OrderSkuItem': ('#FFFF00', 20),
+    # 'OrderSkuItemShipNo': ('#FFFF00', 15),
+    # 'OrderSkuItemShipYes': ('#00FF00', 15),
+    # 'OrderSkuItemBackOrdered': ('#FF0000', 15),
+    # 'StockSkuItem': ('#FF491C', 15),
+    'StockOrderLot': ('#0697FF', 15),
+    'StockOrder':   ('#FF4F08', 20),
+    # 'BackOrderedLot': ('#FF2110', 10),
     'Product': ('#63FF07', 15),
     'ShoppingCart': ('#FF2308', 10),
     'Path': ('#656565', 1),
@@ -84,6 +84,7 @@ multi_color_materials = [
     'Order',
     'GeoOrder',
     "Region",
+    "BackOrderedLot",
 ]
 
 
@@ -321,6 +322,10 @@ def create_emission_material(name, color, strength):
     emission_node = nodes.new('ShaderNodeEmission')
     emission_node.inputs['Color'].default_value = color
     emission_node.inputs['Strength'].default_value = strength
+
+    # Position nodes (optional)
+    output_node.location = (400, 0)
+    emission_node.location = (0, 0)
 
     # Connect nodes
     links = material.node_tree.links
@@ -589,21 +594,24 @@ def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, ev
         insert_key_frame(frame, path)
 
 
-def adjust_point_color(event_type, event_id, message, frame):
-    if message.startswith('color'):
-        from_point_key = point_key_for(event_type, event_id)
-        from_point_obj = created_points[from_point_key]
-        from_point_material_name = from_point_obj.material_slots[0].material.name
+color_map = {
+    'color yellow': red_yellow_green_material_yellow_value,
+    'color red': red_yellow_green_material_red_value,
+    'color green': red_yellow_green_material_green_value
+}
 
-        if message == 'color yellow':
-            set_material_value_keyframe(
-                from_point_material_name, red_yellow_green_material_yellow_value, frame)
-        elif message == 'color red':
-            set_material_value_keyframe(
-                from_point_material_name, red_yellow_green_material_red_value, frame)
-        elif message == 'color green':
-            set_material_value_keyframe(
-                from_point_material_name, red_yellow_green_material_green_value, frame)
+
+def adjust_point_color(event_type, event_id, message, frame):
+    if not message.startswith('color'):
+        return
+
+    if message in color_map:
+        point_key = point_key_for(event_type, event_id)
+        point_obj = created_points[point_key]
+        material_name = point_obj.material_slots[0].material.name
+
+        color_value = color_map[message]
+        set_material_value_keyframe(material_name, color_value, frame)
 
 
 # Setup the scene
@@ -634,6 +642,8 @@ with open(data_file_path, 'r') as file:
         adjust_point_color(event_from_type, event_from_id, message, frame)
 
     end_time = time.time()
+    print(f'Created {len(created_points)} points')
+    print(f'Created {len(created_paths)} paths')
     print(f'Processed {row_count} rows')
     print(f'Frames: {frame}')
     print(f'Finished in {end_time - start_time} seconds')
