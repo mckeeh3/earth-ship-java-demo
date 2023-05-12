@@ -1,0 +1,104 @@
+@urlPrefix = http://localhost:9000
+# @urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
+@customerId-1 = customer-1
+@customerId-2 = customer-2
+@customerId-3 = customer-3
+
+# ==================================================================================================
+
+### cart 1, item 1 of 3
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-1}}/items/add
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-1}}",
+  "skuId":"P0001",
+  "quantity":2
+}
+
+### cart 1, item 2 of 3
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-1}}/items/add
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-1}}",
+  "skuId":"P0002",
+  "quantity":3
+}
+
+### cart 1, item 3 of 3
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-1}}/items/add
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-1}}",
+  "skuId":"P0003",
+  "quantity":4
+}
+
+### cart 1 checkout ================================================================================
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-1}}/checkout
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-1}}"
+}
+
+# ==================================================================================================
+
+### cart 2, item 1 of 1
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-2}}/items/add
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-2}}",
+  "skuId":"P0001",
+  "quantity":4
+}
+
+### cart 2 checkout ================================================================================
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-2}}/checkout
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-2}}"
+}
+
+# ==================================================================================================
+
+### cart 3, item 1 of 2
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-3}}/items/add
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-3}}",
+  "skuId":"P0003",
+  "quantity":4
+}
+
+### cart 3, item 2 of 2
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-3}}/items/add
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-3}}",
+  "skuId":"P0004",
+  "quantity":5
+}
+
+### cart 3 checkout ================================================================================
+
+PUT {{urlPrefix}}/cart-ui/{{customerId-3}}/checkout
+Content-Type: application/json
+
+{
+  "customerId":"{{customerId-3}}"
+}
