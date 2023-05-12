@@ -16,10 +16,11 @@ import time
 import uuid
 from math import radians
 from mathutils import Vector, Quaternion, Euler
+from dataclasses import dataclass
 
 # Define the path to your data file
-data_file_path = '/tmp/earth-ship-events-200-orders.csv'
-video_file_path = '~/Downloads/earth-ship-events-200-orders-01-1'
+data_file_path = '/tmp/earth-ship-events-3-orders.csv'
+video_file_path = '~/Downloads/earth-ship-events-203-orders-'
 
 # Define the positions and radii for the event types
 event_positions = {
@@ -56,23 +57,14 @@ event_radii = {
 
 material_settings = {
     'Generator': ('#FFFFFF', 20),
-    # 'Region': ('#20FF11', 10),
-    # 'GeoOrder': ('#FFFA21', 10),
-    # 'Order': ('#10FFA1', 10),
-    # 'ShippingOrder': ('#05E8FF', 10),
-    # 'ShippingOrderItem': ('#1662FF', 10),
-    # 'OrderSkuItem': ('#FFFF00', 20),
-    # 'OrderSkuItemShipNo': ('#FFFF00', 15),
-    # 'OrderSkuItemShipYes': ('#00FF00', 15),
-    # 'OrderSkuItemBackOrdered': ('#FF0000', 15),
-    # 'StockSkuItem': ('#FF491C', 15),
     'StockOrderLot': ('#0697FF', 15),
     'StockOrder':   ('#FF4F08', 20),
-    # 'BackOrderedLot': ('#FF2110', 10),
     'Product': ('#63FF07', 15),
     'ShoppingCart': ('#FF2308', 10),
     'Path': ('#656565', 1),
-    'Path highlight': ('#FFF117', 10),
+    'Path-1': ('#005EFF', 5),
+    'Path-2': ('#0DFF5F', 5),
+    'Path-3': ('#884F00', 5),
     'Text': ('#FFFFFF', 2),
 }
 
@@ -98,11 +90,15 @@ red_yellow_green_material_yellow_value = 0.5
 red_yellow_green_material_green_value = 1.0
 
 video_fps = 60
+# wait N seconds before starting the data animation
+video_first_frame = 3 * video_fps
 video_file_path = os.path.expanduser(video_file_path)
 video_playback_realtime = 1000
 video_playback_half_speed = 500
 video_playback_quarter_speed = 250
-video_playback_speed = video_playback_quarter_speed
+video_playback_tenth_speed = 100
+video_playback_twenth_speed = 50
+video_playback_speed = video_playback_twenth_speed
 
 
 def scene_setup():
@@ -462,9 +458,11 @@ def set_material_value_keyframe(material_name: str, kf_value: float, frame: int)
     # Set value node
     value_node = nodes.get("Value")
     if value_node:
-        value_node.outputs[0].default_value = kf_value
-
         # Add a keyframe to the Value node output
+        value_node.outputs[0].default_value = red_yellow_green_material_yellow_value
+        value_node.outputs[0].keyframe_insert(
+            data_path="default_value", frame=frame - 1)
+        value_node.outputs[0].default_value = kf_value
         value_node.outputs[0].keyframe_insert(
             data_path="default_value", frame=frame)
 
@@ -583,6 +581,31 @@ def create_to_point(frame, event_to_type, event_to_id):
     return to_point
 
 
+# These path colors are used to highlight different shopping cart orders
+# The frames will need to be adjusted to coencide with the frames of the
+# shopping cart orders
+@dataclass
+class PathAltMaterial:
+    frame: int
+    material_name: str
+
+
+path_alt_material = [
+    PathAltMaterial(600, 'Path-1'),
+    PathAltMaterial(1700, 'Path-2'),
+    PathAltMaterial(8500, 'Path-3'),
+]
+
+
+def assign_path_material(frame, path):
+    for path_material in path_alt_material:
+        if frame < path_material.frame:
+            assign_material(path_material.material_name, path)
+            return
+
+    assign_material('Path', path)
+
+
 def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, event_to_id):
     # Create the path (line) between the points
     path_key = path_key_for(
@@ -590,7 +613,7 @@ def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, ev
     if path_key not in created_paths and not event_from_type + event_from_id == event_to_type + event_to_id:
         created_paths[path_key] = [from_point, to_point]
         path = create_path(from_point, to_point, path_key)
-        assign_material('Path', path)
+        assign_path_material(frame, path)
         insert_key_frame(frame, path)
 
 
@@ -604,6 +627,9 @@ color_map = {
 def adjust_point_color(event_type, event_id, message, frame):
     if not message.startswith('color'):
         return
+
+    if event_type == 'OrderSkuItem' and event_id == 'afcbd27e-3f6e-4594-b745-68238e5d021c_4524e2b3-f5ef-42c9-b09a-bc15e8310274':
+        print('adjust_point_color', event_type, event_id, message, frame)
 
     if message in color_map:
         point_key = point_key_for(event_type, event_id)
@@ -630,7 +656,7 @@ with open(data_file_path, 'r') as file:
         if row_count == 0:
             first_frame_time = int(time_in_ms)
         row_count += 1
-        frame = 1 + (int(time_in_ms) - first_frame_time) * \
+        frame = video_first_frame + (int(time_in_ms) - first_frame_time) * \
             bpy.context.scene.render.fps // video_playback_speed
 
         from_point = create_from_point(frame, event_from_type, event_from_id)
