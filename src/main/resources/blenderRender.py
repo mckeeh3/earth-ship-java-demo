@@ -19,7 +19,7 @@ from mathutils import Vector, Quaternion, Euler
 from dataclasses import dataclass
 
 # Define the path to your data file
-data_file_path = '/tmp/earth-ship-events-3-orders.csv'
+data_file_path = '/tmp/earth-ship-events-203-orders.csv'
 video_file_path = '~/Downloads/earth-ship-events-203-orders-'
 
 # Define the positions and radii for the event types
@@ -98,7 +98,7 @@ video_playback_half_speed = 500
 video_playback_quarter_speed = 250
 video_playback_tenth_speed = 100
 video_playback_twenth_speed = 50
-video_playback_speed = video_playback_twenth_speed
+video_playback_speed = video_playback_quarter_speed
 
 
 def scene_setup():
@@ -162,6 +162,7 @@ def scene_setup():
     add_scene_objects()
 
     create_red_yellow_green_material(red_yellow_green_material_name)
+    create_path_material('path')
 
 
 def add_scene_objects():
@@ -360,6 +361,15 @@ def create_red_yellow_green_material(material_name: str):
     return create_emission_mixed_material(material_name, red, red_strength, green, green_strength)
 
 
+def create_path_material(material_name: str):
+    normal = (0.13, 0.13, 0.13, 1)
+    highlighted = (1, 1, 1, 1)
+    normal_strength = 1
+    highlighted_strength = 5
+
+    return create_emission_mixed_material(material_name, normal, normal_strength, highlighted, highlighted_strength)
+
+
 def create_emission_mixed_material(name: str, emission_1_color, emission_1_strength, emission_2_color, emission_2_strength) -> bpy.types.Material:
     if name in bpy.data.materials:
         return bpy.data.materials[name]
@@ -381,7 +391,7 @@ def create_emission_mixed_material(name: str, emission_1_color, emission_1_stren
     value_node = nodes.new("ShaderNodeValue")
 
     # Set the value node to 0.5
-    value_node.outputs[0].default_value = 0.5
+    value_node.outputs[0].default_value = red_yellow_green_material_yellow_value
 
     # Create Emission nodes
     emission_node1 = nodes.new("ShaderNodeEmission")
@@ -509,7 +519,7 @@ def path_key_for(event_from_type, event_from_id, event_to_type, event_to_id):
 
 
 # Animate the object to appear at the specified frame
-def insert_key_frame(frame, obj):
+def insert_visibility_key_frame(frame, obj):
     if frame > 1:
         obj.hide_render = True
         obj.hide_viewport = True
@@ -552,15 +562,15 @@ def create_from_point(frame, event_from_type, event_from_id):
     # Check if the from_point already exists, otherwise create it
     from_key = point_key_for(event_from_type, event_from_id)
     if from_key in created_points:
-        from_point = created_points[from_key].location
-    else:
-        from_location = random_point_in_sphere(
-            event_positions[event_from_type], event_radii[event_from_type])
-        from_point_obj = create_point(
-            from_location, from_key, event_from_type)
-        created_points[from_key] = from_point_obj
-        from_point = from_location
-        insert_key_frame(frame, from_point_obj)
+        return created_points[from_key].location
+
+    from_location = random_point_in_sphere(
+        event_positions[event_from_type], event_radii[event_from_type])
+    from_point_obj = create_point(
+        from_location, from_key, event_from_type)
+    created_points[from_key] = from_point_obj
+    from_point = from_location
+    insert_visibility_key_frame(frame, from_point_obj)
 
     return from_point
 
@@ -569,14 +579,14 @@ def create_to_point(frame, event_to_type, event_to_id):
     # Check if the to_point already exists, otherwise create it
     to_key = point_key_for(event_to_type, event_to_id)
     if to_key in created_points:
-        to_point = created_points[to_key].location
-    else:
-        to_location = random_point_in_sphere(
-            event_positions[event_to_type], event_radii[event_to_type])
-        to_point_obj = create_point(to_location, to_key, event_to_type)
-        created_points[to_key] = to_point_obj
-        to_point = to_location
-        insert_key_frame(frame, to_point_obj)
+        return created_points[to_key].location
+
+    to_location = random_point_in_sphere(
+        event_positions[event_to_type], event_radii[event_to_type])
+    to_point_obj = create_point(to_location, to_key, event_to_type)
+    created_points[to_key] = to_point_obj
+    to_point = to_location
+    insert_visibility_key_frame(frame, to_point_obj)
 
     return to_point
 
@@ -591,15 +601,15 @@ class PathAltMaterial:
 
 
 path_alt_material = [
-    PathAltMaterial(600, 'Path-1'),
-    PathAltMaterial(1700, 'Path-2'),
-    PathAltMaterial(8500, 'Path-3'),
+    PathAltMaterial(248, 'Path-1'),
+    PathAltMaterial(1762, 'Path-2'),
+    PathAltMaterial(3715, 'Path-3'),
 ]
 
 
 def assign_path_material(frame, path):
     for path_material in path_alt_material:
-        if frame < path_material.frame:
+        if frame <= path_material.frame:
             assign_material(path_material.material_name, path)
             return
 
@@ -614,7 +624,7 @@ def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, ev
         created_paths[path_key] = [from_point, to_point]
         path = create_path(from_point, to_point, path_key)
         assign_path_material(frame, path)
-        insert_key_frame(frame, path)
+        insert_visibility_key_frame(frame, path)
 
 
 color_map = {
@@ -627,9 +637,6 @@ color_map = {
 def adjust_point_color(event_type, event_id, message, frame):
     if not message.startswith('color'):
         return
-
-    if event_type == 'OrderSkuItem' and event_id == 'afcbd27e-3f6e-4594-b745-68238e5d021c_4524e2b3-f5ef-42c9-b09a-bc15e8310274':
-        print('adjust_point_color', event_type, event_id, message, frame)
 
     if message in color_map:
         point_key = point_key_for(event_type, event_id)
@@ -649,6 +656,7 @@ with open(data_file_path, 'r') as file:
     row_count = 0
     first_frame_time = 0
     start_time = time.time()
+    frame_last_activity = video_first_frame
 
     for row in reader:
         time_in_ms, event_from_type, event_from_id, event_to_type, event_to_id, message = [
@@ -659,13 +667,21 @@ with open(data_file_path, 'r') as file:
         frame = video_first_frame + (int(time_in_ms) - first_frame_time) * \
             bpy.context.scene.render.fps // video_playback_speed
 
-        from_point = create_from_point(frame, event_from_type, event_from_id)
+        if frame_last_activity + 100 < frame:
+            print(
+                f'Frame activity gap, from: {frame_last_activity}, to: {frame}')
+        frame_last_activity = frame
+
+        from_point = create_from_point(
+            frame, event_from_type, event_from_id)
         if not event_to_type == 'NA':
             to_point = create_to_point(frame, event_to_type, event_to_id)
             create_from_to_path(frame, event_from_type, event_from_id,
                                 event_to_type, event_to_id)
 
         adjust_point_color(event_from_type, event_from_id, message, frame)
+
+    print(f'Use the above from activity gap from values for path_alt_material settings.')
 
     end_time = time.time()
     print(f'Created {len(created_points)} points')
