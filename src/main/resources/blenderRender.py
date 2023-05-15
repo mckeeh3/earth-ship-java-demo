@@ -79,6 +79,13 @@ multi_color_materials = [
     "BackOrderedLot",
 ]
 
+path_materials = {
+    'Path': ('#656565', 1),
+    'Path-1': ('#005EFF', 5),
+    'Path-2': ('#0DFF5F', 5),
+    'Path-3': ('#884F00', 5),
+}
+
 
 # Dictionaries to keep track of created points and paths
 created_points = {}
@@ -112,7 +119,9 @@ def scene_setup():
     bpy.context.scene.render.resolution_y = 1080
 
     # Set the number of samples for Cycles
-    bpy.context.scene.cycles.samples = 500
+    # bpy.context.scene.cycles.samples = 500
+    # Set the numner of samples for Eevee
+    bpy.context.scene.eevee.taa_render_samples = 32
 
     # Set the frame rate
     bpy.context.scene.render.fps = desired_fps
@@ -532,9 +541,9 @@ def insert_visibility_key_frame(frame, obj):
         obj['frame'] = frame
 
 
-def location_and_rotation_of_object(obj_name):
-    obj = bpy.data.objects[obj_name]
-    return obj.location, obj.rotation_euler
+# def location_and_rotation_of_object(obj_name):
+#     obj = bpy.data.objects[obj_name]
+#     return obj.location, obj.rotation_euler
 
 
 def view_360(frame_from, frames):
@@ -569,10 +578,10 @@ def create_from_point(frame, event_from_type, event_from_id):
     from_point_obj = create_point(
         from_location, from_key, event_from_type)
     created_points[from_key] = from_point_obj
-    from_point = from_location
+
     insert_visibility_key_frame(frame, from_point_obj)
 
-    return from_point
+    return from_location
 
 
 def create_to_point(frame, event_to_type, event_to_id):
@@ -585,10 +594,10 @@ def create_to_point(frame, event_to_type, event_to_id):
         event_positions[event_to_type], event_radii[event_to_type])
     to_point_obj = create_point(to_location, to_key, event_to_type)
     created_points[to_key] = to_point_obj
-    to_point = to_location
+
     insert_visibility_key_frame(frame, to_point_obj)
 
-    return to_point
+    return to_location
 
 
 # These path colors are used to highlight different shopping cart orders
@@ -613,7 +622,25 @@ def assign_path_material(frame, path):
             assign_material(path_material.material_name, path)
             return
 
-    assign_material('Path', path)
+    # assign_material('Path', path)
+    new_material_name = f'path:{uuid.uuid4()}'
+    new_material = copy_material('path', new_material_name)
+    assign_material(new_material_name, path)
+    set_material_value(new_material_name, 0.0)
+
+    node_tree = new_material.node_tree
+    nodes = node_tree.nodes
+    value_node = nodes['Value']
+    if value_node:
+        value_node.outputs[0].default_value = 0.0
+        value_node.outputs[0].keyframe_insert(
+            data_path='default_value', frame=frame - 1)
+        value_node.outputs[0].default_value = 1.0
+        value_node.outputs[0].keyframe_insert(
+            data_path='default_value', frame=frame)
+        value_node.outputs[0].default_value = 0.0
+        value_node.outputs[0].keyframe_insert(
+            data_path='default_value', frame=frame + 5)
 
 
 def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, event_to_id):
@@ -621,10 +648,37 @@ def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, ev
     path_key = path_key_for(
         event_from_type, event_from_id, event_to_type, event_to_id)
     if path_key not in created_paths and not event_from_type + event_from_id == event_to_type + event_to_id:
-        created_paths[path_key] = [from_point, to_point]
+        # created_paths[path_key] = [from_point, to_point]
         path = create_path(from_point, to_point, path_key)
+        created_paths[path_key] = path
         assign_path_material(frame, path)
         insert_visibility_key_frame(frame, path)
+
+
+def highlight_path(frame, event_from_type, event_from_id, event_to_type, event_to_id):
+    path_key = path_key_for(
+        event_from_type, event_from_id, event_to_type, event_to_id)
+    if path_key in created_paths:
+        path = created_paths[path_key]
+        material = path.data.materials[0]
+        if material.name.startswith('path'):
+            highlight_path_keyframes(material, frame)
+
+
+def highlight_path_keyframes(path_material, frame):
+    node_tree = path_material.node_tree
+    nodes = node_tree.nodes
+    value_node = nodes['Value']
+    if value_node:
+        value_node.outputs[0].default_value = 0.0
+        value_node.outputs[0].keyframe_insert(
+            data_path='default_value', frame=frame - 1)
+        value_node.outputs[0].default_value = 1.0
+        value_node.outputs[0].keyframe_insert(
+            data_path='default_value', frame=frame)
+        value_node.outputs[0].default_value = 0.0
+        value_node.outputs[0].keyframe_insert(
+            data_path='default_value', frame=frame + 5)
 
 
 color_map = {
@@ -635,9 +689,6 @@ color_map = {
 
 
 def adjust_point_color(event_type, event_id, message, frame):
-    if not message.startswith('color'):
-        return
-
     if message in color_map:
         point_key = point_key_for(event_type, event_id)
         point_obj = created_points[point_key]
@@ -663,6 +714,7 @@ with open(data_file_path, 'r') as file:
             cell.strip() for cell in row]
         if row_count == 0:
             first_frame_time = int(time_in_ms)
+            print(f'First frame time: {first_frame_time}')
         row_count += 1
         frame = video_first_frame + (int(time_in_ms) - first_frame_time) * \
             bpy.context.scene.render.fps // video_playback_speed
@@ -680,15 +732,11 @@ with open(data_file_path, 'r') as file:
                                 event_to_type, event_to_id)
 
         adjust_point_color(event_from_type, event_from_id, message, frame)
+        if message in color_map:
+            highlight_path(frame, event_from_type, event_from_id,
+                           event_to_type, event_to_id)
 
     print(f'Use the above from activity gap from values for path_alt_material settings.')
-
-    end_time = time.time()
-    print(f'Created {len(created_points)} points')
-    print(f'Created {len(created_paths)} paths')
-    print(f'Processed {row_count} rows')
-    print(f'Frames: {frame}')
-    print(f'Finished in {end_time - start_time} seconds')
 
     # Set the number of frames
     frame_end = math.ceil(frame / 100) * 100
@@ -696,3 +744,12 @@ with open(data_file_path, 'r') as file:
 
     frames_for_360 = 15 * video_fps - 1
     view_360(frame_end + 1, frames_for_360)
+    print(
+        f'Frames for 360: {frame_end + 1} - {frame_end + 1 + frames_for_360}')
+
+    end_time = time.time()
+    print(f'Created {len(created_points)} points')
+    print(f'Created {len(created_paths)} paths')
+    print(f'Processed {row_count} rows')
+    print(f'Frames: {frame}')
+    print(f'Finished in {end_time - start_time} seconds')
