@@ -16,12 +16,12 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("customerId")
-@EntityType("shoppingCart")
+@Id("customerId")
+@TypeId("shoppingCart")
 @RequestMapping("/cart/{customerId}")
 public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.State, ShoppingCartEntity.Event> {
   private final Logger log = LoggerFactory.getLogger(getClass());

@@ -6,6 +6,18 @@
 # sort /tmp/earth-ship-events-unsorted.csv > /tmp/earth-ship-events.csv
 # change the data_file_path variable to point to the .csv file
 
+# You can run the blenderRender.py script from the Blender Python console using the following command:
+# exec(compile(open("/tmp/blenderRender.py").read(), "/tmp/blenderRender.py", 'exec'))
+
+# You can run the blenderRender.py script from the command line using the following command:
+# blender -b -P /tmp/blenderRender.py
+
+# In VSCode, you can run the blenderRender.py script using the Blender extension.
+# First, start Blender from the Command Palette (Ctrl+Shift+P) and select the "Blender: Start" command.
+# Open the Command Palette (Ctrl+Shift+P) and select the "Blender: Run Script" command.
+# To stop the script, open the Command Palette (Ctrl+Shift+P) and select the "Blender: Stop" command.
+
+
 import bpy
 import bmesh
 import csv
@@ -62,8 +74,10 @@ material_settings = {
     'Product': ('#63FF07', 15),
     'ShoppingCart': ('#FF2308', 10),
     'Path': ('#656565', 1),
-    'Path-1': ('#005EFF', 5),
-    'Path-2': ('#0DFF5F', 5),
+    # 'Path-1': ('#005EFF', 5),
+    # 'Path-2': ('#0DFF5F', 5),
+    'Path-1': ('#7609BF', 5),  # ('#005EFF', 5),
+    'Path-2': ('#4CA607', 5),  # ('#0DFF5F', 5),
     'Path-3': ('#884F00', 5),
     'Text': ('#FFFFFF', 2),
 }
@@ -75,16 +89,16 @@ multi_color_materials = [
     'ShippingOrder',
     'Order',
     'GeoOrder',
-    "Region",
-    "BackOrderedLot",
+    'Region',
+    'BackOrderedLot',
 ]
 
-path_materials = {
-    'Path': ('#656565', 1),
-    'Path-1': ('#005EFF', 5),
-    'Path-2': ('#0DFF5F', 5),
-    'Path-3': ('#884F00', 5),
-}
+# path_materials = {
+#     'Path': ('#656565', 1),
+#     'Path-1': ('#7609BF', 5),  # ('#005EFF', 5),
+#     'Path-2': ('#4CA607', 5),  # ('#0DFF5F', 5),
+#     'Path-3': ('#884F00', 5),
+# }
 
 
 # Dictionaries to keep track of created points and paths
@@ -95,6 +109,7 @@ red_yellow_green_material_name = 'RedYellowGreen'
 red_yellow_green_material_red_value = 0.0
 red_yellow_green_material_yellow_value = 0.5
 red_yellow_green_material_green_value = 1.0
+stock_sku_item_material_name = 'StockSkuItem'
 
 video_fps = 60
 # wait N seconds before starting the data animation
@@ -171,6 +186,7 @@ def scene_setup():
     add_scene_objects()
 
     create_red_yellow_green_material(red_yellow_green_material_name)
+    create_stock_sku_green_material(stock_sku_item_material_name)
     create_path_material('path')
 
 
@@ -267,7 +283,10 @@ def create_point(location, name, material_name):
     # assign_material(material_name, point)
     if material_name in multi_color_materials:
         new_material_name = f'{material_name}:{uuid.uuid4()}'
-        copy_material(red_yellow_green_material_name, new_material_name)
+        if (material_name == stock_sku_item_material_name):
+            copy_material(stock_sku_item_material_name, new_material_name)
+        else:
+            copy_material(red_yellow_green_material_name, new_material_name)
         assign_material(new_material_name, point)
         set_material_value(new_material_name,
                            red_yellow_green_material_yellow_value)
@@ -370,6 +389,56 @@ def create_red_yellow_green_material(material_name: str):
     return create_emission_mixed_material(material_name, red, red_strength, green, green_strength)
 
 
+def create_stock_sku_green_material(material_name: str):
+    # Create a new material
+    material = bpy.data.materials.new(name=material_name)
+    material.use_nodes = True
+    nodes = material.node_tree.nodes
+    links = material.node_tree.links
+
+    # Clear all nodes to start clean
+    for node in nodes:
+        nodes.remove(node)
+
+    # Add a Value node and Math node with 'Less Than' operation
+    value_node = nodes.new(type='ShaderNodeValue')
+    value_node.outputs['Value'].default_value = 0.5
+    value_node.location = -400, 100
+
+    math_node = nodes.new(type='ShaderNodeMath')
+    math_node.operation = 'GREATER_THAN'
+    math_node.inputs[1].default_value = 0.6
+    math_node.location = -200, 100
+
+    # Add two emission nodes
+    emission_node1 = nodes.new(type='ShaderNodeEmission')
+    emission_node1.inputs['Color'].default_value = (0.0, 0.01, 1.0, 1.0)
+    emission_node1.inputs['Strength'].default_value = 20.0
+    emission_node1.location = -200, -100
+
+    emission_node2 = nodes.new(type='ShaderNodeEmission')
+    emission_node2.inputs['Color'].default_value = (0.0, 1.0, 0.05, 1.0)
+    emission_node2.inputs['Strength'].default_value = 20.0
+    emission_node2.location = -200, -250
+
+    # Add a Mix Shader node
+    mix_shader = nodes.new(type='ShaderNodeMixShader')
+    mix_shader.location = 100, 0
+
+    # Add an Output node
+    output_node = nodes.new(type='ShaderNodeOutputMaterial')
+    output_node.location = 300, 0
+
+    # Link the nodes
+    links.new(emission_node1.outputs[0], mix_shader.inputs[1])
+    links.new(emission_node2.outputs[0], mix_shader.inputs[2])
+    links.new(mix_shader.outputs[0], output_node.inputs[0])
+    links.new(value_node.outputs[0], math_node.inputs[0])
+    links.new(math_node.outputs[0], mix_shader.inputs[0])
+
+    return material
+
+
 def create_path_material(material_name: str):
     normal = (0.13, 0.13, 0.13, 1)
     highlighted = (1, 1, 1, 1)
@@ -395,16 +464,16 @@ def create_emission_mixed_material(name: str, emission_1_color, emission_1_stren
     nodes.clear()
 
     # Create Output, Mix Shader, and Value nodes
-    output_node = nodes.new("ShaderNodeOutputMaterial")
-    mix_shader_node = nodes.new("ShaderNodeMixShader")
-    value_node = nodes.new("ShaderNodeValue")
+    output_node = nodes.new('ShaderNodeOutputMaterial')
+    mix_shader_node = nodes.new('ShaderNodeMixShader')
+    value_node = nodes.new('ShaderNodeValue')
 
     # Set the value node to 0.5
     value_node.outputs[0].default_value = red_yellow_green_material_yellow_value
 
     # Create Emission nodes
-    emission_node1 = nodes.new("ShaderNodeEmission")
-    emission_node2 = nodes.new("ShaderNodeEmission")
+    emission_node1 = nodes.new('ShaderNodeEmission')
+    emission_node2 = nodes.new('ShaderNodeEmission')
 
     # Set emission node colors and strengths
     emission_node1.inputs[0].default_value = emission_1_color
@@ -431,7 +500,7 @@ def create_emission_mixed_material(name: str, emission_1_color, emission_1_stren
 def copy_material(material_name_from: str, material_name_to: str) -> bpy.types.Material:
     # Check if the source material exists
     if material_name_from not in bpy.data.materials:
-        print(f"Material '{material_name_from}' not found.")
+        print(f'Material "{material_name_from}" not found.')
         return None
 
     # Get the source material
@@ -447,7 +516,7 @@ def copy_material(material_name_from: str, material_name_to: str) -> bpy.types.M
 def set_material_value(material_name: str, kf_value: float):
     # Check if the material exists
     if material_name not in bpy.data.materials:
-        print(f"Material '{material_name}' not found.")
+        print(f'Material "{material_name}" not found.')
         return
 
     # Get the material
@@ -456,17 +525,17 @@ def set_material_value(material_name: str, kf_value: float):
     nodes = node_tree.nodes
 
     # Set value node
-    value_node = nodes.get("Value")
+    value_node = nodes.get('Value')
     if value_node:
         value_node.outputs[0].default_value = kf_value
     else:
-        print(f"Value node not found in '{material_name}'.")
+        print(f'Value node not found in "{material_name}".')
 
 
 def set_material_value_keyframe(material_name: str, kf_value: float, frame: int):
     # Check if the material exists
     if material_name not in bpy.data.materials:
-        print(f"Material '{material_name}' not found.")
+        print(f'Material "{material_name}" not found.')
         return
 
     # Get the material
@@ -475,15 +544,15 @@ def set_material_value_keyframe(material_name: str, kf_value: float, frame: int)
     nodes = node_tree.nodes
 
     # Set value node
-    value_node = nodes.get("Value")
+    value_node = nodes.get('Value')
     if value_node:
         # Add a keyframe to the Value node output
         value_node.outputs[0].default_value = red_yellow_green_material_yellow_value
         value_node.outputs[0].keyframe_insert(
-            data_path="default_value", frame=frame - 1)
+            data_path='default_value', frame=frame - 1)
         value_node.outputs[0].default_value = kf_value
         value_node.outputs[0].keyframe_insert(
-            data_path="default_value", frame=frame)
+            data_path='default_value', frame=frame)
 
         # Set interpolation to Constant
         action = node_tree.animation_data.action
@@ -494,7 +563,7 @@ def set_material_value_keyframe(material_name: str, kf_value: float, frame: int)
                     kf.interpolation = 'CONSTANT'
                     break
     else:
-        print(f"Value node not found in '{material_name}'.")
+        print(f'Value node not found in "{material_name}".')
 
 
 def assign_material(material_name, shape):

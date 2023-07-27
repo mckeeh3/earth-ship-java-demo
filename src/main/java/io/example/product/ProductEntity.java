@@ -16,12 +16,12 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("skuId")
-@EntityType("product")
+@Id("skuId")
+@TypeId("product")
 @RequestMapping("/product/{skuId}")
 public class ProductEntity extends EventSourcedEntity<ProductEntity.State, ProductEntity.Event> {
   private final Logger log = LoggerFactory.getLogger(getClass());

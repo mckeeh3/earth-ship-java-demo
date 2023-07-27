@@ -16,12 +16,12 @@ import io.example.stock.StockSkuItemEntity.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("orderSkuItemId")
-@EntityType("orderSkuItem")
+@Id("orderSkuItemId")
+@TypeId("orderSkuItem")
 @RequestMapping("/order-sku-item/{orderSkuItemId}")
 public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.State, OrderSkuItemEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(OrderSkuItemEntity.class);

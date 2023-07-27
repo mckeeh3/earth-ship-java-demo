@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.map.WorldMap.LatLng;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 
-@EntityKey("generatorId")
-@EntityType("generator")
+@Id("generatorId")
+@TypeId("generator")
 @RequestMapping("/generator")
 public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, GeneratorEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(GeneratorEntity.class);

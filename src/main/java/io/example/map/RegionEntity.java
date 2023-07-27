@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.map.WorldMap.Region;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("regionId")
-@EntityType("region")
+@Id("regionId")
+@TypeId("region")
 @RequestMapping("/region")
 public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(RegionEntity.class);

@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.map.WorldMap.LatLng;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("geoOrderId")
-@EntityType("geoOrder")
+@Id("geoOrderId")
+@TypeId("geoOrder")
 @RequestMapping("/geo-order/{geoOrderId}")
 public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, GeoOrderEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(GeoOrderEntity.class);

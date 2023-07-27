@@ -15,12 +15,12 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("orderId")
-@EntityType("order")
+@Id("orderId")
+@TypeId("order")
 @RequestMapping("/order/{orderId}")
 public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(OrderEntity.class);

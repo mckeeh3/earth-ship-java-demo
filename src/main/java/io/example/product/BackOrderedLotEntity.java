@@ -13,12 +13,12 @@ import io.example.Validator;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("backOrderedLotId")
-@EntityType("backOrderedLot")
+@Id("backOrderedLotId")
+@TypeId("backOrderedLot")
 @RequestMapping("/back-ordered-lot/{backOrderedLotId}")
 public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntity.State, BackOrderedLotEntity.Event> {
   private final Logger log = LoggerFactory.getLogger(getClass());

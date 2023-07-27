@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.Validator;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.annotations.EventHandler;
 
-@EntityKey("stockOrderLotId")
-@EntityType("stockOrderLot")
+@Id("stockOrderLotId")
+@TypeId("stockOrderLot")
 @RequestMapping("/stock-order-lot/{stockOrderLotId}")
 public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.State, StockOrderLotEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(StockOrderLotEntity.class);
