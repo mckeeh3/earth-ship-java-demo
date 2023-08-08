@@ -24,10 +24,6 @@ public class StockOrderToStockSkuItemAction extends Action {
   public Effect<String> on(StockOrderEntity.GeneratedStockSkuItemIdsEvent event) {
     log.info("Event: {}", event);
 
-    return onOneEventInToManyCommandsOut(event);
-  }
-
-  private Effect<String> onOneEventInToManyCommandsOut(StockOrderEntity.GeneratedStockSkuItemIdsEvent event) {
     var results = event.generateStockSkuItems().stream()
         .map(id -> toCommand(id))
         .map(command -> callFor(command, event.stockOrderId()))

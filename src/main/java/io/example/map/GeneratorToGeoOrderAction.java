@@ -25,6 +25,7 @@ public class GeneratorToGeoOrderAction extends Action {
 
   public Effect<String> on(GeneratorEntity.GeoOrdersToGenerateEvent event) {
     log.info("Event: {}", event);
+
     var results = event.geoOrders().stream()
         .map(geoOrder -> toCommand(event, geoOrder))
         .map(command -> callFor(command))
