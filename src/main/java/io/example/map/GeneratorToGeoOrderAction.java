@@ -1,39 +1,55 @@
 package io.example.map;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.any.Any;
+
 import io.example.LogEvent;
+import io.example.map.GeneratorEntity.GeoOrder;
+import io.example.map.GeoOrderEntity.CreateGeoOrderCommand;
+import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = GeneratorEntity.class, ignoreUnknown = true)
 public class GeneratorToGeoOrderAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(GeneratorToGeoOrderAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public GeneratorToGeoOrderAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public GeneratorToGeoOrderAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(GeneratorEntity.GeoOrdersToGenerateEvent event) {
     log.info("Event: {}", event);
     var results = event.geoOrders().stream()
-        .map(geoOrder -> {
-          LogEvent.log("Generator", event.generatorId(), "GeoOrder", geoOrder.geoOrderId(), "");
-          var path = "/geo-order/%s/create".formatted(geoOrder.geoOrderId());
-          var command = new GeoOrderEntity.CreateGeoOrderCommand(geoOrder.geoOrderId(), geoOrder.position());
-          var returnType = String.class;
-          return kalixClient.post(path, command, returnType).execute();
-        })
+        .map(geoOrder -> toCommand(event, geoOrder))
+        .map(command -> callFor(command))
         .toList();
 
-    var result = CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
-        .thenApply(__ -> "OK");
+    return effects().asyncReply(waitForCallsToFinish(results));
+  }
 
-    return effects().asyncReply(result);
+  private CreateGeoOrderCommand toCommand(GeneratorEntity.GeoOrdersToGenerateEvent event, GeoOrder geoOrder) {
+    LogEvent.log("Generator", event.generatorId(), "GeoOrder", geoOrder.geoOrderId(), "");
+    return new GeoOrderEntity.CreateGeoOrderCommand(geoOrder.geoOrderId(), geoOrder.position());
+  }
+
+  private CompletionStage<String> callFor(CreateGeoOrderCommand command) {
+    return componentClient.forEventSourcedEntity(command.geoOrderId())
+        .call(GeoOrderEntity::create)
+        .params(command)
+        .execute();
+  }
+
+  private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
+    return CompletableFuture.allOf(results.toArray(CompletableFuture[]::new))
+        .thenApply(__ -> "OK");
   }
 }

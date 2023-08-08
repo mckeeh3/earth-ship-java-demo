@@ -9,16 +9,16 @@ import org.slf4j.LoggerFactory;
 
 import io.example.LogEvent;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = StockOrderEntity.class, ignoreUnknown = true)
 public class StockOrderToStockSkuItemAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(StockOrderToStockSkuItemAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public StockOrderToStockSkuItemAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public StockOrderToStockSkuItemAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(StockOrderEntity.GeneratedStockSkuItemIdsEvent event) {
@@ -41,13 +41,11 @@ public class StockOrderToStockSkuItemAction extends Action {
   }
 
   private CompletionStage<String> callFor(StockSkuItemEntity.CreateStockSkuItemCommand command, String stockOrderId) {
-    var path = "/stock-sku-item/%s/create".formatted(command.stockSkuItemId().toEntityId());
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-
     LogEvent.log("StockOrder", stockOrderId, "StockSkuItem", command.stockSkuItemId().toEntityId(), "");
-
-    return deferredCall.execute();
+    return componentClient.forEventSourcedEntity(command.stockSkuItemId().toEntityId())
+        .call(StockSkuItemEntity::create)
+        .params(command)
+        .execute();
   }
 
   private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
