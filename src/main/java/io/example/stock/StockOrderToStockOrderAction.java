@@ -7,16 +7,16 @@ import com.google.protobuf.any.Any;
 
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = StockOrderEntity.class, ignoreUnknown = true)
 public class StockOrderToStockOrderAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(StockOrderToStockOrderAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public StockOrderToStockOrderAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public StockOrderToStockOrderAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(StockOrderEntity.CreatedStockOrderEvent event) {
@@ -30,10 +30,10 @@ public class StockOrderToStockOrderAction extends Action {
   }
 
   private DeferredCall<Any, String> callFor(String stockOrderId) {
-    var path = "/stock-order/%s/generate-stock-sku-item-ids".formatted(stockOrderId);
     var command = new StockOrderEntity.GenerateStockSkuItemIdsCommand(stockOrderId);
-    var returnType = String.class;
 
-    return kalixClient.put(path, command, returnType);
+    return componentClient.forEventSourcedEntity(stockOrderId)
+        .call(StockOrderEntity::generateStockSkuItemIds)
+        .params(command);
   }
 }
