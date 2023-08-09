@@ -16,15 +16,15 @@ import io.example.product.ProductEntity;
 import io.example.product.ProductEntity.State;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 
 @RequestMapping("/cart-ui/{customerId}")
 public class ShoppingCartControllerAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(ShoppingCartControllerAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public ShoppingCartControllerAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public ShoppingCartControllerAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   @PutMapping("/items/add")
@@ -63,26 +63,17 @@ public class ShoppingCartControllerAction extends Action {
   }
 
   private CompletionStage<Effect<String>> validateProduct(AddLineItemCommand command) {
-    var path = "/product/%s".formatted(command.skuId());
-    var returnType = ProductEntity.State.class;
-    var deferredCall = kalixClient.get(path, returnType);
-
-    return handleProductResponse(command, deferredCall.execute());
-  }
-
-  private CompletionStage<Effect<String>> handleProductResponse(AddLineItemCommand command, CompletionStage<ProductEntity.State> response) {
-    return response
+    return componentClient.forEventSourcedEntity(command.skuId())
+        .call(ProductEntity::get)
+        .execute()
         .thenApply(result -> addLineItem(command, result))
         .exceptionally(e -> effects().error(e.getMessage()));
   }
 
   private Effect<String> addLineItem(AddLineItemCommand commandIn, ProductEntity.State product) {
-    var path = "/cart/%s/items/add".formatted(commandIn.customerId());
-    var commandOut = toCommand(commandIn, product);
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, commandOut, returnType);
-
-    return effects().forward(deferredCall);
+    return effects().forward(componentClient.forEventSourcedEntity(commandIn.customerId())
+        .call(ShoppingCartEntity::addLineItem)
+        .params(toCommand(commandIn, product)));
   }
 
   private ShoppingCartEntity.AddLineItemCommand toCommand(AddLineItemCommand commandIn, State product) {
@@ -100,7 +91,7 @@ public class ShoppingCartControllerAction extends Action {
     var commandOut = new ShoppingCartEntity.ChangeLineItemCommand(commandIn.customerId(), commandIn.skuId(), commandIn.quantity());
     var returnType = String.class;
 
-    return kalixClient.put(path, commandOut, returnType);
+    return componentClient.put(path, commandOut, returnType);
   }
 
   private DeferredCall<Any, String> callFor(RemoveLineItemCommand commandIn) {
@@ -108,7 +99,7 @@ public class ShoppingCartControllerAction extends Action {
     var commandOut = new ShoppingCartEntity.RemoveLineItemCommand(commandIn.customerId(), commandIn.skuId());
     var returnType = String.class;
 
-    return kalixClient.put(path, commandOut, returnType);
+    return componentClient.put(path, commandOut, returnType);
   }
 
   private DeferredCall<Any, String> callFor(CheckoutCommand commandIn) {
@@ -116,14 +107,14 @@ public class ShoppingCartControllerAction extends Action {
     var commandOut = new ShoppingCartEntity.CheckoutCommand(commandIn.customerId());
     var returnType = String.class;
 
-    return kalixClient.put(path, commandOut, returnType);
+    return componentClient.put(path, commandOut, returnType);
   }
 
   private DeferredCall<Any, ShoppingCartEntity.State> callFor(String customerId) {
     var path = "/cart/%s".formatted(customerId);
     var returnType = ShoppingCartEntity.State.class;
 
-    return kalixClient.get(path, returnType);
+    return componentClient.get(path, returnType);
   }
 
   public record AddLineItemCommand(String customerId, String skuId, int quantity) {}
