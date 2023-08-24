@@ -12,15 +12,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 
 @RequestMapping("/product-ui")
 public class ProductControllerAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(ProductControllerAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public ProductControllerAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public ProductControllerAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   @PutMapping("/create-products")
@@ -48,11 +48,10 @@ public class ProductControllerAction extends Action {
   }
 
   private CompletionStage<String> callFor(ProductEntity.CreateProductCommand command) {
-    var path = "/product/%s/create".formatted(command.skuId());
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-
-    return deferredCall.execute();
+    return componentClient.forEventSourcedEntity(command.skuId())
+        .call(ProductEntity::create)
+        .params(command)
+        .execute();
   }
 
   private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {

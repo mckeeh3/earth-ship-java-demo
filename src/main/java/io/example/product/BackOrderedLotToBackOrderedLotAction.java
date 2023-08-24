@@ -3,67 +3,71 @@ package io.example.product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.any.Any;
-
 import io.example.LogEvent;
-import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = BackOrderedLotEntity.class, ignoreUnknown = true)
 public class BackOrderedLotToBackOrderedLotAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(BackOrderedLotToBackOrderedLotAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public BackOrderedLotToBackOrderedLotAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public BackOrderedLotToBackOrderedLotAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(BackOrderedLotEntity.UpdatedBackOrderedLotEvent event) {
     log.info("Event: {}", event);
-    return effects().forward(callFor(event));
+
+    return callFor(event);
   }
 
   public Effect<String> on(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
     log.info("Event: {}", event);
 
+    return callFor(event);
+  }
+
+  private Effect<String> callFor(BackOrderedLotEntity.UpdatedBackOrderedLotEvent event) {
+    var command = new BackOrderedLotEntity.ReleaseBackOrderedLotCommand(event.backOrderedLotId());
+    return effects().forward(
+        componentClient.forEventSourcedEntity(event.backOrderedLotId().toEntityId())
+            .call(BackOrderedLotEntity::release)
+            .params(command));
+  }
+
+  private Effect<String> callFor(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
     if (event.backOrderedLotId().lotLevel() > 0) {
-      return effects().forward(callForBackOrderedLot(event));
+      return callForBackOrderedLot(event);
     } else {
-      return effects().forward(callForProduct(event));
+      return callForProduct(event);
     }
   }
 
-  private DeferredCall<Any, String> callFor(BackOrderedLotEntity.UpdatedBackOrderedLotEvent event) {
-    var path = "/back-ordered-lot/%s/release".formatted(event.backOrderedLotId().toEntityId());
-    var command = new BackOrderedLotEntity.ReleaseBackOrderedLotCommand(event.backOrderedLotId());
-    var returnType = String.class;
-
-    return kalixClient.put(path, command, returnType);
-  }
-
-  private DeferredCall<Any, String> callForBackOrderedLot(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
+  private Effect<String> callForBackOrderedLot(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
     var upperBackOrderedLotId = event.backOrderedLotId().levelUp();
-    var path = "/back-ordered-lot/%s/update".formatted(upperBackOrderedLotId.toEntityId());
     var command = new BackOrderedLotEntity.UpdateSubBackOrderedLotCommand(event.backOrderedLotId(), event.backOrderedLot());
-    var returnType = String.class;
 
     var message = "color %s".formatted(event.backOrderedLot().quantityBackOrdered() > 0 ? "red" : "green");
     LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "BackOrderedLot", upperBackOrderedLotId.toEntityId(), message);
 
-    return kalixClient.put(path, command, returnType);
+    return effects().forward(
+        componentClient.forEventSourcedEntity(upperBackOrderedLotId.toEntityId())
+            .call(BackOrderedLotEntity::update)
+            .params(command));
   }
 
-  private DeferredCall<Any, String> callForProduct(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
+  private Effect<String> callForProduct(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
     var skuId = event.backOrderedLotId().skuId();
-    var path = "/product/%s/update-units-back-ordered".formatted(skuId);
     var command = new ProductEntity.UpdateProductsBackOrderedCommand(skuId, event.backOrderedLot());
-    var returnType = String.class;
 
     var message = "color %s".formatted(event.backOrderedLot().quantityBackOrdered() > 0 ? "red" : "green");
     LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "Product", skuId, message);
 
-    return kalixClient.put(path, command, returnType);
+    return effects().forward(
+        componentClient.forEventSourcedEntity(skuId)
+            .call(ProductEntity::updateUnitsBackOrdered)
+            .params(command));
   }
 }

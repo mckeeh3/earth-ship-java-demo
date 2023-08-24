@@ -1,5 +1,6 @@
 package io.example.shipping;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -7,47 +8,54 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.example.LogEvent;
-import io.example.shipping.ShippingOrderEntity.CreatedShippingOrderEvent;
-import io.example.shipping.ShippingOrderEntity.OrderItem;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = ShippingOrderEntity.class, ignoreUnknown = true)
 public class ShippingOrderToShippingOrderItemAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(ShippingOrderToShippingOrderItemAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public ShippingOrderToShippingOrderItemAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public ShippingOrderToShippingOrderItemAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
-  public Effect<String> on(CreatedShippingOrderEvent event) {
+  public Effect<String> on(ShippingOrderEntity.CreatedShippingOrderEvent event) {
     log.info("Event: {}", event);
+
+    return callFor(event);
+  }
+
+  private Effect<String> callFor(ShippingOrderEntity.CreatedShippingOrderEvent event) {
     var results = event.orderItems().stream()
-        .map(orderItem -> callFor(event, orderItem))
+        .map(orderItem -> toCommand(event, orderItem))
+        .map(command -> callFor(command))
         .toList();
 
-    var result = CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
-        .thenApply(__ -> "OK");
-
-    return effects().asyncReply(result);
+    return effects().asyncReply(waitForCallsToFinish(results));
   }
 
-  private CompletionStage<String> callFor(CreatedShippingOrderEvent event, OrderItem orderItem) {
-    var command = toCommand(event, orderItem);
-    LogEvent.log("ShippingOrder", event.orderId(), "ShippingOrderItem", command.shippingOrderItemId().toEntityId(), "color yellow");
-    var path = "/shipping-order-item/%s/create".formatted(command.shippingOrderItemId().toEntityId());
-    var returnType = String.class;
-    return kalixClient.put(path, command, returnType).execute();
+  private CompletionStage<String> callFor(ShippingOrderItemEntity.CreateShippingOrderItemCommand command) {
+    LogEvent.log("ShippingOrder", command.shippingOrderItemId().orderId(), "ShippingOrderItem", command.shippingOrderItemId().toEntityId(), "color yellow");
+
+    return componentClient.forEventSourcedEntity(command.shippingOrderItemId().toEntityId())
+        .call(ShippingOrderItemEntity::create)
+        .params(command)
+        .execute();
   }
 
-  private ShippingOrderItemEntity.CreateShippingOrderItemCommand toCommand(CreatedShippingOrderEvent event, ShippingOrderEntity.OrderItem orderItem) {
+  private ShippingOrderItemEntity.CreateShippingOrderItemCommand toCommand(ShippingOrderEntity.CreatedShippingOrderEvent event, ShippingOrderEntity.OrderItem orderItem) {
     return new ShippingOrderItemEntity.CreateShippingOrderItemCommand(
         ShippingOrderItemEntity.ShippingOrderItemId.of(event.orderId(), orderItem.skuId()),
         orderItem.skuName(),
         orderItem.quantity(),
         event.customerId(),
         event.orderedAt());
+  }
+
+  private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
+    return CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
+        .thenApply(__ -> "OK");
   }
 }

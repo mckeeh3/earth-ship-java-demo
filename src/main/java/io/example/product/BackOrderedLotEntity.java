@@ -34,7 +34,7 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
   }
 
   @PutMapping("/update")
-  public Effect<String> create(@RequestBody UpdateSubBackOrderedLotCommand command) {
+  public Effect<String> update(@RequestBody UpdateSubBackOrderedLotCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -42,7 +42,7 @@ public class BackOrderedLotEntity extends EventSourcedEntity<BackOrderedLotEntit
   }
 
   @PutMapping("/release")
-  public Effect<String> releaseBackOrderedLot(@RequestBody ReleaseBackOrderedLotCommand command) {
+  public Effect<String> release(@RequestBody ReleaseBackOrderedLotCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))

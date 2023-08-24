@@ -5,36 +5,33 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.any.Any;
-
 import io.example.LogEvent;
 import io.example.order.OrderEntity;
-import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = OrderEntity.class, ignoreUnknown = true)
 public class OrderToShippingOrderAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(OrderToShippingOrderAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public OrderToShippingOrderAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public OrderToShippingOrderAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(OrderEntity.CreatedOrderEvent event) {
     log.info("Event: {}", event);
     LogEvent.log("Order", event.orderId(), "ShippingOrder", event.orderId(), "color yellow");
-    return effects().forward(callFor(event));
+
+    return callFor(event);
   }
 
-  private DeferredCall<Any, String> callFor(OrderEntity.CreatedOrderEvent event) {
-    var path = "/shipping-order/%s/create".formatted(event.orderId());
-    var command = toCommand(event);
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-    return deferredCall;
+  private Effect<String> callFor(OrderEntity.CreatedOrderEvent event) {
+    return effects().forward(
+        componentClient.forEventSourcedEntity(event.orderId())
+            .call(ShippingOrderEntity::createOrder)
+            .params(toCommand(event)));
   }
 
   private ShippingOrderEntity.CreateShippingOrderCommand toCommand(OrderEntity.CreatedOrderEvent event) {

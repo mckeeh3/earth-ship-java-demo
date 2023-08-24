@@ -9,43 +9,40 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.any.Any;
-
 import io.example.LogEvent;
 import io.example.map.GeoOrderEntity;
 import io.example.map.GeoOrderEntity.GeoOrderCreatedEvent;
 import io.example.product.ProductEntity;
 import io.example.product.ProductEntity.State;
-import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = GeoOrderEntity.class, ignoreUnknown = true)
 public class GeoOrderToOrderAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(GeoOrderToOrderAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public GeoOrderToOrderAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public GeoOrderToOrderAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(GeoOrderEntity.GeoOrderCreatedEvent event) {
     log.info("Event: {}", event);
     LogEvent.log("GeoOrder", event.geoOrderId(), "Order", event.geoOrderId(), "");
+
+    return callFor(event);
+  }
+
+  private Effect<String> callFor(GeoOrderEntity.GeoOrderCreatedEvent event) {
     try {
-      return effects().forward(callFor(event));
+      return effects().forward(
+          componentClient.forEventSourcedEntity(event.geoOrderId())
+              .call(OrderEntity::createOrder)
+              .params(toCommand(event)));
     } catch (Exception e) {
       return effects().error(e.getMessage());
     }
-  }
-
-  private DeferredCall<Any, String> callFor(GeoOrderEntity.GeoOrderCreatedEvent event) {
-    var path = "/order/%s/create".formatted(event.geoOrderId());
-    var command = toCommand(event);
-    var returnType = String.class;
-
-    return kalixClient.put(path, command, returnType);
   }
 
   private OrderEntity.CreateOrderCommand toCommand(GeoOrderCreatedEvent event) {
@@ -103,9 +100,8 @@ public class GeoOrderToOrderAction extends Action {
   }
 
   private CompletionStage<State> product(String productId) {
-    var path = "/product/%s".formatted(productId);
-    var returnType = ProductEntity.State.class;
-
-    return kalixClient.get(path, returnType).execute();
+    return componentClient.forEventSourcedEntity(productId)
+        .call(ProductEntity::get)
+        .execute();
   }
 }

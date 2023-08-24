@@ -3,56 +3,77 @@ package io.example.shipping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.any.Any;
-
 import io.example.LogEvent;
 import io.example.shipping.OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent;
 import io.example.shipping.OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent;
 import io.example.shipping.OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent;
-import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = OrderSkuItemEntity.class, ignoreUnknown = true)
 public class OrderSkuItemToShippingOrderItemAction extends Action {
   private static final Logger logger = LoggerFactory.getLogger(OrderSkuItemToShippingOrderItemAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public OrderSkuItemToShippingOrderItemAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public OrderSkuItemToShippingOrderItemAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
     logger.info("Event: {}", event);
     LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color green");
-    return effects().forward(callFor(event));
+
+    return callFor(event);
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     logger.info("Event: {}", event);
     LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color green");
-    return effects().forward(callFor(event));
+
+    return callFor(event);
   }
 
   public Effect<String> on(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     logger.info("Event: {}", event);
     LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color yellow");
-    return effects().forward(callFor(event));
+
+    return callFor(event);
   }
 
   public Effect<String> on(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
     logger.info("Event: {}", event);
     LogEvent.log("OrderSkuItem", event.orderSkuItemId().toEntityId(), "ShippingOrderItem", shippingOrderItemEntityId(event), "color red");
-    return effects().forward(callFor(event));
+
+    return callFor(event);
   }
 
-  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
-    var path = "/shipping-order-item/%s/ready-to-ship".formatted(shippingOrderItemEntityId(event));
-    var command = toCommand(event);
-    var returnType = String.class;
+  private Effect<String> callFor(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
+    return effects().forward(
+        componentClient.forEventSourcedEntity(shippingOrderItemEntityId(event))
+            .call(ShippingOrderItemEntity::readyToShip)
+            .params(toCommand(event)));
+  }
 
-    return kalixClient.put(path, command, returnType);
+  private Effect<String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
+    return effects().forward(
+        componentClient.forEventSourcedEntity(shippingOrderItemEntityId(event))
+            .call(ShippingOrderItemEntity::readyToShip)
+            .params(toCommand(event)));
+  }
+
+  private Effect<String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
+    return effects().forward(
+        componentClient.forEventSourcedEntity(shippingOrderItemEntityId(event))
+            .call(ShippingOrderItemEntity::release)
+            .params(toCommand(event)));
+  }
+
+  private Effect<String> callFor(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
+    return effects().forward(
+        componentClient.forEventSourcedEntity(shippingOrderItemEntityId(event))
+            .call(ShippingOrderItemEntity::backOrder)
+            .params(toCommand(event)));
   }
 
   private static ShippingOrderItemEntity.ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.StockRequestedJoinToOrderAcceptedEvent event) {
@@ -63,14 +84,6 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
         event.readyToShipAt());
   }
 
-  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
-    var path = "/shipping-order-item/%s/ready-to-ship".formatted(shippingOrderItemEntityId(event));
-    var command = toCommand(event);
-    var returnType = String.class;
-
-    return kalixClient.put(path, command, returnType);
-  }
-
   private static ShippingOrderItemEntity.ReadyToShipOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockAcceptedEvent event) {
     return new ShippingOrderItemEntity.ReadyToShipOrderSkuItemCommand(
         event.orderSkuItemId(),
@@ -79,27 +92,11 @@ public class OrderSkuItemToShippingOrderItemAction extends Action {
         event.readyToShipAt());
   }
 
-  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
-    var path = "/shipping-order-item/%s/release".formatted(shippingOrderItemEntityId(event));
-    var command = toCommand(event);
-    var returnType = String.class;
-
-    return kalixClient.put(path, command, returnType);
-  }
-
   private static ShippingOrderItemEntity.ReleaseOrderSkuItemCommand toCommand(OrderSkuItemEntity.OrderRequestedJoinToStockReleasedEvent event) {
     return new ShippingOrderItemEntity.ReleaseOrderSkuItemCommand(
         event.orderSkuItemId(),
         event.skuId(),
         event.stockSkuItemId());
-  }
-
-  private DeferredCall<Any, String> callFor(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {
-    var path = "/shipping-order-item/%s/back-order".formatted(shippingOrderItemEntityId(event));
-    var command = toCommand(event);
-    var returnType = String.class;
-
-    return kalixClient.put(path, command, returnType);
   }
 
   private static ShippingOrderItemEntity.BackOrderOrderSkuItemCommand toCommand(OrderSkuItemEntity.BackOrderedOrderSkuItemEvent event) {

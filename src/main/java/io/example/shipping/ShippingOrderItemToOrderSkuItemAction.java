@@ -12,20 +12,24 @@ import io.example.shipping.ShippingOrderItemEntity.CreatedShippingOrderItemEvent
 import io.example.shipping.ShippingOrderItemEntity.OrderSkuItem;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = ShippingOrderItemEntity.class, ignoreUnknown = true)
 public class ShippingOrderItemToOrderSkuItemAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(ShippingOrderItemToOrderSkuItemAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public ShippingOrderItemToOrderSkuItemAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public ShippingOrderItemToOrderSkuItemAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(ShippingOrderItemEntity.CreatedShippingOrderItemEvent event) {
     log.info("Event: {}", event);
 
+    return callFor(event);
+  }
+
+  private Effect<String> callFor(ShippingOrderItemEntity.CreatedShippingOrderItemEvent event) {
     var results = event.orderSkuItems().stream()
         .map(orderSkuItem -> toCommands(event, orderSkuItem))
         .map(command -> callFor(command))
@@ -36,6 +40,7 @@ public class ShippingOrderItemToOrderSkuItemAction extends Action {
 
   private OrderSkuItemEntity.CreateOrderSkuItemCommand toCommands(CreatedShippingOrderItemEvent event, OrderSkuItem orderSkuItem) {
     LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "OrderSkuItem", orderSkuItem.orderSkuItemId().toEntityId(), "color yellow");
+
     return new OrderSkuItemEntity.CreateOrderSkuItemCommand(
         orderSkuItem.orderSkuItemId(),
         orderSkuItem.customerId(),
@@ -45,11 +50,10 @@ public class ShippingOrderItemToOrderSkuItemAction extends Action {
   }
 
   private CompletionStage<String> callFor(OrderSkuItemEntity.CreateOrderSkuItemCommand command) {
-    var path = "/order-sku-item/%s/create".formatted(command.orderSkuItemId().toEntityId());
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
-
-    return deferredCall.execute();
+    return componentClient.forEventSourcedEntity(command.orderSkuItemId().toEntityId())
+        .call(OrderSkuItemEntity::create)
+        .params(command)
+        .execute();
   }
 
   private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {

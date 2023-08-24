@@ -7,32 +7,42 @@ import org.slf4j.LoggerFactory;
 
 import io.example.LogEvent;
 import kalix.javasdk.action.Action;
-import kalix.spring.KalixClient;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = RegionEntity.class, ignoreUnknown = true)
 public class RegionToRegionAction extends Action {
   private static Logger log = LoggerFactory.getLogger(RegionToRegionAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public RegionToRegionAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public RegionToRegionAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(RegionEntity.UpdatedRegionEvent event) {
     log.info("Event: {}", event);
-    var region = event.region();
-    var regionId = regionIdFor(region);
-    var path = "/region/%s/release-current-state".formatted(regionId);
-    var command = new RegionEntity.ReleaseCurrentStateCommand(region);
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
 
-    return effects().forward(deferredCall);
+    return callFor(event);
   }
 
   public Effect<String> on(RegionEntity.ReleasedCurrentStateEvent event) {
     log.info("Event: {}", event);
+
+    return callFor(event);
+  }
+
+  private Effect<String> callFor(RegionEntity.UpdatedRegionEvent event) {
+    var region = event.region();
+    var regionId = regionIdFor(region);
+    var command = new RegionEntity.ReleaseCurrentStateCommand(region);
+
+    return effects().forward(
+        componentClient.forEventSourcedEntity(regionId)
+            .call(RegionEntity::releaseCurrentState)
+            .params(command));
+  }
+
+  private Effect<String> callFor(RegionEntity.ReleasedCurrentStateEvent event) {
     var subRegion = event.region();
     var region = regionAbove(subRegion);
     if (region == null) {
@@ -43,11 +53,11 @@ public class RegionToRegionAction extends Action {
     LogEvent.log("Region", regionIdFor(subRegion), "Region", regionIdFor(region), message);
 
     var regionId = regionIdFor(region);
-    var path = "/region/%s/update-sub-region".formatted(regionId);
     var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
-    var returnType = String.class;
-    var deferredCall = kalixClient.put(path, command, returnType);
 
-    return effects().forward(deferredCall);
+    return effects().forward(
+        componentClient.forEventSourcedEntity(regionId)
+            .call(RegionEntity::updateSubRegion)
+            .params(command));
   }
 }

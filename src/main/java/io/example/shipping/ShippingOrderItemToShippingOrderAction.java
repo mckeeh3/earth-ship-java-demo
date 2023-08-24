@@ -3,65 +3,62 @@ package io.example.shipping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.protobuf.any.Any;
-
 import io.example.LogEvent;
-import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = ShippingOrderItemEntity.class, ignoreUnknown = true)
 public class ShippingOrderItemToShippingOrderAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(ShippingOrderItemToShippingOrderAction.class);
-  private final KalixClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public ShippingOrderItemToShippingOrderAction(KalixClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public ShippingOrderItemToShippingOrderAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
   public Effect<String> on(ShippingOrderItemEntity.ReadyToShipOrderItemEvent event) {
     log.info("Event: {}", event);
-    return effects().forward(callFor(event));
+    LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "ShippingOrder", event.shippingOrderItemId().orderId(), "color green");
+
+    return callFor(event);
   }
 
   public Effect<String> on(ShippingOrderItemEntity.ReleasedOrderItemEvent event) {
     log.info("Event: {}", event);
-    return effects().forward(callFor(event));
+    LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "ShippingOrder", event.shippingOrderItemId().orderId(), "color yellow");
+
+    return callFor(event);
   }
 
   public Effect<String> on(ShippingOrderItemEntity.BackOrderedOrderItemEvent event) {
     log.info("Event: {}", event);
-    return effects().forward(callFor(event));
-  }
-
-  private DeferredCall<Any, String> callFor(ShippingOrderItemEntity.ReadyToShipOrderItemEvent event) {
-    var path = "/shipping-order/%s/ready-to-ship-order-item".formatted(event.shippingOrderItemId().orderId());
-    var command = new ShippingOrderEntity.ReadyToShipOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId(), event.readyToShipAt());
-    var returnType = String.class;
-
-    LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "ShippingOrder", event.shippingOrderItemId().orderId(), "color green");
-
-    return kalixClient.put(path, command, returnType);
-  }
-
-  private DeferredCall<Any, String> callFor(ShippingOrderItemEntity.ReleasedOrderItemEvent event) {
-    var path = "/shipping-order/%s/release-order-item".formatted(event.shippingOrderItemId().orderId());
-    var command = new ShippingOrderEntity.ReleaseOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId());
-    var returnType = String.class;
-
-    LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "ShippingOrder", event.shippingOrderItemId().orderId(), "color yellow");
-
-    return kalixClient.put(path, command, returnType);
-  }
-
-  private DeferredCall<Any, String> callFor(ShippingOrderItemEntity.BackOrderedOrderItemEvent event) {
-    var path = "/shipping-order/%s/back-order-order-item".formatted(event.shippingOrderItemId().orderId());
-    var command = new ShippingOrderEntity.BackOrderOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId(), event.backOrderedAt());
-    var returnType = String.class;
-
     LogEvent.log("ShippingOrderItem", event.shippingOrderItemId().toEntityId(), "ShippingOrder", event.shippingOrderItemId().orderId(), "color red");
 
-    return kalixClient.put(path, command, returnType);
+    return callFor(event);
+  }
+
+  private Effect<String> callFor(ShippingOrderItemEntity.ReadyToShipOrderItemEvent event) {
+    var command = new ShippingOrderEntity.ReadyToShipOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId(), event.readyToShipAt());
+    return effects().forward(
+        componentClient.forEventSourcedEntity(event.shippingOrderItemId().orderId())
+            .call(ShippingOrderEntity::readyToShipOrderItem)
+            .params(command));
+  }
+
+  private Effect<String> callFor(ShippingOrderItemEntity.ReleasedOrderItemEvent event) {
+    var command = new ShippingOrderEntity.ReleaseOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId());
+    return effects().forward(
+        componentClient.forEventSourcedEntity(event.shippingOrderItemId().orderId())
+            .call(ShippingOrderEntity::releaseOrderItem)
+            .params(command));
+  }
+
+  private Effect<String> callFor(ShippingOrderItemEntity.BackOrderedOrderItemEvent event) {
+    var command = new ShippingOrderEntity.BackOrderOrderItemCommand(event.shippingOrderItemId().orderId(), event.shippingOrderItemId().skuId(), event.backOrderedAt());
+    return effects().forward(
+        componentClient.forEventSourcedEntity(event.shippingOrderItemId().orderId())
+            .call(ShippingOrderEntity::backOrderOrderItem)
+            .params(command));
   }
 }

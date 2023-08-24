@@ -1,7 +1,5 @@
 package io.example.cart;
 
-import java.util.concurrent.CompletionStage;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,11 +8,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.google.protobuf.any.Any;
-
 import io.example.product.ProductEntity;
 import io.example.product.ProductEntity.State;
-import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.client.ComponentClient;
 
@@ -31,43 +26,44 @@ public class ShoppingCartControllerAction extends Action {
   public Effect<String> addLineItem(@RequestBody AddLineItemCommand command) {
     log.info("Command: {}", command);
 
-    return effects().asyncEffect(validateProduct(command));
+    return validateProduct(command);
   }
 
   @PutMapping("/items/{sku_id}/change")
   public Effect<String> changeLineItem(@RequestBody ChangeLineItemCommand command) {
     log.info("Command: {}", command);
 
-    return effects().forward(callFor(command));
+    return callFor(command);
   }
 
   @PutMapping("/items/{sku_id}/remove")
   public Effect<String> removeLineItem(@RequestBody RemoveLineItemCommand command) {
     log.info("Command: {}", command);
 
-    return effects().forward(callFor(command));
+    return callFor(command);
   }
 
   @PutMapping("/checkout")
   public Effect<String> checkout(@RequestBody CheckoutCommand command) {
     log.info("Command: {}", command);
 
-    return effects().forward(callFor(command));
+    return callFor(command);
   }
 
   @GetMapping()
   public Effect<ShoppingCartEntity.State> get(@PathVariable("customerId") String customerId) {
     log.info("EntityId: {}\n_Command: {}", customerId, "GetShoppingCart");
 
-    return effects().forward(callFor(customerId));
+    return callFor(customerId);
   }
 
-  private CompletionStage<Effect<String>> validateProduct(AddLineItemCommand command) {
-    return componentClient.forEventSourcedEntity(command.skuId())
-        .call(ProductEntity::get)
-        .execute()
-        .thenApply(result -> addLineItem(command, result))
-        .exceptionally(e -> effects().error(e.getMessage()));
+  private Effect<String> validateProduct(AddLineItemCommand command) {
+    return effects().asyncEffect(
+        componentClient.forEventSourcedEntity(command.skuId())
+            .call(ProductEntity::get)
+            .execute()
+            .thenApply(result -> addLineItem(command, result))
+            .exceptionally(e -> effects().error(e.getMessage())));
   }
 
   private Effect<String> addLineItem(AddLineItemCommand commandIn, ProductEntity.State product) {
@@ -86,35 +82,34 @@ public class ShoppingCartControllerAction extends Action {
         commandIn.quantity());
   }
 
-  private DeferredCall<Any, String> callFor(ChangeLineItemCommand commandIn) {
-    var path = "/cart/%s/items/%s/change".formatted(commandIn.customerId(), commandIn.skuId());
+  private Effect<String> callFor(ChangeLineItemCommand commandIn) {
     var commandOut = new ShoppingCartEntity.ChangeLineItemCommand(commandIn.customerId(), commandIn.skuId(), commandIn.quantity());
-    var returnType = String.class;
-
-    return componentClient.put(path, commandOut, returnType);
+    return effects().forward(
+        componentClient.forEventSourcedEntity(commandIn.customerId())
+            .call(ShoppingCartEntity::changeLineItem)
+            .params(commandOut));
   }
 
-  private DeferredCall<Any, String> callFor(RemoveLineItemCommand commandIn) {
-    var path = "/cart/%s/items/%s/remove".formatted(commandIn.customerId(), commandIn.skuId());
+  private Effect<String> callFor(RemoveLineItemCommand commandIn) {
     var commandOut = new ShoppingCartEntity.RemoveLineItemCommand(commandIn.customerId(), commandIn.skuId());
-    var returnType = String.class;
-
-    return componentClient.put(path, commandOut, returnType);
+    return effects().forward(
+        componentClient.forEventSourcedEntity(commandIn.customerId())
+            .call(ShoppingCartEntity::removeLineItem)
+            .params(commandOut));
   }
 
-  private DeferredCall<Any, String> callFor(CheckoutCommand commandIn) {
-    var path = "/cart/%s/checkout".formatted(commandIn.customerId());
+  private Effect<String> callFor(CheckoutCommand commandIn) {
     var commandOut = new ShoppingCartEntity.CheckoutCommand(commandIn.customerId());
-    var returnType = String.class;
-
-    return componentClient.put(path, commandOut, returnType);
+    return effects().forward(
+        componentClient.forEventSourcedEntity(commandIn.customerId())
+            .call(ShoppingCartEntity::checkout)
+            .params(commandOut));
   }
 
-  private DeferredCall<Any, ShoppingCartEntity.State> callFor(String customerId) {
-    var path = "/cart/%s".formatted(customerId);
-    var returnType = ShoppingCartEntity.State.class;
-
-    return componentClient.get(path, returnType);
+  private Effect<io.example.cart.ShoppingCartEntity.State> callFor(String customerId) {
+    return effects().forward(
+        componentClient.forEventSourcedEntity(customerId)
+            .call(ShoppingCartEntity::get));
   }
 
   public record AddLineItemCommand(String customerId, String skuId, int quantity) {}
