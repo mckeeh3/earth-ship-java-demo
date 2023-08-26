@@ -70,19 +70,20 @@ const stopwatch = {
   },
 
   formatElapsedTime: function () {
-    const hours = Math.floor(this.elapsedTime / (60 * 60 * 1000));
-    const minutes = Math.floor(this.elapsedTime / (60 * 1000));
-    const seconds = Math.floor((this.elapsedTime % (60 * 1000)) / 1000);
-    const milliseconds = Math.floor(this.elapsedTime % 1000);
+    const milliseconds = this.elapsedTime;
+    const seconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
 
-    return `${this.formatTime(hours, 2)}:${this.formatTime(minutes, 2)}:${this.formatTime(seconds, 2)}:${this.formatTime(milliseconds, 3)}`;
-  },
+    const secondsLeft = seconds % 60;
+    const minutesLeft = minutes % 60;
 
-  formatTime: function (time, digits) {
-    let timeString = time.toString();
-    while (timeString.length < (digits ? digits : 2)) {
-      timeString = '0' + timeString;
-    }
-    return timeString;
+    return [
+      //
+      hours.toString(),
+      minutesLeft.toString().padStart(2, '0'),
+      secondsLeft.toString().padStart(2, '0'),
+      (milliseconds % 1000).toString().padStart(3, '0'),
+    ].join(':');
   },
 };

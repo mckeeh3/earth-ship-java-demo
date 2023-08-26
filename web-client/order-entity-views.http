@@ -1,7 +1,8 @@
-@urlPrefix = http://localhost:9000
+# @urlPrefix = http://localhost:9000
+@urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
 //today's date in iso format
-@orderedAtFrom = 2022-01-01T00:00:00.000Z
-@orderedAtTo = 2023-02-28T23:59:59.999Z
+@orderedAtFrom = 2023-01-01T00:00:00.000Z
+@orderedAtTo = 2023-12-31T23:59:59.999Z
 @nextPageToken = ABCD
 @customerId = customer-1
 

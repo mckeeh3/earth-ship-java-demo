@@ -16,7 +16,7 @@
   <properties>
 
     <!-- TODO Update to your own Docker repository or Docker Hub scope -->
-    <dockerImage>mckeeh3/${project.artifactId}</dockerImage>
+    <dockerImage>kcr.eu-central-1.kalix.io/lightbend/hugh-demos/${project.artifactId}</dockerImage>
     <dockerTag>${project.version}-${build.timestamp}</dockerTag>
     <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
     <mainClass>io.example.Main</mainClass>
