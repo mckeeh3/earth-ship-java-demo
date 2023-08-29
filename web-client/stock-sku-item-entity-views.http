@@ -1,5 +1,5 @@
-@urlPrefix = http://localhost:9000
-# @urlPrefix = https://flat-lab-5598.eu-central-1.kalix.app
+# @urlPrefix = http://localhost:9000
+@urlPrefix = https://cold-poetry-2720.eu-central-1.kalix.app
 @skuId = P0021
 
 ### query for available stock sku items

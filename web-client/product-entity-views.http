@@ -1,4 +1,5 @@
-@urlPrefix = http://localhost:9000
+# @urlPrefix = http://localhost:9000
+@urlPrefix = https://cold-poetry-2720.eu-central-1.kalix.app
 @nextPageToken = NULL
 
 ### Get all products
