@@ -7,18 +7,18 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.map.WorldMap.LatLng;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
-import kalix.javasdk.annotations.EventHandler;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 
 @Id("geoOrderId")
 @TypeId("geoOrder")
@@ -44,7 +44,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
         .thenReply(__ -> "OK");
   }
 
-  @PutMapping("/ready-to-ship")
+  @PatchMapping("/ready-to-ship")
   public Effect<String> readyToShip(@RequestBody GeoOrderReadyToShipCommand command) {
     log.debug("EntityId: {}\n_State: {}", entityId, currentState());
     if (currentState().isEmpty()) { // this can happen when orders are created with the shopping cart
@@ -55,7 +55,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
         .thenReply(__ -> "OK");
   }
 
-  @PutMapping("/back-ordered")
+  @PatchMapping("/back-ordered")
   public Effect<String> alarm(@RequestBody GeoOrderBackOrderedCommand command) {
     log.debug("EntityId: {}\n_State: {}", entityId, currentState());
     if (currentState().isEmpty()) { // this can happen when orders are created with the shopping cart
