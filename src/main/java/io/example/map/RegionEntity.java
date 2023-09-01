@@ -22,7 +22,7 @@ import kalix.javasdk.annotations.EventHandler;
 
 @Id("regionId")
 @TypeId("region")
-@RequestMapping("/region")
+@RequestMapping("/region/{regionId}")
 public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionEntity.Event> {
   private static final Logger log = LoggerFactory.getLogger(RegionEntity.class);
   private final String entityId;
@@ -36,7 +36,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionE
     return State.empty();
   }
 
-  @PutMapping("/{regionId}/update-sub-region")
+  @PutMapping("/update-sub-region")
   public Effect<String> updateSubRegion(@RequestBody UpdateSubRegionCommand command) {
     if (command.subRegion().zoom() < 1) {
       return effects().error("Cannot add sub-region with zoom < 1, zoom: %d".formatted(command.subRegion().zoom()));
@@ -47,7 +47,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionE
         .thenReply(__ -> "OK");
   }
 
-  @PutMapping("/{regionId}/release-current-state")
+  @PutMapping("/release-current-state")
   public Effect<String> releaseCurrentState(@RequestBody ReleaseCurrentStateCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
@@ -55,7 +55,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionE
         .thenReply(__ -> "OK");
   }
 
-  @GetMapping("/{regionId}")
+  @GetMapping()
   public Effect<RegionEntity.State> get(@PathVariable String regionId) {
     log.debug("EntityId: {}\n_RegionId: {}\n_State: {}", entityId, regionId, currentState());
     if (currentState().isEmpty()) {
@@ -92,7 +92,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionE
       return region.isEmpty();
     }
 
-    List<? extends Event> eventsFor(UpdateSubRegionCommand command) {
+    List<Event> eventsFor(UpdateSubRegionCommand command) {
       var newRegion = regionFor(region, command);
       var updatedSubRegionEvent = new UpdatedSubRegionEvent(command.subRegion());
 
@@ -105,7 +105,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionE
       return List.of(updatedSubRegionEvent, updateRegionEvent);
     }
 
-    ReleasedCurrentStateEvent eventFor(ReleaseCurrentStateCommand command) {
+    Event eventFor(ReleaseCurrentStateCommand command) {
       var newRegion = regionFor(region, command);
       return new ReleasedCurrentStateEvent(newRegion);
     }

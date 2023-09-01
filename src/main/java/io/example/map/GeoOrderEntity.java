@@ -47,7 +47,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
   @PutMapping("/ready-to-ship")
   public Effect<String> readyToShip(@RequestBody GeoOrderReadyToShipCommand command) {
     log.debug("EntityId: {}\n_State: {}", entityId, currentState());
-    if (currentState().isEmpty()) {
+    if (currentState().isEmpty()) { // this can happen when orders are created with the shopping cart
       return effects().reply("OK");
     }
     return effects()
@@ -58,7 +58,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
   @PutMapping("/back-ordered")
   public Effect<String> alarm(@RequestBody GeoOrderBackOrderedCommand command) {
     log.debug("EntityId: {}\n_State: {}", entityId, currentState());
-    if (currentState().isEmpty()) {
+    if (currentState().isEmpty()) { // this can happen when orders are created with the shopping cart
       return effects().reply("OK");
     }
     return effects()
@@ -107,15 +107,15 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
       return geoOrderId == null;
     }
 
-    GeoOrderCreatedEvent eventFor(CreateGeoOrderCommand command) {
+    Event eventFor(CreateGeoOrderCommand command) {
       return new GeoOrderCreatedEvent(command.geoOrderId, command.position);
     }
 
-    GeoOrderReadyToShipEvent eventFor(GeoOrderReadyToShipCommand command) {
+    Event eventFor(GeoOrderReadyToShipCommand command) {
       return new GeoOrderReadyToShipEvent(geoOrderId, position, command.readyToShipAt);
     }
 
-    GeoOrderBackOrderedEvent eventFor(GeoOrderBackOrderedCommand command) {
+    Event eventFor(GeoOrderBackOrderedCommand command) {
       return new GeoOrderBackOrderedEvent(geoOrderId, position, command.backOrderedAt);
     }
 
