@@ -104,7 +104,7 @@ public class GeoOrderTest {
     {
       var backOrderedAt = Instant.now();
       var command = new GeoOrderEntity.GeoOrderBackOrderedCommand("geoOrderId", backOrderedAt);
-      var result = testKit.call(e -> e.alarm(command));
+      var result = testKit.call(e -> e.backOrdered(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
 

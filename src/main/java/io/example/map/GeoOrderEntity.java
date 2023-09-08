@@ -59,7 +59,7 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
   }
 
   @PatchMapping("/back-ordered")
-  public Effect<String> alarm(@RequestBody GeoOrderBackOrderedCommand command) {
+  public Effect<String> backOrdered(@RequestBody GeoOrderBackOrderedCommand command) {
     log.debug("EntityId: {}\n_State: {}", entityId, currentState());
     if (currentState().isEmpty()) { // this can happen when orders are created with the shopping cart
       return effects().reply("OK");

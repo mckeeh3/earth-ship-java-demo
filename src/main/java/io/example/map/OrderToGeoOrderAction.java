@@ -42,7 +42,7 @@ public class OrderToGeoOrderAction extends Action {
   private Effect<String> callFor(OrderEntity.BackOrderedOrderEvent event) {
     var command = new GeoOrderEntity.GeoOrderBackOrderedCommand(event.orderId(), event.backOrderedAt());
     return effects().forward(componentClient.forEventSourcedEntity(event.orderId())
-        .call(GeoOrderEntity::alarm)
+        .call(GeoOrderEntity::backOrdered)
         .params(command));
   }
 }
