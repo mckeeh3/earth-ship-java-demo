@@ -38,13 +38,13 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
 
   @PostMapping("/create")
   public Effect<String> create(@RequestBody CreateGeoOrderCommand command) {
-    log.debug("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    if (!currentState().isEmpty()) {
-      return effects().reply("OK"); // idempotent
+    log.debug("EntityId: {}\n_State: {}", entityId, currentState());
+    if (currentState().isEmpty()) {
+      return effects()
+          .emitEvent(currentState().eventFor(command))
+          .thenReply(__ -> "OK");
     }
-    return effects()
-        .emitEvent(currentState().eventFor(command))
-        .thenReply(__ -> "OK");
+    return effects().reply("OK");
   }
 
   @PatchMapping("/ready-to-ship")
