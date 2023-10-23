@@ -637,8 +637,7 @@ def create_from_point(frame, event_from_type, event_from_id):
     if from_key in created_points:
         return created_points[from_key].location
 
-    from_location = random_point_in_sphere(
-        event_positions[event_from_type], event_radii[event_from_type])
+    from_location = random_point_in_sphere(event_positions[event_from_type], event_radii[event_from_type])
     from_point_obj = create_point(from_location, from_key, event_from_type)
     created_points[from_key] = from_point_obj
 
