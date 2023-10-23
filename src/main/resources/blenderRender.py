@@ -670,7 +670,7 @@ def create_to_point(frame, event_to_type, event_to_id):
 
 
 # These path colors are used to highlight different shopping cart orders
-# The frames will need to be adjusted to coencide with the frames of the
+# The frames will need to be adjusted to coincide with the frames of the
 # shopping cart orders
 @dataclass
 class PathAltMaterial:
