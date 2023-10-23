@@ -205,8 +205,7 @@ def add_camera():
 
     # Add an empty object
     empty_location = (12.25, 0.25, 0)
-    bpy.ops.object.empty_add(
-        type='PLAIN_AXES', align='WORLD', location=empty_location)
+    bpy.ops.object.empty_add(type='PLAIN_AXES', align='WORLD', location=empty_location)
     empty = bpy.context.active_object
 
     # Add a track to constraint to the camera to empty
@@ -288,8 +287,7 @@ def create_point(location, name, material_name):
         else:
             copy_material(red_yellow_green_material_name, new_material_name)
         assign_material(new_material_name, point)
-        set_material_value(new_material_name,
-                           red_yellow_green_material_yellow_value)
+        set_material_value(new_material_name, red_yellow_green_material_yellow_value)
     else:
         assign_material(material_name, point)
 
@@ -548,11 +546,9 @@ def set_material_value_keyframe(material_name: str, kf_value: float, frame: int)
     if value_node:
         # Add a keyframe to the Value node output
         value_node.outputs[0].default_value = red_yellow_green_material_yellow_value
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame - 1)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame - 1)
         value_node.outputs[0].default_value = kf_value
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame)
 
         # Set interpolation to Constant
         action = node_tree.animation_data.action
@@ -573,8 +569,7 @@ def assign_material(material_name, shape):
         material_setting = material_settings[material_name]
         color = hex_to_rgba(material_setting[0])
         strength = material_setting[1]
-        mat = create_emission_material(
-            name=material_name, color=color, strength=strength)
+        mat = create_emission_material(name=material_name, color=color, strength=strength)
     else:
         mat = bpy.data.materials[material_name]
 
@@ -644,8 +639,7 @@ def create_from_point(frame, event_from_type, event_from_id):
 
     from_location = random_point_in_sphere(
         event_positions[event_from_type], event_radii[event_from_type])
-    from_point_obj = create_point(
-        from_location, from_key, event_from_type)
+    from_point_obj = create_point(from_location, from_key, event_from_type)
     created_points[from_key] = from_point_obj
 
     insert_visibility_key_frame(frame, from_point_obj)
@@ -702,14 +696,11 @@ def assign_path_material(frame, path):
     value_node = nodes['Value']
     if value_node:
         value_node.outputs[0].default_value = 0.0
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame - 1)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame - 1)
         value_node.outputs[0].default_value = 1.0
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame)
         value_node.outputs[0].default_value = 0.0
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame + 5)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame + 5)
 
 
 def create_from_to_path(frame, event_from_type, event_from_id, event_to_type, event_to_id):
@@ -740,14 +731,11 @@ def highlight_path_keyframes(path_material, frame):
     value_node = nodes['Value']
     if value_node:
         value_node.outputs[0].default_value = 0.0
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame - 1)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame - 1)
         value_node.outputs[0].default_value = 1.0
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame)
         value_node.outputs[0].default_value = 0.0
-        value_node.outputs[0].keyframe_insert(
-            data_path='default_value', frame=frame + 5)
+        value_node.outputs[0].keyframe_insert(data_path='default_value', frame=frame + 5)
 
 
 color_map = {
@@ -789,21 +777,17 @@ with open(data_file_path, 'r') as file:
             bpy.context.scene.render.fps // video_playback_speed
 
         if frame_last_activity + 100 < frame:
-            print(
-                f'Frame activity gap, from: {frame_last_activity}, to: {frame}')
+            print(f'Frame activity gap, from: {frame_last_activity}, to: {frame}')
         frame_last_activity = frame
 
-        from_point = create_from_point(
-            frame, event_from_type, event_from_id)
+        from_point = create_from_point(frame, event_from_type, event_from_id)
         if not event_to_type == 'NA':
             to_point = create_to_point(frame, event_to_type, event_to_id)
-            create_from_to_path(frame, event_from_type, event_from_id,
-                                event_to_type, event_to_id)
+            create_from_to_path(frame, event_from_type, event_from_id, event_to_type, event_to_id)
 
         adjust_point_color(event_from_type, event_from_id, message, frame)
         if message in color_map:
-            highlight_path(frame, event_from_type, event_from_id,
-                           event_to_type, event_to_id)
+            highlight_path(frame, event_from_type, event_from_id, event_to_type, event_to_id)
 
     print(f'Use the above from activity gap from values for path_alt_material settings.')
 
@@ -813,8 +797,7 @@ with open(data_file_path, 'r') as file:
 
     frames_for_360 = 15 * video_fps - 1
     view_360(frame_end + 1, frames_for_360)
-    print(
-        f'Frames for 360: {frame_end + 1} - {frame_end + 1 + frames_for_360}')
+    print(f'Frames for 360: {frame_end + 1} - {frame_end + 1 + frames_for_360}')
 
     end_time = time.time()
     print(f'Created {len(created_points)} points')
