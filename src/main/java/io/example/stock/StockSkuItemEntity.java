@@ -177,7 +177,7 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
               command.skuId));
     }
 
-    StockSkuItemActivatedEvent eventFor(StockSkuItemActivateCommand command) {
+    Event eventFor(StockSkuItemActivateCommand command) {
       return new StockSkuItemActivatedEvent(
           command.stockSkuItemId,
           command.skuId);
@@ -221,13 +221,13 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
               command.orderSkuItemId));
     }
 
-    StockRequestedJoinToOrderEvent eventFor(StockRequestsJoinToOrderRejectedCommand command) {
+    Event eventFor(StockRequestsJoinToOrderRejectedCommand command) {
       return new StockRequestedJoinToOrderEvent(
           command.stockSkuItemId,
           command.skuId);
     }
 
-    OrderRequestedJoinToStockReleasedEvent eventFor(OrderRequestsJoinToStockReleasedCommand command) {
+    Event eventFor(OrderRequestsJoinToStockReleasedCommand command) {
       return new OrderRequestedJoinToStockReleasedEvent(
           command.stockSkuItemId,
           command.skuId,
