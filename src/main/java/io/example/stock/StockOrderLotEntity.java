@@ -98,7 +98,7 @@ public class StockOrderLotEntity extends EventSourcedEntity<StockOrderLotEntity.
       }
     }
 
-    ReleasedStockOrderLotEvent eventFor(ReleaseStockOrderLotCommand command) {
+    Event eventFor(ReleaseStockOrderLotCommand command) {
       return new ReleasedStockOrderLotEvent(stockOrderLot.stockOrderLotId(), stockOrderLot.copyWithoutSubLots());
     }
 
