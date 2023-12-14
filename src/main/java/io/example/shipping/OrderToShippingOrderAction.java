@@ -11,7 +11,7 @@ import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
 
-@Subscribe.EventSourcedEntity(value = OrderEntity.class, ignoreUnknown = true)
+//@Subscribe.EventSourcedEntity(value = OrderEntity.class, ignoreUnknown = true)
 public class OrderToShippingOrderAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(OrderToShippingOrderAction.class);
   private final ComponentClient componentClient;
