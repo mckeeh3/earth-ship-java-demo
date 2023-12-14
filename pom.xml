@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.0.4</version>
+    <version>3.1.5</version>
     <relativePath/>
   </parent>
   <groupId>io.example</groupId>
@@ -15,8 +15,11 @@
   <name>earth-ship-java-demo</name>
   <properties>
 
-    <!-- TODO Update to your own Docker repository or Docker Hub scope -->
-    <dockerImage>kcr.eu-central-1.kalix.io/lightbend/hugh-demos/${project.artifactId}</dockerImage>
+    <!-- For Docker setup see https://docs.kalix.io/projects/container-registries.html -->
+    <kalixContainerRegistry>kcr.eu-central-1.kalix.io</kalixContainerRegistry>
+    <kalixOrganization>lightbend</kalixOrganization>
+    <!--dockerImage>${D}{kalixContainerRegistry}/${D}{kalixOrganization}/${D}{project.artifactId}<dockerImage-->
+    <dockerImage>${kalixContainerRegistry}/${kalixOrganization}/${project.artifactId}</dockerImage>
     <dockerTag>${project.version}-${build.timestamp}</dockerTag>
     <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
     <mainClass>io.example.Main</mainClass>
@@ -24,7 +27,7 @@
     <jdk.target>17</jdk.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <kalix-sdk.version>1.3.5</kalix-sdk.version>
+    <kalix-sdk.version>1.3.6</kalix-sdk.version>
   </properties>
 
   <build>
@@ -38,7 +41,7 @@
       <extension>
         <groupId>kr.motd.maven</groupId>
         <artifactId>os-maven-plugin</artifactId>
-        <version>1.7.0</version>
+        <version>1.7.1</version>
       </extension>
     </extensions>
 
@@ -70,7 +73,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
         <configuration>
           <source>${jdk.target}</source>
           <target>${jdk.target}</target>
@@ -84,7 +86,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.39.1</version>
+        <version>0.43.4</version>
         <configuration>
           <images>
             <image>
@@ -135,32 +137,6 @@
       </plugin>
 
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.0.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <executable>java</executable>
-          <arguments>
-            <argument>-classpath</argument>
-            <classpath/>
-            <argument>-Dlogging.config=src/main/resources/logback-dev-mode.xml</argument>
-            <argument>${mainClass}</argument>
-          </arguments>
-          <environmentVariables>
-            <!-- needed for the proxy to access the user function on all platforms -->
-            <HOST>0.0.0.0</HOST>
-          </environmentVariables>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <!-- configure src/it/java and src/it/resources -->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -206,6 +182,11 @@
       </plugin>
 
       <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
         <groupId>io.kalix</groupId>
         <artifactId>kalix-maven-plugin</artifactId>
         <version>${kalix-sdk.version}</version>
@@ -219,23 +200,12 @@
         <configuration>
           <dockerImage>${dockerImage}:${dockerTag}</dockerImage>
           <mainClass>${mainClass}</mainClass>
-          <proxyImage>gcr.io/kalix-public/kalix-proxy:1.1.7</proxyImage>
         </configuration>
-      </plugin>
-      <plugin>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-maven-plugin</artifactId>
-        <configuration>
-            <systemPropertyVariables>
-                <logging.config>src/main/resources/logback-dev-mode.xml</logging.config>
-                <kalix.user-function-interface>0.0.0.0</kalix.user-function-interface>
-            </systemPropertyVariables>
-          </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
-        <version>3.0.0-M1</version>
+        <version>3.1.1</version>
         <configuration>
           <skip>true</skip>
         </configuration>
@@ -254,7 +224,6 @@
             <!-- run *IntegrationTest with failsafe -->
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
-            <version>2.22.2</version>
             <executions>
               <execution>
                 <goals>
