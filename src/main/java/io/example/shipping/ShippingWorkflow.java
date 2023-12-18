@@ -1,10 +1,13 @@
 package io.example.shipping;
 
+import io.example.stock.StockSkuItemEntity;
 import io.example.stock.StockSkuItemsAvailableView;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.client.ComponentClient;
 import kalix.javasdk.workflow.Workflow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +22,7 @@ import java.util.stream.IntStream;
 @RequestMapping("/shipping-workflow/{shippingId}")
 public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
 
+  private Logger logger = LoggerFactory.getLogger(getClass());
 
   final private ComponentClient componentClient;
 
@@ -49,18 +53,19 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
     String id,
     String skuId,
     String skuName,
-    Status status
+    Status status,
+    Optional<String> stockSkuItemId
   ) {
     boolean isOpen() {
       return status == Status.OPEN;
     }
 
     OrderSkuItem toBackOrder() {
-      return new OrderSkuItem(id, skuId, skuName, Status.TO_BACK_ORDER);
+      return new OrderSkuItem(id, skuId, skuName, Status.TO_BACK_ORDER, Optional.empty());
     }
 
-    OrderSkuItem readyToShip() {
-      return new OrderSkuItem(id, skuId, skuName, Status.READY_TO_SHIP);
+    OrderSkuItem readyToShip(String stockSkuItemId) {
+      return new OrderSkuItem(id, skuId, skuName, Status.READY_TO_SHIP, Optional.of(stockSkuItemId));
     }
 
     public boolean isReadyToShip() {
@@ -70,7 +75,7 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
 
   public record State(String orderId, Map<String, List<OrderSkuItem>> items) {
 
-    Optional<List<OrderSkuItem>> nextOpen() {
+    Optional<List<OrderSkuItem>> nextBatch() {
       return items.values().stream()
         .filter(items -> items.stream().anyMatch(OrderSkuItem::isOpen))
         .findFirst();
@@ -96,13 +101,14 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
   }
 
   // step labels
-  private String reserveStepLabel = "reserve";
-  private String searchItemsStepLabel = "search-orderSkuItems";
-  private String backOrderStepLabel = "back-order";
+  final private String reserveStepLabel = "reserve";
+  final private String searchItemsStepLabel = "search-orderSkuItems";
+  final private String backOrderStepLabel = "back-order";
 
 
   @PostMapping
   public Effect<String> initiateWorkflow(@RequestBody CreateWorkflow cmd) {
+  logger.info("Creating Order Workflow " + cmd);
     var items =
       cmd.orderItems
         .stream()
@@ -111,7 +117,7 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
             .mapToObj(i ->
               new OrderSkuItem(
                 UUID.randomUUID().toString(),
-                item.skuId(), item.skuName(), Status.OPEN)
+                item.skuId(), item.skuName(), Status.OPEN, Optional.empty())
             )
         ).collect(Collectors.groupingBy(i -> i.skuId));
 
@@ -145,6 +151,17 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
   record ReservationBatch(List<OrderSkuItem> orderSkuItems,
                           List<StockSkuItemsAvailableView.StockSkuItemRow> stockSkuItemRows) {
 
+    String getSkuId() {
+      return orderSkuItems.get(0).skuId;
+    }
+
+    OrderSkuItem orderSkuItemToMatch() {
+      return orderSkuItems
+        .stream()
+        .filter(OrderSkuItem::isOpen)
+        .toList().get(0);
+    }
+
     boolean allReadyToShip() {
       return orderSkuItems.stream().allMatch(OrderSkuItem::isReadyToShip);
     }
@@ -154,34 +171,29 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
     }
 
     /**
+     * Pick the first item from the list to try to reserve it
+     */
+    StockSkuItemsAvailableView.StockSkuItemRow firstStockSkuItem() {
+      return stockSkuItemRows.get(0);
+    }
+
+    /**
      * We call this method when we succeed to make a reservation.
      * This will remove the reserved item from the list of StockSkuItemRow
      * and set one of the order items to reserve.
      */
-    ReservationBatch headIsReserved() {
-
-      var firstReadyToShip =
+    ReservationBatch stockSkuItemReserved(String stockSkuItemId) {
+      var firstReadyToShip = orderSkuItemToMatch();
+      // if empty, we are ready with this batch
+      var readyToShipItem = firstReadyToShip.readyToShip(stockSkuItemId);
+      // replace old item with the new ReadyToShip one
+      var newItemList =
         orderSkuItems
           .stream()
-          .filter(OrderSkuItem::isOpen)
-          .findFirst()
-          .map(OrderSkuItem::readyToShip);
-
-      // if empty, we are ready with this batch
-      if (firstReadyToShip.isEmpty())
-        return new ReservationBatch(orderSkuItems, List.of());
-      else {
-        var readyToShipItem = firstReadyToShip.get();
-        // replace old item with the new ReadyToShip one
-        var newItemList =
-          orderSkuItems
-            .stream()
-            .map(i -> i.id.equals(readyToShipItem.id) ? readyToShipItem : i)
-            .toList();
-        // continue reservation process
-        return new ReservationBatch(newItemList, stockSkuItemRows.stream().skip(1).toList());
-      }
-
+          .map(i -> i.id.equals(readyToShipItem.id) ? readyToShipItem : i)
+          .toList();
+      // continue reservation process
+      return new ReservationBatch(newItemList, stockSkuItemRows.stream().skip(1).toList());
 
     }
 
@@ -189,7 +201,7 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
     /**
      * Head is not available, so we drop it and continue searching
      */
-    ReservationBatch headNotAvailable() {
+    ReservationBatch stockSkuItemNotAvailable() {
       return new ReservationBatch(orderSkuItems, stockSkuItemRows.stream().skip(1).toList());
     }
 
@@ -201,11 +213,12 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
     Step searchItems =
       step(searchItemsStepLabel)
         .asyncCall(() -> {
-          var nextItems = currentState().nextOpen();
-          if (nextItems.isEmpty()) {
+          logger.info("Creating Order Workflow " + cmd);
+          var batch = currentState().nextBatch();
+          if (batch.isEmpty()) {
             return CompletableFuture.completedFuture(Searching.asEmpty());
           } else {
-            var openItems = nextItems.get();
+            var openItems = batch.get();
             var skuId = openItems.get(0).skuId;
             return componentClient.forView()
               .call(StockSkuItemsAvailableView::getStockSkuItemsAvailable)
@@ -237,27 +250,47 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
       step(reserveStepLabel)
         .asyncCall(ReservationBatch.class, toReserve -> {
           // list is guaranteed to be non-empty, so we always pick the first one
-          // TODO: call StockSkuItemEntity to reserve the head
-          // for now are just assuming that the will be reserved without failures
-          return CompletableFuture.completedFuture(toReserve.headIsReserved());
+          var stockSkuItem = toReserve.firstStockSkuItem();
+          var stockSkuItemId = stockSkuItem.stockSkuItemId().toEntityId();
+
+          var cmd = new StockSkuItemEntity.ReserveStockSkuItemCommand(
+            stockSkuItem.stockSkuItemId(),
+            toReserve.getSkuId(),
+            OrderSkuItemEntity.OrderSkuItemId.of(currentState().orderId(), toReserve.orderSkuItemToMatch().id())
+          );
+
+          return componentClient
+            .forEventSourcedEntity(stockSkuItemId)
+            .call(StockSkuItemEntity::reserve).params(cmd)
+            .execute().thenApply(res -> {
+              if (res.isSuccess()) {
+                return toReserve.stockSkuItemReserved(stockSkuItemId);
+              } else {
+                return toReserve.stockSkuItemNotAvailable();
+              }
+            });
         })
         .andThen(ReservationBatch.class, toReserve -> {
           if (toReserve.allReadyToShip() || toReserve.isStockEmpty()) {
             // if all items in this batch are ready, or we run out of stock
-            // we update the state with whatever we have and go back to searching
+            // we update the state with whatever we have and go back to searching mode
             return effects()
-              .updateState(currentState()
-                .updateBatch(toReserve.orderSkuItems))
+              .updateState(currentState().updateBatch(toReserve.orderSkuItems))
               .transitionTo(searchItemsStepLabel);
           } else {
-            return effects().transitionTo(reserveStepLabel);
+            return effects().transitionTo(reserveStepLabel, toReserve);
           }
         });
 
-    return workflow()
-      .addStep(searchItems);
-  }
+    Step backOrderStep =
+      step(backOrderStepLabel)
+        .asyncCall(() -> CompletableFuture.completedFuture("ok"))
+        .andThen(String.class, __ -> effects().pause());
 
-  private Random random = new Random();
+    return workflow()
+      .addStep(searchItems)
+      .addStep(reserveStep)
+      .addStep(backOrderStep);
+  }
 
 }

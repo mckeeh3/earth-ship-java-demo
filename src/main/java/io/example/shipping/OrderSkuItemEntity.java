@@ -372,9 +372,13 @@ public class OrderSkuItemEntity extends EventSourcedEntity<OrderSkuItemEntity.St
 
   public record BackOrderedOrderSkuItemEvent(OrderSkuItemId orderSkuItemId, Instant orderedAt, String skuId, Instant backOrderedAt) implements Event {}
 
-  public record OrderSkuItemId(String orderId, UUID uuid) {
+  public record OrderSkuItemId(String orderId, String uuid) {
     public static OrderSkuItemId of(String orderId) {
-      return new OrderSkuItemId(orderId, UUID.randomUUID());
+      return new OrderSkuItemId(orderId, UUID.randomUUID().toString());
+    }
+
+    public static OrderSkuItemId of(String orderId, String uuid) {
+      return new OrderSkuItemId(orderId, uuid);
     }
 
     public String toEntityId() {
