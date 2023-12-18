@@ -108,7 +108,7 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
 
   @PostMapping
   public Effect<String> initiateWorkflow(@RequestBody CreateWorkflow cmd) {
-  logger.info("Creating Order Workflow " + cmd);
+    logger.info("Creating Order Workflow " + cmd);
     var items =
       cmd.orderItems
         .stream()
@@ -213,12 +213,14 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
     Step searchItems =
       step(searchItemsStepLabel)
         .asyncCall(() -> {
-          logger.info("Creating Order Workflow " + cmd);
+          logger.info("searching for items...");
           var batch = currentState().nextBatch();
           if (batch.isEmpty()) {
             return CompletableFuture.completedFuture(Searching.asEmpty());
           } else {
+
             var openItems = batch.get();
+            logger.info("found batch here for you " + openItems);
             var skuId = openItems.get(0).skuId;
             return componentClient.forView()
               .call(StockSkuItemsAvailableView::getStockSkuItemsAvailable)
@@ -229,15 +231,18 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
         })
         .andThen(Searching.class, results -> {
             if (results.noOpenItems()) {
+              logger.info("end searching, moving to back-ordering...");
               // if there is no open orderSkuItems, we can move to back-ordering step
               return effects().transitionTo(backOrderStepLabel);
             } else if (results.noStockAvailable()) {
+              logger.info("no stock available, marking items for back-ordering");
               // when here is no stock available, we mark the orderSkuItems in this batch for back-ordering
               // we search for the next batch of open orderSkuItems
               return effects()
                 .updateState(currentState().markToBackOrder(results.getSkuId()))
                 .transitionTo(searchItemsStepLabel);
             } else {
+              logger.info("moving to reserving batch");
               // we have some orderSkuItems in stock, so we will move on and try to reserve them
               Collections.shuffle(results.stockSkuItemRows); // shuffling the list diminish the chance of concurrent item reservation
               return effects()
@@ -249,6 +254,7 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
     Step reserveStep =
       step(reserveStepLabel)
         .asyncCall(ReservationBatch.class, toReserve -> {
+          logger.info("reserving batch {} - {}", toReserve.orderSkuItems, toReserve.stockSkuItemRows);
           // list is guaranteed to be non-empty, so we always pick the first one
           var stockSkuItem = toReserve.firstStockSkuItem();
           var stockSkuItemId = stockSkuItem.stockSkuItemId().toEntityId();
@@ -264,8 +270,11 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
             .call(StockSkuItemEntity::reserve).params(cmd)
             .execute().thenApply(res -> {
               if (res.isSuccess()) {
+
+                logger.info("found stock for {}", stockSkuItem);
                 return toReserve.stockSkuItemReserved(stockSkuItemId);
               } else {
+                logger.info("no stock found for {}", stockSkuItem);
                 return toReserve.stockSkuItemNotAvailable();
               }
             });
@@ -274,10 +283,12 @@ public class ShippingWorkflow extends Workflow<ShippingWorkflow.State> {
           if (toReserve.allReadyToShip() || toReserve.isStockEmpty()) {
             // if all items in this batch are ready, or we run out of stock
             // we update the state with whatever we have and go back to searching mode
+            logger.info("moving back to searching");
             return effects()
               .updateState(currentState().updateBatch(toReserve.orderSkuItems))
               .transitionTo(searchItemsStepLabel);
           } else {
+            logger.info("continue searching");
             return effects().transitionTo(reserveStepLabel, toReserve);
           }
         });
