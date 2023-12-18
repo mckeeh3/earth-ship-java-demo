@@ -118,7 +118,6 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
       .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
       .onSuccess(() -> effects().reply(currentState()));
   }
-
   @EventHandler
   public State on(CreatedStockSkuItemEvent event) {
     log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
@@ -163,6 +162,12 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
 
   @EventHandler
   public State on(StockRequestedJoinToOrderReleasedEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
+  @EventHandler
+  public State on(StockSkuItemReservedEvent event) {
     log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
@@ -351,9 +356,19 @@ public class StockSkuItemEntity extends EventSourcedEntity<StockSkuItemEntity.St
         cmd.orderSkuItemId,
         Instant.now());
     }
+
+    public State on(StockSkuItemReservedEvent event) {
+      return new State(
+        stockSkuItemId,
+        skuId,
+        skuName,
+        event.orderSkuItemId,
+        event.readyToShipAt,
+        Instant.now());
+    }
   }
 
-  public interface Event {
+  sealed public interface Event {
   }
 
   public record CreateStockSkuItemCommand(StockSkuItemId stockSkuItemId, String skuId, String skuName) {
