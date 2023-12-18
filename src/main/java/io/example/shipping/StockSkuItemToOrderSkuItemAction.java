@@ -60,11 +60,11 @@ public class StockSkuItemToOrderSkuItemAction extends Action {
     var count = queryReply.orderSkuItemRows().size();
     if (count > 0) {
       var orderSkuItemRow = queryReply.orderSkuItemRows().get(random.nextInt(count));
-      log.info("Found {} back-ordered order sku items, skuId: {}\n_stock sku item: {}\n_attempt to join to stock sku item: {}",
+      log.info("Found {} back-ordered order sku orderSkuItems, skuId: {}\n_stock sku item: {}\n_attempt to join to stock sku item: {}",
           count, event.skuId(), event.stockSkuItemId().toEntityId(), orderSkuItemRow.orderSkuItemId().toEntityId());
       return callFor(event, orderSkuItemRow);
     } else {
-      log.info("No back-ordered order sku items, skuId: {}, stock sku item: {}", event.skuId(), event.stockSkuItemId().toEntityId());
+      log.info("No back-ordered order sku orderSkuItems, skuId: {}, stock sku item: {}", event.skuId(), event.stockSkuItemId().toEntityId());
       return callFor(event);
     }
   }

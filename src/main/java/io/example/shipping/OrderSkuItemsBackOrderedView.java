@@ -14,7 +14,7 @@ import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.annotations.Table;
 import kalix.javasdk.annotations.ViewId;
 
-@ViewId("order-sku-items-back-ordered")
+@ViewId("order-sku-orderSkuItems-back-ordered")
 @Table("order_sku_items_back_ordered")
 @Subscribe.EventSourcedEntity(value = OrderSkuItemEntity.class, ignoreUnknown = true)
 public class OrderSkuItemsBackOrderedView extends View<OrderSkuItemsBackOrderedView.OrderSkuItemRow> {

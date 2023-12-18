@@ -1,6 +1,7 @@
 package io.example.shipping;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,16 +30,17 @@ public class OrderToShippingOrderAction extends Action {
 
   private Effect<String> callFor(OrderEntity.CreatedOrderEvent event) {
     return effects().forward(
-        componentClient.forEventSourcedEntity(event.orderId())
-            .call(ShippingOrderEntity::createOrder)
+        componentClient.forWorkflow(event.orderId())
+            .call(ShippingWorkflow::initiateWorkflow)
             .params(toCommand(event)));
   }
 
-  private ShippingOrderEntity.CreateShippingOrderCommand toCommand(OrderEntity.CreatedOrderEvent event) {
-    return new ShippingOrderEntity.CreateShippingOrderCommand(event.orderId(), event.customerId(), event.orderedAt(), toOrderItems(event.orderItems()));
+  private ShippingWorkflow.CreateWorkflow toCommand(OrderEntity.CreatedOrderEvent event) {
+    return new ShippingWorkflow.CreateWorkflow(event.orderId(), toOrderItems(event.orderItems()));
   }
 
-  private List<ShippingOrderEntity.OrderItem> toOrderItems(List<OrderEntity.OrderItem> items) {
-    return items.stream().map(i -> new ShippingOrderEntity.OrderItem(i.skuId(), i.skuName(), i.quantity(), null, null)).toList();
+  private List<ShippingWorkflow.OrderItem> toOrderItems(List<OrderEntity.OrderItem> items) {
+    return items.stream()
+      .map(i -> new ShippingWorkflow.OrderItem(i.skuId(), i.skuName(), i.quantity())).toList();
   }
 }

@@ -1,9 +1,9 @@
-# @urlPrefix = http://localhost:9000
-@urlPrefix = https://weathered-shadow-3441.us-east1.kalix.app
-@stockOrderId = stock-order-2
+@urlPrefix = http://localhost:9000
+#@urlPrefix = https://weathered-shadow-3441.us-east1.kalix.app
+@stockOrderId = stock-order-22
 @skuId = P0002
-@skuName = sku name 1
-@quantityTotal = 200
+@skuName = sku name 2
+@quantityTotal = 10
 @orderItemsOrdered = 5
 @orderItemsAvailable = 5
 
