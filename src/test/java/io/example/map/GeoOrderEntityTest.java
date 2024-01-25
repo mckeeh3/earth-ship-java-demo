@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import io.example.map.WorldMap.LatLng;
 import kalix.javasdk.testkit.EventSourcedTestKit;
 
-public class GeoOrderTest {
+public class GeoOrderEntityTest {
   @Test
   public void createTest() {
     var testKit = EventSourcedTestKit.of(GeoOrderEntity::new);
