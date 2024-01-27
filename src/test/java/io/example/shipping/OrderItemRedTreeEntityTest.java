@@ -235,7 +235,7 @@ class OrderItemRedTreeEntityTest {
     testSubBranchCreation(125);
     testSubBranchCreation(122);
 
-    var subBranch = testSubBranchCreation(12479);
+    var subBranch = testSubBranchCreation(12579);
     while (subBranch.isPresent()) {
       subBranch = testSubBranchCreation(subBranch.get().quantity());
     }

@@ -31,8 +31,8 @@ class StockOrderRedLeafEntityTest {
         var event = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderRedLeafCreatedEvent.class);
         assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
         assertEquals(quantity, event.quantity());
-        assertFalse(event.stockSkuItemIds().isEmpty());
-        assertEquals(quantity, event.stockSkuItemIds().size());
+        assertFalse(event.stockSkuItemsAvailable().isEmpty());
+        assertEquals(quantity, event.stockSkuItemsAvailable().size());
       }
 
       {
@@ -45,8 +45,8 @@ class StockOrderRedLeafEntityTest {
       var state = testKit.getState();
       assertEquals(stockOrderRedLeafId, state.stockOrderRedLeafId());
       assertEquals(quantity, state.quantity());
-      assertFalse(state.stockSkuItemIds().isEmpty());
-      assertEquals(quantity, state.stockSkuItemIds().size());
+      assertFalse(state.stockSkuItemsAvailable().isEmpty());
+      assertEquals(quantity, state.stockSkuItemsAvailable().size());
     }
   }
 
@@ -101,7 +101,7 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(0, event.stockSkuItemToOrderSkuItems().size());
+      assertEquals(0, event.stockSkuItemsConsumed().size());
     }
 
     { // set available to be consumed
@@ -124,12 +124,13 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(quantityRequested, event.stockSkuItemToOrderSkuItems().size());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityRequested, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
     }
 
     {
       var state = testKit.getState();
-      assertEquals(quantityStockOrder - quantityRequested, state.stockSkuItemIds().size());
+      assertEquals(quantityStockOrder - quantityRequested, state.stockSkuItemsAvailable().size());
     }
   }
 
@@ -176,7 +177,8 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(quantityRequested, event.stockSkuItemToOrderSkuItems().size());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityRequested, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
     }
 
     { // second request
@@ -191,7 +193,7 @@ class StockOrderRedLeafEntityTest {
 
     {
       var state = testKit.getState();
-      assertEquals(quantityStockOrder - quantityRequested, state.stockSkuItemIds().size());
+      assertEquals(quantityStockOrder - quantityRequested, state.stockSkuItemsAvailable().size());
     }
   }
 
@@ -219,7 +221,8 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(quantityRequested1, event.stockSkuItemToOrderSkuItems().size());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityRequested1, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
     }
 
     { // this order will be partially allocated
@@ -236,7 +239,8 @@ class StockOrderRedLeafEntityTest {
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
       var quantityExpected = Math.max(0, quantityStockOrder - quantityRequested1);
-      assertEquals(quantityExpected, event.stockSkuItemToOrderSkuItems().size());
+      assertEquals(2, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityExpected, event.stockSkuItemsConsumed().get(1).stockSkuItemsToOrderSkuItems().size());
     }
 
     { // this order will not be allocated
@@ -252,13 +256,11 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      var quantityExpected = Math.max(0, quantityStockOrder - quantityRequested1 - quantityRequested2);
-      assertEquals(quantityExpected, event.stockSkuItemToOrderSkuItems().size());
     }
   }
 
   @Test
-  void allocateStockSkuItemsToMultipleOrdersAndReleaseOrderTest() {
+  void multipleOrderItemssConsumeStockSkuItemsAndReleaseOrderTest() {
     var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.of("stockOrderId", "skuId");
 
     var quantityStockOrder = 17;
@@ -281,7 +283,14 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(quantityRequested1, event.stockSkuItemToOrderSkuItems().size());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityRequested1, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
+    }
+
+    {
+      var state = testKit.getState();
+      assertEquals(quantityStockOrder - quantityRequested1, state.stockSkuItemsAvailable().size());
+      assertTrue(state.availableToBeConsumed());
     }
 
     { // this order will be partially allocated
@@ -298,18 +307,29 @@ class StockOrderRedLeafEntityTest {
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
       var quantityExpected = Math.max(0, quantityStockOrder - quantityRequested1);
-      assertEquals(quantityExpected, event.stockSkuItemToOrderSkuItems().size());
+      assertEquals(2, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityExpected, event.stockSkuItemsConsumed().get(1).stockSkuItemsToOrderSkuItems().size());
+    }
+
+    {
+      var state = testKit.getState();
+      assertTrue(state.stockSkuItemsAvailable().isEmpty());
     }
 
     { // release order-2 stockSkuItems
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId-2", "skuId");
-      var command = new StockOrderRedLeafEntity.OrderItemReleaseOrderSkuItemsCommand(stockOrderRedLeafId, orderItemRedLeafId);
+      var command = new StockOrderRedLeafEntity.OrderItemReleaseStockSkuItemsCommand(stockOrderRedLeafId, orderItemRedLeafId);
       var result = testKit.call(e -> e.orderItemReleaseOrderSkuItems(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
     }
 
-    { // this order will be partially allocated
+    {
+      var state = testKit.getState();
+      assertEquals(quantityStockOrder - quantityRequested1, state.stockSkuItemsAvailable().size());
+    }
+
+    { // this order will not be allocated because it is no longer available to be consumed
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId-3", "skuId");
       var orderSkuItems = IntStream.range(0, quantityRequested3)
           .mapToObj(i -> OrderItemRedLeafEntity.OrderSkuItemId.of(orderItemRedLeafId))
@@ -322,8 +342,6 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      var quantityExpected = Math.max(0, quantityStockOrder - quantityRequested1);
-      assertEquals(quantityExpected, event.stockSkuItemToOrderSkuItems().size());
     }
   }
 
@@ -344,7 +362,7 @@ class StockOrderRedLeafEntityTest {
 
     var state = testKit.getState();
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId-1", "skuId");
-    var stockSkuItems = state.stockSkuItemIds().stream()
+    var stockSkuItems = state.stockSkuItemsAvailable().stream()
         .map(stockSkuItemId -> new StockOrderRedLeafEntity.StockSkuItemToOrderSkuItem(stockSkuItemId,
             OrderItemRedLeafEntity.OrderSkuItemId.of(orderItemRedLeafId)))
         .limit(quantityOrderSkuItems)
@@ -359,13 +377,14 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(quantityOrderSkuItems, event.stockSkuItemsToOrderSkuItems().size());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityOrderSkuItems, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
 
       var eventRequest = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderRequestsOrderSkuItemsEvent.class);
       assertEquals(quantityStockOrder - quantityOrderSkuItems, eventRequest.stockSkuItemIds().size());
 
       var stateAfter = testKit.getState();
-      var quantityAllocated = stateAfter.stockSkuItemIds().size();
+      var quantityAllocated = stateAfter.stockSkuItemsAvailable().size();
       assertEquals(quantityStockOrder - quantityOrderSkuItems, quantityAllocated);
     }
 
@@ -399,7 +418,7 @@ class StockOrderRedLeafEntityTest {
     { // first order item
       var state = testKit.getState();
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId-1", "skuId");
-      var stockSkuItems = state.stockSkuItemIds().stream()
+      var stockSkuItems = state.stockSkuItemsAvailable().stream()
           .map(stockSkuItemId -> new StockOrderRedLeafEntity.StockSkuItemToOrderSkuItem(stockSkuItemId,
               OrderItemRedLeafEntity.OrderSkuItemId.of(orderItemRedLeafId)))
           .limit(quantityOrderSkuItems1)
@@ -413,20 +432,21 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(quantityOrderSkuItems1, event.stockSkuItemsToOrderSkuItems().size());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityOrderSkuItems1, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
 
       var eventRequest = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderRequestsOrderSkuItemsEvent.class);
       assertEquals(quantityStockOrder - quantityOrderSkuItems1, eventRequest.stockSkuItemIds().size());
 
       var stateAfter = testKit.getState();
-      var quantityAllocated = stateAfter.stockSkuItemIds().size();
+      var quantityAllocated = stateAfter.stockSkuItemsAvailable().size();
       assertEquals(quantityStockOrder - quantityOrderSkuItems1, quantityAllocated);
     }
 
     { // second order item
       var state = testKit.getState();
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId-2", "skuId");
-      var stockSkuItems = state.stockSkuItemIds().stream()
+      var stockSkuItems = state.stockSkuItemsAvailable().stream()
           .map(stockSkuItemId -> new StockOrderRedLeafEntity.StockSkuItemToOrderSkuItem(stockSkuItemId,
               OrderItemRedLeafEntity.OrderSkuItemId.of(orderItemRedLeafId)))
           .limit(quantityOrderSkuItems2)
@@ -443,10 +463,11 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(quantityOrderSkuItems2, event.stockSkuItemsToOrderSkuItems().size());
+      assertEquals(2, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityOrderSkuItems2, event.stockSkuItemsConsumed().get(1).stockSkuItemsToOrderSkuItems().size());
 
       var stateAfter = testKit.getState();
-      var quantityRemaining = stateAfter.stockSkuItemIds().size();
+      var quantityRemaining = stateAfter.stockSkuItemsAvailable().size();
       assertEquals(quantityStockOrder - quantityOrderSkuItems1 - quantityOrderSkuItems2, quantityRemaining);
     }
   }
@@ -470,14 +491,14 @@ class StockOrderRedLeafEntityTest {
     // Assign the first order item to the stockSkuItems
     var state = testKit.getState();
     var orderItemRedLeafId1 = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId-1", "skuId");
-    var stockSkuItems1 = state.stockSkuItemIds().stream()
+    var stockSkuItems1 = state.stockSkuItemsAvailable().stream()
         .map(stockSkuItemId -> new StockOrderRedLeafEntity.StockSkuItemToOrderSkuItem(stockSkuItemId,
             OrderItemRedLeafEntity.OrderSkuItemId.of(orderItemRedLeafId1)))
         .limit(quantityOrderSkuItems1)
         .toList();
 
     var orderItemRedLeafId2 = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId-2", "skuId");
-    var stockSkuItems2 = state.stockSkuItemIds().stream()
+    var stockSkuItems2 = state.stockSkuItemsAvailable().stream()
         .map(stockSkuItemId -> new StockOrderRedLeafEntity.StockSkuItemToOrderSkuItem(stockSkuItemId,
             OrderItemRedLeafEntity.OrderSkuItemId.of(orderItemRedLeafId2)))
         .limit(quantityOrderSkuItems2)
@@ -495,13 +516,14 @@ class StockOrderRedLeafEntityTest {
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(orderItemRedLeafId1, event.orderItemRedLeafId());
-      assertEquals(quantityOrderSkuItems1, event.stockSkuItemsToOrderSkuItems().size());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityOrderSkuItems1, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
 
       var eventRequest = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderRequestsOrderSkuItemsEvent.class);
       assertEquals(quantityStockOrder - quantityOrderSkuItems1, eventRequest.stockSkuItemIds().size());
 
       var stateAfter = testKit.getState();
-      var quantityAvailable = stateAfter.stockSkuItemIds().size();
+      var quantityAvailable = stateAfter.stockSkuItemsAvailable().size();
       assertEquals(quantityStockOrder - quantityOrderSkuItems1, quantityAvailable);
     }
 
@@ -522,7 +544,7 @@ class StockOrderRedLeafEntityTest {
       assertEquals(quantityStockOrder - quantityOrderSkuItems1, eventRequest.stockSkuItemIds().size());
 
       var stateAfter = testKit.getState();
-      var quantityAvailable = stateAfter.stockSkuItemIds().size();
+      var quantityAvailable = stateAfter.stockSkuItemsAvailable().size();
       assertEquals(quantityStockOrder - quantityOrderSkuItems1, quantityAvailable);
     }
   }

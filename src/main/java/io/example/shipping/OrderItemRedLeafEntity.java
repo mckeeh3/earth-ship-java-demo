@@ -25,6 +25,108 @@ import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 
+// ===========================================================
+// ===== Processing flow when order item leaf is created =====
+// ===========================================================
+//
+// Entity: OrderItemRedLeafEntity
+//
+// OrderItemRedLeafCreateCommand
+// --> OrderItemRedLeafCreatedEvent
+// --> OrderItemRequestsStockSkuItemsEvent
+//
+// Action: OrderItemRedLeafEntityToStockOrderRedLeafEntity
+//
+// OrderItemRequestsStockSkuItemsEvent --> OrderItemRequestsStockSkuItemsCommand
+//
+// Entity: StockOrderRedLeafEntity
+//
+// OrderItemRequestsStockSkuItemsCommand
+// --> OrderItemConsumedStockSkuItemsEvent
+//
+// Action: StockOrderRedLeafEntityToOrderItemRedLeafEntity
+//
+// OrderItemConsumedStockSkuItemsEvent --> OrderItemConsumedStockSkuItemsCommand
+//
+// Entity: OrderItemRedLeafEntity
+//
+// OrderItemConsumedStockSkuItemsCommand
+// --> OrderItemConsumedStockSkuItemsEvent
+// --> OrderItemRequestsStockSkuItemsEvent (optional if more stockSkuItems are needed)
+//
+// =======================================================================================
+// ===== Processing flow when consumed (above) orderSkuItems are no longer available =====
+// ===== Consumed here means that the orderSkuItems have consumed stockSkuItems _____=====
+// ===== The consumed stockSkuItems are release, which will make them available _____=====
+// =======================================================================================
+//
+// Entity: OrderItemRedLeafEntity
+//
+// OrderItemConsumedStockSkuItemsCommand
+// --> OrderItemReleasedStockSkuItemsEvent (release the stockSkuItems)
+// --> OrderItemRequestsStockSkuItemsEvent (optional if more stockSkuItems are needed)
+//
+// Action: OrderItemRedLeafEntityToStockOrderRedLeafEntity
+//
+// OrderItemReleasedStockSkuItemsEvent --> OrderItemReleaseStockSkuItemsCommand
+//
+// Entity: StockOrderRedLeafEntity
+//
+// OrderItemReleaseStockSkuItemsCommand
+// --> OrderItemReleasedStockSkuItemsEvent
+// --> OrderItemRequestsStockSkuItemsEvent
+//
+// ============================================================
+// ===== Processing flow when stock order leaf is created =====
+// ============================================================
+//
+// Entity: StockOrderRedLeafEntity
+//
+// StockOrderRedLeafCreateCommand
+// --> StockOrderRedLeafCreatedEvent
+// --> StockOrderRequestsOrderSkuItemsEvent
+//
+// Action: StockOrderRedLeafEntityToOrderItemRedLeafEntity
+//
+// StockOrderRequestsOrderSkuItemsEvent --> StockOrderRequestsOrderSkuItemsCommand
+//
+// Entity: OrderItemRedLeafEntity
+//
+// StockOrderRequestsOrderSkuItemsCommand
+// --> StockOrderConsumedOrderSkuItemsEvent
+//
+// Action: OrderItemRedLeafEntityToStockOrderRedLeafEntity
+//
+// StockOrderConsumedOrderSkuItemsEvent --> StockOrderConsumedOrderSkuItemsCommand
+//
+// Entity: StockOrderRedLeafEntity
+//
+// StockOrderConsumedOrderSkuItemsCommand
+// --> StockOrderConsumedOrderSkuItemsEvent
+// --> StockOrderRequestsOrderSkuItemsEvent (optional if more orderSkuItems are needed)
+//
+// =======================================================================================
+// ===== Processing flow when consumed (above) stockSkuItems are no longer available =====
+// ===== Consumed here means that the stockSkuItems have consumed orderSkuItems _____=====
+// ===== The consumed orderSkuItems are release, which will make them available _____=====
+// =======================================================================================
+//
+// Entity: StockOrderRedLeafEntity
+//
+// StockOrderConsumedOrderSkuItemsCommand
+// --> StockOrderReleasedOrderSkuItemsEvent (release the orderSkuItems)
+// --> StockOrderRequestsOrderSkuItemsEvent (optional if more orderSkuItems are needed)
+//
+// Action: StockOrderRedLeafEntityToOrderItemRedLeafEntity
+//
+// StockOrderReleasedOrderSkuItemsEvent --> StockOrderReleaseOrderSkuItemsCommand
+//
+// Entity: OrderItemRedLeafEntity
+//
+// StockOrderReleaseOrderSkuItemsCommand
+// --> StockOrderReleasedOrderSkuItemsEvent
+// --> OrderItemRequestsStockSkuItemsEvent
+
 @Id("orderItemRedLeafId")
 @TypeId("orderItemRedLeaf")
 @RequestMapping("/order-item-red-leaf/{orderItemRedLeafId}")
@@ -135,18 +237,21 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
   public record State(
       OrderItemRedLeafId orderItemRedLeafId,
       int quantity,
-      boolean availableToBeConsumed,
       Instant readyToShipAt,
       Instant backOrderedAt,
-      List<OrderSkuItemId> orderSkuItemIds,
-      List<Consumed> consumedStockOrders) {
+      List<OrderSkuItemId> orderSkuItemsAvailable,
+      List<Consumed> orderSkuItemsConsumed) {
 
     static State emptyState() {
-      return new State(null, 0, false, null, null, List.of(), List.of());
+      return new State(null, 0, null, null, List.of(), List.of());
     }
 
     boolean alreadyCreated() {
       return orderItemRedLeafId != null;
+    }
+
+    boolean isAvailableToBeConsumed() {
+      return backOrderedAt != null;
     }
 
     List<Event> eventsFor(OrderItemRedLeafCreateCommand command) {
@@ -154,86 +259,123 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
         return List.of();
       }
 
-      var orderSkuItems = IntStream.range(0, command.quantity())
+      var newOrderSkuItemsAvailable = IntStream.range(0, command.quantity())
           .mapToObj(i -> OrderSkuItemId.of(command.orderItemRedLeafId))
           .toList();
 
       return List.of(
-          new OrderItemRedLeafCreatedEvent(command.orderItemRedLeafId, command.quantity(), orderSkuItems),
-          new OrderItemRequestsStockSkuItemsEvent(command.orderItemRedLeafId, orderSkuItems));
+          new OrderItemRedLeafCreatedEvent(command.orderItemRedLeafId, command.quantity(), newOrderSkuItemsAvailable),
+          new OrderItemRequestsStockSkuItemsEvent(command.orderItemRedLeafId, newOrderSkuItemsAvailable));
     }
 
     List<Event> eventsFor(StockOrderRequestsOrderSkuItemsCommand command) {
-      if (!availableToBeConsumed) {
-        return List.of(new StockOrderConsumedOrderSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId, List.of()));
+      if (!isAvailableToBeConsumed()) {
+        var consumed = new Consumed(command.stockOrderRedLeafId, List.of());
+        return List.of(new StockOrderConsumedOrderSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId,
+            readyToShipAt, backOrderedAt, orderSkuItemsAvailable, orderSkuItemsConsumed, consumed));
       }
-      boolean alreadyConsumed = consumedStockOrders.stream()
+
+      boolean alreadyConsumed = orderSkuItemsConsumed.stream()
           .anyMatch(consumed -> consumed.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()));
-      if (!availableToBeConsumed || alreadyConsumed) {
+      if (!isAvailableToBeConsumed() || alreadyConsumed) {
         return List.of();
       }
 
-      var stockSkuItemIdsQueue = new LinkedList<>(command.stockSkuItemIds());
-      var orderSkuItemsForStockOrder = orderSkuItemIds.stream()
+      var stockSkuItemIdsQueue = new LinkedList<>(command.stockSkuItemsAvailable());
+      var orderSkuItemsForStockOrder = orderSkuItemsAvailable.stream()
           .map(orderSkuItemId -> new OrderSkuItemToStockSkuItem(orderSkuItemId, stockSkuItemIdsQueue.poll()))
           .filter(orderSkuItem -> orderSkuItem.stockSkuItemId != null)
           .toList();
+      var orderSkuItemIdsConsumed = orderSkuItemsForStockOrder.stream()
+          .map(orderSkuItemToStockSkuItem -> orderSkuItemToStockSkuItem.orderSkuItemId())
+          .toList();
+      var newOrderSkuItemsAvailable = this.orderSkuItemsAvailable.stream()
+          .filter(orderSkuItem -> !orderSkuItemIdsConsumed.contains(orderSkuItem))
+          .toList();
+      var newReadyToShipAt = newOrderSkuItemsAvailable.isEmpty()
+          ? Instant.now()
+          : null;
+      var newBackOrderedAt = newOrderSkuItemsAvailable.isEmpty()
+          ? null
+          : backOrderedAt;
+      var consumed = new Consumed(command.stockOrderRedLeafId(), orderSkuItemsForStockOrder);
+      var newOrderSkuItemsConsumed = Stream.concat(this.orderSkuItemsConsumed.stream(), Stream.of(consumed)).toList();
 
-      return List.of(new StockOrderConsumedOrderSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId, orderSkuItemsForStockOrder));
+      return List.of(new StockOrderConsumedOrderSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId,
+          newReadyToShipAt, newBackOrderedAt, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed, consumed));
     }
 
     List<Event> eventsFor(StockOrderReleaseOrderSkuItemsCommand command) {
-      boolean alreadyReleased = !consumedStockOrders.stream()
-          .anyMatch(consumed -> consumed.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()));
+      var orderSkuItemsReleased = orderSkuItemsConsumed.stream()
+          .filter(consumed -> consumed.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()))
+          .findFirst()
+          .map(consumed -> consumed.orderSkuItemsToStockSkuItems())
+          .orElse(List.of())
+          .stream()
+          .map(orderSkuItemToStockSkuItem -> orderSkuItemToStockSkuItem.orderSkuItemId())
+          .toList();
 
-      if (alreadyReleased) {
-        return List.of();
+      if (orderSkuItemsReleased.isEmpty()) {
+        return List.of(); // already released
       }
 
-      var eventReleased = new StockOrderReleasedOrderSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId());
-      var newState = on(eventReleased);
-      var eventNeeded = new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, newState.orderSkuItemIds);
+      var newOrderSkuItemsAvailable = Stream.concat(orderSkuItemsAvailable.stream(), orderSkuItemsReleased.stream()).toList();
+      var newOrderSkuItemsConsumed = orderSkuItemsConsumed.stream()
+          .filter(consumedStockOrder -> !consumedStockOrder.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()))
+          .toList();
+      var newReadyToShipAt = newOrderSkuItemsAvailable.size() == 0
+          ? Instant.now()
+          : null;
+
+      var eventReleased = new StockOrderReleasedOrderSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId(),
+          newReadyToShipAt, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed);
+      var eventNeeded = new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, newOrderSkuItemsAvailable);
 
       return List.of(eventReleased, eventNeeded);
     }
 
     List<Event> eventsFor(OrderItemConsumedStockSkuItemsCommand command) {
-      boolean alreadyConsumed = consumedStockOrders.stream()
+      boolean alreadyConsumed = orderSkuItemsConsumed.stream()
           .anyMatch(consumed -> consumed.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()));
       if (alreadyConsumed) {
         return List.of();
       }
 
-      var allOrderSkuItemsConsumedAreAvailable = command.orderSkuItemsToStockSckItems.stream()
-          .allMatch(orderSkuItemToStockSkuItem -> orderSkuItemIds.contains(orderSkuItemToStockSkuItem.orderSkuItemId()));
+      var areAllOrderSkuItemsToBeConsumedAvailable = command.orderSkuItemsConsumed.stream()
+          .allMatch(orderSkuItemToStockSkuItem -> orderSkuItemsAvailable.contains(orderSkuItemToStockSkuItem.orderSkuItemId()));
 
-      if (!allOrderSkuItemsConsumedAreAvailable) {
-        var event = new OrderItemReleasedStockSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId());
-        return orderSkuItemIds.size() > 0
-            ? List.of(event, new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, orderSkuItemIds))
+      if (!areAllOrderSkuItemsToBeConsumedAvailable) {
+        var event = new OrderItemReleasedStockSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId(), command.orderSkuItemsConsumed);
+
+        return orderSkuItemsAvailable.size() > 0
+            ? List.of(event, new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, orderSkuItemsAvailable))
             : List.of(event);
       }
 
-      var stockSkuItemIds = command.orderSkuItemsToStockSckItems.stream()
-          .map(orderSkuItemToStockSkuItem -> orderSkuItemToStockSkuItem.stockSkuItemId())
+      var orderSkuItemIdsConsumed = command.orderSkuItemsConsumed.stream()
+          .map(OrderSkuItemToStockSkuItem::orderSkuItemId)
           .toList();
-      var stockSkuItemIdsQueue = new LinkedList<>(stockSkuItemIds);
-      var orderSkuItemsForStock = orderSkuItemIds.stream()
-          .map(orderSkuItem -> new OrderSkuItemToStockSkuItem(orderSkuItem, stockSkuItemIdsQueue.poll()))
-          .filter(orderSkuItem -> orderSkuItem.stockSkuItemId != null)
+      var newOrderSkuItemsAvailable = orderSkuItemsAvailable.stream()
+          .filter(orderSkuItem -> !orderSkuItemIdsConsumed.contains(orderSkuItem))
           .toList();
+      var consumed = new Consumed(command.stockOrderRedLeafId, command.orderSkuItemsConsumed);
+      var newOrderSkuItemsConsumed = Stream.concat(this.orderSkuItemsConsumed.stream(), Stream.of(consumed)).toList();
+      var newReadyToShipAt = newOrderSkuItemsAvailable.isEmpty()
+          ? Instant.now()
+          : null;
+      var newBackOrderedAt = newOrderSkuItemsAvailable.isEmpty()
+          ? null
+          : backOrderedAt;
+      var event = new OrderItemConsumedStockSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId,
+          newReadyToShipAt, newBackOrderedAt, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed);
 
-      var event = new OrderItemConsumedStockSkuItemsEvent(orderItemRedLeafId, command.stockOrderRedLeafId, orderSkuItemsForStock);
-      var orderSkuItemIdsNeeded = orderSkuItemIds.stream()
-          .skip(orderSkuItemsForStock.size())
-          .toList();
-      return orderSkuItemIdsNeeded.isEmpty()
+      return newOrderSkuItemsAvailable.isEmpty()
           ? List.of(event)
-          : List.of(event, new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, orderSkuItemIdsNeeded));
+          : List.of(event, new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, newOrderSkuItemsAvailable));
     }
 
     List<Event> eventsFor(OrderItemSetBackOrderedCommand command) {
-      if (availableToBeConsumed) {
+      if (isAvailableToBeConsumed()) {
         return List.of();
       }
 
@@ -241,7 +383,7 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
     }
 
     State on(OrderItemRedLeafCreatedEvent event) {
-      return new State(event.orderItemRedLeafId(), event.quantity(), false, null, null, event.orderSkuItemIds, List.of());
+      return new State(event.orderItemRedLeafId(), event.quantity(), null, null, event.orderSkuItemsAvailable, List.of());
     }
 
     State on(OrderItemRequestsStockSkuItemsEvent event) {
@@ -249,51 +391,15 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
     }
 
     State on(StockOrderConsumedOrderSkuItemsEvent event) {
-      if (event.orderSkuItemToStockSkuItems().isEmpty()) {
-        return this;
-      }
-      var orderSkuItemIds = event.orderSkuItemToStockSkuItems().stream()
-          .map(orderSkuItemToStockSkuItem -> orderSkuItemToStockSkuItem.orderSkuItemId())
-          .toList();
-      var newOrderSkuItems = this.orderSkuItemIds.stream()
-          .filter(orderSkuItem -> !orderSkuItemIds.contains(orderSkuItem))
-          .toList();
-      var consumed = new Consumed(event.stockOrderRedLeafId(), event.orderSkuItemToStockSkuItems());
-      var newConsumedStockOrders = Stream.concat(this.consumedStockOrders.stream(), Stream.of(consumed)).toList();
-
-      return new State(orderItemRedLeafId, quantity, availableToBeConsumed, readyToShipAt, backOrderedAt, newOrderSkuItems, newConsumedStockOrders);
+      return new State(orderItemRedLeafId, quantity, event.readyToShipAt, event.backOrderedAt, event.orderSkuItemsAvailable, event.orderSkuItemsConsumed);
     }
 
     State on(StockOrderReleasedOrderSkuItemsEvent event) {
-      var consumedToBeReleased = consumedStockOrders.stream()
-          .filter(consumed -> consumed.stockOrderRedLeafId().equals(event.stockOrderRedLeafId()))
-          .findFirst();
-
-      if (consumedToBeReleased.isEmpty()) {
-        return this;
-      }
-
-      var newOrderSkuItems = Stream.concat(this.orderSkuItemIds.stream(), consumedToBeReleased.get().orderSkuItemsToStockSkuItems().stream()
-          .map(orderSkuItemToStockSkuItem -> orderSkuItemToStockSkuItem.orderSkuItemId()))
-          .toList();
-      var newConsumedStockOrders = consumedStockOrders.stream()
-          .filter(consumedStockOrder -> !consumedStockOrder.stockOrderRedLeafId().equals(event.stockOrderRedLeafId()))
-          .toList();
-
-      return new State(orderItemRedLeafId, quantity, availableToBeConsumed, readyToShipAt, backOrderedAt, newOrderSkuItems, newConsumedStockOrders);
+      return new State(orderItemRedLeafId, quantity, event.readyToShipAt, backOrderedAt, event.orderSkuItemsAvailable, event.orderSkuItemsConsumed);
     }
 
     State on(OrderItemConsumedStockSkuItemsEvent event) {
-      var consumedOrderSkuItemIds = event.orderSkuItemsToStockSckItems.stream()
-          .map(orderSkuItemToStockSkuItem -> orderSkuItemToStockSkuItem.orderSkuItemId())
-          .toList();
-      var newOrderSkuItems = this.orderSkuItemIds.stream()
-          .filter(orderSkuItem -> !consumedOrderSkuItemIds.contains(orderSkuItem))
-          .toList();
-      var consumed = new Consumed(event.stockOrderRedLeafId, event.orderSkuItemsToStockSckItems);
-      var newConsumedStockOrders = Stream.concat(this.consumedStockOrders.stream(), Stream.of(consumed)).toList();
-
-      return new State(orderItemRedLeafId, quantity, availableToBeConsumed, readyToShipAt, backOrderedAt, newOrderSkuItems, newConsumedStockOrders);
+      return new State(orderItemRedLeafId, quantity, event.readyToShipAt, event.backOrderedAt, event.orderSkuItemsAvailable, event.orderSkuItemsConsumed);
     }
 
     State on(OrderItemReleasedStockSkuItemsEvent event) {
@@ -301,7 +407,8 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
     }
 
     State on(OrderItemSetBackOrderedEvent event) {
-      return new State(orderItemRedLeafId, quantity, true, null, Instant.now(), orderSkuItemIds, consumedStockOrders);
+      var newBackOrderedAt = Instant.now();
+      return new State(orderItemRedLeafId, quantity, null, newBackOrderedAt, orderSkuItemsAvailable, orderSkuItemsConsumed);
     }
   }
 
@@ -329,46 +436,32 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
 
   public record OrderItemRedLeafCreateCommand(OrderItemRedLeafId orderItemRedLeafId, int quantity) {}
 
-  public record OrderItemRedLeafCreatedEvent(OrderItemRedLeafId orderItemRedLeafId, int quantity, List<OrderSkuItemId> orderSkuItemIds) implements Event {}
+  public record OrderItemRedLeafCreatedEvent(OrderItemRedLeafId orderItemRedLeafId, int quantity, List<OrderSkuItemId> orderSkuItemsAvailable) implements Event {}
 
   public record OrderItemRequestsStockSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, List<OrderSkuItemId> orderSkuItemIds) implements Event {}
 
-  public record StockOrderRequestsOrderSkuItemsCommand(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId, List<StockSkuItemId> stockSkuItemIds) {}
+  public record StockOrderRequestsOrderSkuItemsCommand(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId,
+      List<StockSkuItemId> stockSkuItemsAvailable) {}
 
-  public record StockOrderConsumedOrderSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId, List<OrderSkuItemToStockSkuItem> orderSkuItemToStockSkuItems) implements Event {}
+  public record StockOrderConsumedOrderSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId, Instant readyToShipAt, Instant backOrderedAt,
+      List<OrderSkuItemId> orderSkuItemsAvailable, List<Consumed> orderSkuItemsConsumed, Consumed consumed) implements Event {}
 
   public record StockOrderReleaseOrderSkuItemsCommand(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId) {}
 
-  public record StockOrderReleasedOrderSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId) implements Event {}
+  public record StockOrderReleasedOrderSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId, Instant readyToShipAt,
+      List<OrderSkuItemId> orderSkuItemsAvailable, List<Consumed> orderSkuItemsConsumed) implements Event {}
 
-  public record OrderItemConsumedStockSkuItemsCommand(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId, List<OrderSkuItemToStockSkuItem> orderSkuItemsToStockSckItems) {}
+  public record OrderItemConsumedStockSkuItemsCommand(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId,
+      List<OrderSkuItemToStockSkuItem> orderSkuItemsConsumed) {}
 
-  public record OrderItemConsumedStockSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId, List<OrderSkuItemToStockSkuItem> orderSkuItemsToStockSckItems) implements Event {}
+  public record OrderItemConsumedStockSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId, Instant readyToShipAt, Instant backOrderedAt,
+      List<OrderSkuItemId> orderSkuItemsAvailable, List<Consumed> orderSkuItemsConsumed) implements Event {}
 
-  public record OrderItemReleasedStockSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId) implements Event {}
+  public record OrderItemReleasedStockSkuItemsEvent(OrderItemRedLeafId orderItemRedLeafId, StockOrderRedLeafId stockOrderRedLeafId,
+      List<OrderSkuItemToStockSkuItem> orderSkuItemsReleased) implements Event {}
 
   public record OrderItemSetBackOrderedCommand(OrderItemRedLeafId orderItemRedLeafId) {}
 
   public record OrderItemSetBackOrderedEvent(OrderItemRedLeafId orderItemRedLeafId) implements Event {}
 
-  // OrderItemRedLeafEntity
-  //
-  // OrderItemRedLeafCreateCommand
-  // --> OrderItemRedLeafCreatedEvent
-  // --> OrderItemRequestsStockSkuItemsEvent
-  //
-  // Action: OrderItemRequestsStockSkuItemsEvent --> OrderItemRequestsStockSkuItemsCommand
-  //
-  // StockOrderRedLeafEntity
-  //
-  // OrderItemRequestsStockSkuItemsCommand
-  // --> OrderItemConsumedStockSkuItemsEvent
-  //
-  // Action: OrderItemConsumedStockSkuItemsEvent --> OrderItemConsumedStockSkuItemsCommand
-  //
-  // OrderItemRedLeafEntity
-  //
-  // OrderItemConsumedStockSkuItemsCommand
-  // --> OrderItemConsumedStockSkuItemsEvent
-  // --> OrderItemRequestsStockSkuItemsEvent (optional if more stockSkuItems are needed)
 }
