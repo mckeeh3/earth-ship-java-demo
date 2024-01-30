@@ -22,14 +22,15 @@ class OrderItemRedLeafEntityTest {
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+      var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
       var quantity = 21;
-      var command = new OrderItemRedLeafEntity.OrderItemRedLeafCreateCommand(orderItemRedLeafId, quantity);
-      var result = testKit.call(e -> e.createOrderItemRedLeaf(command));
+      var command = new OrderItemRedLeafEntity.OrderItemCreateCommand(orderItemRedLeafId, parentId, quantity);
+      var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
 
       {
-        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemRedLeafCreatedEvent.class);
+        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemCreatedEvent.class);
         assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
         assertEquals(quantity, event.quantity());
         assertFalse(event.orderSkuItemsAvailable().isEmpty());
@@ -59,9 +60,10 @@ class OrderItemRedLeafEntityTest {
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+      var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
       var quantity = 21;
-      var command = new OrderItemRedLeafEntity.OrderItemRedLeafCreateCommand(orderItemRedLeafId, quantity);
-      var result = testKit.call(e -> e.createOrderItemRedLeaf(command));
+      var command = new OrderItemRedLeafEntity.OrderItemCreateCommand(orderItemRedLeafId, parentId, quantity);
+      var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
     }
@@ -80,13 +82,14 @@ class OrderItemRedLeafEntityTest {
   void singleOrderItemConsumesStockSkuItemsTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedLeafEntity::new);
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
 
     var quantityOrderItem = 17;
     var quantityRequested = 10;
 
     {
-      var command = new OrderItemRedLeafEntity.OrderItemRedLeafCreateCommand(orderItemRedLeafId, quantityOrderItem);
-      var result = testKit.call(e -> e.createOrderItemRedLeaf(command));
+      var command = new OrderItemRedLeafEntity.OrderItemCreateCommand(orderItemRedLeafId, parentId, quantityOrderItem);
+      var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
     }
@@ -139,13 +142,14 @@ class OrderItemRedLeafEntityTest {
     }
   }
 
-  EventSourcedTestKit<State, Event, OrderItemRedLeafEntity> createOrderItemRedLeaf(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId,
+  EventSourcedTestKit<State, Event, OrderItemRedLeafEntity> createOrderItemRedLeaf(
+      OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId, OrderItemRedTreeEntity.OrderItemRedTreeId parentId,
       int quantityOrderItem, boolean makeAvailableToConsume) {
     var testKit = EventSourcedTestKit.of(OrderItemRedLeafEntity::new);
 
     {
-      var command = new OrderItemRedLeafEntity.OrderItemRedLeafCreateCommand(orderItemRedLeafId, quantityOrderItem);
-      var result = testKit.call(e -> e.createOrderItemRedLeaf(command));
+      var command = new OrderItemRedLeafEntity.OrderItemCreateCommand(orderItemRedLeafId, parentId, quantityOrderItem);
+      var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
     }
@@ -163,10 +167,11 @@ class OrderItemRedLeafEntityTest {
   @Test
   void singleOrderItemConsumesStockSkuItemsIdempotentTest() {
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
     var quantityOrderItem = 17;
     var quantityRequested = 10;
 
-    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, quantityOrderItem, true);
+    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, parentId, quantityOrderItem, true);
 
     var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.of("stockOrderId", "skuId");
     var stockSkuItems = IntStream.range(0, quantityRequested)
@@ -205,13 +210,14 @@ class OrderItemRedLeafEntityTest {
   @Test
   void multipleStockOrdersConsumeOrderSkuItemsTest() {
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
 
     var quantityOrderItem = 17;
     var quantityRequested1 = 10;
     var quantityRequested2 = 11;
     var quantityRequested3 = 12;
 
-    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, quantityOrderItem, true);
+    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, parentId, quantityOrderItem, true);
 
     { // this order will be fully allocated
       var stockOrderRedLeafId1 = StockOrderRedLeafEntity.StockOrderRedLeafId.of("orderItemId-1", "skuId");
@@ -288,13 +294,14 @@ class OrderItemRedLeafEntityTest {
   @Test
   void multipleStockOrdersConsumeOrderSkuItemsAndReleaseTest() {
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
 
     var quantityOrderItem = 17;
     var quantityRequested1 = 10;
     var quantityRequested2 = 11;
     var quantityRequested3 = 12;
 
-    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, quantityOrderItem, true);
+    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, parentId, quantityOrderItem, true);
 
     { // this order item will be fully allocated
       var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.of("orderItemId-1", "skuId");
@@ -380,13 +387,14 @@ class OrderItemRedLeafEntityTest {
   void consumeStockSkuItemsToOrderItemTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedLeafEntity::new);
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
 
     var quantityOrderItem = 17;
     var quantityStockSkuItems = 10;
 
     {
-      var command = new OrderItemRedLeafEntity.OrderItemRedLeafCreateCommand(orderItemRedLeafId, quantityOrderItem);
-      var result = testKit.call(e -> e.createOrderItemRedLeaf(command));
+      var command = new OrderItemRedLeafEntity.OrderItemCreateCommand(orderItemRedLeafId, parentId, quantityOrderItem);
+      var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
     }
@@ -434,14 +442,15 @@ class OrderItemRedLeafEntityTest {
   void consumeStockSkuItemsForTwoOrderItemsTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedLeafEntity::new);
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
 
     var quantityOrderItem = 17;
     var quantityStockSkuItems1 = 9;
     var quantityStockSkuItems2 = 8;
 
     {
-      var command = new OrderItemRedLeafEntity.OrderItemRedLeafCreateCommand(orderItemRedLeafId, quantityOrderItem);
-      var result = testKit.call(e -> e.createOrderItemRedLeaf(command));
+      var command = new OrderItemRedLeafEntity.OrderItemCreateCommand(orderItemRedLeafId, parentId, quantityOrderItem);
+      var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
     }
@@ -510,14 +519,15 @@ class OrderItemRedLeafEntityTest {
   void consumeStockSkuItemsToOrderItemFromTwoStockOrdersOneReleasedTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedLeafEntity::new);
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.of("orderItemId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderItemId2", "skuId");
 
     var quantityOrderItem = 17;
     var quantityStockSkuItems1 = 4;
     var quantityStockSkuItems2 = 13;
 
     {
-      var command = new OrderItemRedLeafEntity.OrderItemRedLeafCreateCommand(orderItemRedLeafId, quantityOrderItem);
-      var result = testKit.call(e -> e.createOrderItemRedLeaf(command));
+      var command = new OrderItemRedLeafEntity.OrderItemCreateCommand(orderItemRedLeafId, parentId, quantityOrderItem);
+      var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
     }

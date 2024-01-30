@@ -1,5 +1,6 @@
 package io.example.shipping;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,7 +19,7 @@ class OrderItemRedTreeEntityTest {
     var quantity = 1247;
 
     {
-      var command = new OrderItemRedTreeEntity.OrderItemRedTreeCreateCommand(orderItemRedTreeId, null, quantity);
+      var command = new OrderItemRedTreeEntity.OrderItemCreateCommand(orderItemRedTreeId, null, quantity);
       var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
@@ -42,6 +43,14 @@ class OrderItemRedTreeEntityTest {
       assertEquals(0, state.quantityBackOrdered());
       assertTrue(state.subBranches().size() > 0);
     }
+
+    { // Idempotent test
+      var command = new OrderItemRedTreeEntity.OrderItemCreateCommand(orderItemRedTreeId, null, quantity);
+      var result = testKit.call(e -> e.orderItemCreate(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+      assertEquals(0, result.getAllEvents().size());
+    }
   }
 
   @Test
@@ -51,7 +60,7 @@ class OrderItemRedTreeEntityTest {
     var quantity = 1247;
 
     {
-      var command = new OrderItemRedTreeEntity.OrderItemRedTreeCreateCommand(orderItemRedTreeId, null, quantity);
+      var command = new OrderItemRedTreeEntity.OrderItemCreateCommand(orderItemRedTreeId, null, quantity);
       var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
@@ -77,7 +86,7 @@ class OrderItemRedTreeEntityTest {
     var quantityBackOrdered = 23;
 
     {
-      var command = new OrderItemRedTreeEntity.OrderItemRedTreeCreateCommand(orderItemRedTreeId, null, quantity);
+      var command = new OrderItemRedTreeEntity.OrderItemCreateCommand(orderItemRedTreeId, null, quantity);
       var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
@@ -100,9 +109,9 @@ class OrderItemRedTreeEntityTest {
       assertEquals(1, eventCount);
 
       var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
-      assertEquals(subBranch.orderItemRedTreeId(), event.orderItemRedTreeId());
-      assertEquals(orderItemRedTreeId, event.parentId());
-      assertEquals(subBranch.quantity(), event.quantity());
+      assertEquals(orderItemRedTreeId, event.orderItemRedTreeId());
+      assertNull(event.parentId());
+      assertEquals(quantity, event.quantity());
       assertEquals(quantityReadyToShip, event.quantityReadyToShip());
       assertEquals(quantityBackOrdered, event.quantityBackOrdered());
     }
@@ -135,7 +144,7 @@ class OrderItemRedTreeEntityTest {
     var quantityBackOrdered2 = 45;
 
     {
-      var command = new OrderItemRedTreeEntity.OrderItemRedTreeCreateCommand(orderItemRedTreeId, parentId, quantity);
+      var command = new OrderItemRedTreeEntity.OrderItemCreateCommand(orderItemRedTreeId, parentId, quantity);
       var result = testKit.call(e -> e.orderItemCreate(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
@@ -156,21 +165,14 @@ class OrderItemRedTreeEntityTest {
       assertEquals("OK", result.getReply());
 
       var eventCount = result.getAllEvents().size();
-      assertEquals(2, eventCount);
+      assertEquals(1, eventCount);
 
       var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
-      assertEquals(subBranch.orderItemRedTreeId(), event.orderItemRedTreeId());
-      assertEquals(orderItemRedTreeId, event.parentId());
-      assertEquals(subBranch.quantity(), event.quantity());
+      assertEquals(orderItemRedTreeId, event.orderItemRedTreeId());
+      assertNotNull(event.parentId());
+      assertEquals(quantity, event.quantity());
       assertEquals(quantityReadyToShip1, event.quantityReadyToShip());
       assertEquals(quantityBackOrdered1, event.quantityBackOrdered());
-
-      var eventParent = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchParentUpdatedEvent.class);
-      assertEquals(orderItemRedTreeId, eventParent.orderItemRedTreeId());
-      assertEquals(parentId, eventParent.parentId());
-      assertEquals(quantity, eventParent.quantity());
-      assertEquals(quantityReadyToShip1, eventParent.quantityReadyToShip());
-      assertEquals(quantityBackOrdered1, eventParent.quantityBackOrdered());
     }
 
     {
@@ -188,21 +190,14 @@ class OrderItemRedTreeEntityTest {
       assertEquals("OK", result.getReply());
 
       var eventCount = result.getAllEvents().size();
-      assertEquals(2, eventCount);
+      assertEquals(1, eventCount);
 
       var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
-      assertEquals(subBranch.orderItemRedTreeId(), event.orderItemRedTreeId());
-      assertEquals(orderItemRedTreeId, event.parentId());
-      assertEquals(subBranch.quantity(), event.quantity());
-      assertEquals(quantityReadyToShip2, event.quantityReadyToShip());
-      assertEquals(quantityBackOrdered2, event.quantityBackOrdered());
-
-      var eventParent = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchParentUpdatedEvent.class);
-      assertEquals(orderItemRedTreeId, eventParent.orderItemRedTreeId());
-      assertEquals(parentId, eventParent.parentId());
-      assertEquals(quantity, eventParent.quantity());
-      assertEquals(quantityReadyToShip1 + quantityReadyToShip2, eventParent.quantityReadyToShip());
-      assertEquals(quantityBackOrdered1 + quantityBackOrdered2, eventParent.quantityBackOrdered());
+      assertEquals(orderItemRedTreeId, event.orderItemRedTreeId());
+      assertNotNull(event.parentId());
+      assertEquals(quantity, event.quantity());
+      assertEquals(quantityReadyToShip1 + quantityReadyToShip2, event.quantityReadyToShip());
+      assertEquals(quantityBackOrdered1 + quantityBackOrdered2, event.quantityBackOrdered());
     }
   }
 
@@ -230,7 +225,8 @@ class OrderItemRedTreeEntityTest {
     testSubBranchCreation(39);
     testSubBranchCreation(40);
     testSubBranchCreation(41);
-    testSubBranchCreation(42);
+    testSubBranchCreation(176);
+    testSubBranchCreation(199);
     testSubBranchCreation(1247);
     testSubBranchCreation(125);
     testSubBranchCreation(122);

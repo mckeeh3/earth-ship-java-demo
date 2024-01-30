@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.Validator;
 import io.example.shipping.OrderItemRedLeafEntity.OrderItemRedLeafId;
 import io.example.shipping.OrderItemRedLeafEntity.OrderSkuItemId;
+import io.example.stock.StockOrderRedTreeEntity.StockOrderRedTreeId;
 import io.grpc.Status;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
@@ -30,8 +31,8 @@ import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 //
 // Entity: OrderItemRedLeafEntity
 //
-// OrderItemRedLeafCreateCommand
-// --> OrderItemRedLeafCreatedEvent
+// OrderItemCreateCommand
+// --> OrderItemCreatedEvent
 // --> OrderItemRequestsStockSkuItemsEvent
 //
 // Action: OrderItemRedLeafEntityToStockOrderRedLeafEntity
@@ -143,7 +144,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
   }
 
   @PutMapping("/stock-order-create")
-  public Effect<String> createStockOrderRedLeaf(@RequestBody StockOrderRedLeafCreateCommand command) {
+  public Effect<String> stockOrderCreate(@RequestBody StockOrderCreateCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -192,7 +193,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
   }
 
   @EventHandler
-  public State on(StockOrderRedLeafCreatedEvent event) {
+  public State on(StockOrderCreatedEvent event) {
     log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
@@ -233,22 +234,29 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     return currentState().on(event);
   }
 
+  @EventHandler
+  public State on(StockOrderUpdatedEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
   public record State(
       StockOrderRedLeafId stockOrderRedLeafId,
+      StockOrderRedTreeId parentId,
       int quantity,
       boolean availableToBeConsumed,
       List<StockSkuItemId> stockSkuItemsAvailable,
       List<Consumed> stockSkuItemsConsumed) {
 
     static State emptyState() {
-      return new State(null, 0, false, List.of(), List.of());
+      return new State(null, null, 0, false, List.of(), List.of());
     }
 
     boolean alreadyCreated() {
       return stockOrderRedLeafId != null;
     }
 
-    List<Event> eventsFor(StockOrderRedLeafCreateCommand command) {
+    List<Event> eventsFor(StockOrderCreateCommand command) {
       if (alreadyCreated()) {
         return List.of();
       }
@@ -258,14 +266,14 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
           .toList();
 
       return List.of(
-          new StockOrderRedLeafCreatedEvent(command.stockOrderRedLeafId, command.quantity(), newStockSkuItemsAvailable),
+          new StockOrderCreatedEvent(command.stockOrderRedLeafId, command.parentId, command.quantity(), newStockSkuItemsAvailable),
           new StockOrderRequestsOrderSkuItemsEvent(command.stockOrderRedLeafId, newStockSkuItemsAvailable));
     }
 
     List<Event> eventsFor(OrderItemRequestsStockSkuItemsCommand command) {
       if (!availableToBeConsumed) {
         var consumed = new Consumed(command.orderItemRedLeafId, List.of());
-        return List.of(new OrderItemConsumedStockSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId,
+        return List.of(new OrderItemConsumedStockSkuItemsEvent(stockOrderRedLeafId, parentId, command.orderItemRedLeafId,
             availableToBeConsumed, stockSkuItemsAvailable, stockSkuItemsConsumed, consumed));
       }
 
@@ -292,7 +300,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
       var consumed = new Consumed(command.orderItemRedLeafId(), stockSkuItemsForOrderItem);
       var newStockSkuItemIdsConsumed = Stream.concat(this.stockSkuItemsConsumed.stream(), Stream.of(consumed)).toList();
 
-      return List.of(new OrderItemConsumedStockSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId,
+      return List.of(new OrderItemConsumedStockSkuItemsEvent(stockOrderRedLeafId, parentId, command.orderItemRedLeafId,
           newAvailableToBeConsumed, newStockSkuItemIds, newStockSkuItemIdsConsumed, consumed));
     }
 
@@ -315,7 +323,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
           .filter(consumed -> !consumed.orderItemRedLeafId().equals(command.orderItemRedLeafId))
           .toList();
 
-      var eventReleased = new OrderItemReleasedStockSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId,
+      var eventReleased = new OrderItemReleasedStockSkuItemsEvent(stockOrderRedLeafId, parentId, command.orderItemRedLeafId,
           newStockSkuItemAvailable, newConsumedOrderItems);
       var eventNeeded = new StockOrderRequestsOrderSkuItemsEvent(stockOrderRedLeafId, newStockSkuItemAvailable);
 
@@ -333,7 +341,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
           .allMatch(stockSkuItemToOrderSkuItem -> stockSkuItemsAvailable.contains(stockSkuItemToOrderSkuItem.stockSkuItemId()));
 
       if (!areAllStockSkuItemsToBeConsumedAvailable) {
-        var event = new StockOrderReleasedOrderSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId(), command.stockSkuItemsConsumed);
+        var event = new StockOrderReleasedOrderSkuItemsEvent(stockOrderRedLeafId, parentId, command.orderItemRedLeafId(), command.stockSkuItemsConsumed);
 
         return stockSkuItemsAvailable.size() > 0
             ? List.of(event, new StockOrderRequestsOrderSkuItemsEvent(stockOrderRedLeafId, stockSkuItemsAvailable))
@@ -351,7 +359,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
       var newAvailableToBeConsumed = newStockSkuItemsAvailable.isEmpty()
           ? false
           : availableToBeConsumed;
-      var event = new StockOrderConsumedOrderSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId, newAvailableToBeConsumed,
+      var event = new StockOrderConsumedOrderSkuItemsEvent(stockOrderRedLeafId, parentId, command.orderItemRedLeafId, newAvailableToBeConsumed,
           newStockSkuItemsAvailable, newOrderItemsConsumed);
 
       return newStockSkuItemsAvailable.isEmpty()
@@ -364,11 +372,14 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
         return List.of();
       }
 
-      return List.of(new StockOrderSetAvailableToBeConsumedEvent(stockOrderRedLeafId));
+      var event = new StockOrderSetAvailableToBeConsumedEvent(stockOrderRedLeafId, parentId);
+      var updatedEvent = new StockOrderUpdatedEvent(stockOrderRedLeafId, parentId, quantity, quantity - stockSkuItemsAvailable.size());
+
+      return List.of(event, updatedEvent);
     }
 
-    State on(StockOrderRedLeafCreatedEvent event) {
-      return new State(event.stockOrderRedLeafId(), event.quantity(), false, event.stockSkuItemsAvailable, List.of());
+    State on(StockOrderCreatedEvent event) {
+      return new State(event.stockOrderRedLeafId(), event.parentId(), event.quantity(), false, event.stockSkuItemsAvailable, List.of());
     }
 
     State on(StockOrderRequestsOrderSkuItemsEvent event) {
@@ -376,15 +387,15 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     }
 
     State on(OrderItemConsumedStockSkuItemsEvent event) {
-      return new State(stockOrderRedLeafId, quantity, event.availableToBeConsumed, event.stockSkuItemsAvailable, event.stockSkuItemsConsumed);
+      return new State(stockOrderRedLeafId, parentId, quantity, event.availableToBeConsumed, event.stockSkuItemsAvailable, event.stockSkuItemsConsumed);
     }
 
     State on(OrderItemReleasedStockSkuItemsEvent event) {
-      return new State(stockOrderRedLeafId, quantity, availableToBeConsumed, event.stockSkuItemsAvailable, event.stockSkuItemsConsumed);
+      return new State(stockOrderRedLeafId, parentId, quantity, availableToBeConsumed, event.stockSkuItemsAvailable, event.stockSkuItemsConsumed);
     }
 
     State on(StockOrderConsumedOrderSkuItemsEvent event) {
-      return new State(stockOrderRedLeafId, quantity, event.availableToBeConsumed, event.stockSkuItemsAvailable, event.stockSkuItemsConsumed);
+      return new State(stockOrderRedLeafId, parentId, quantity, event.availableToBeConsumed, event.stockSkuItemsAvailable, event.stockSkuItemsConsumed);
     }
 
     State on(StockOrderReleasedOrderSkuItemsEvent event) {
@@ -392,7 +403,11 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     }
 
     State on(StockOrderSetAvailableToBeConsumedEvent event) {
-      return new State(stockOrderRedLeafId, quantity, true, stockSkuItemsAvailable, stockSkuItemsConsumed);
+      return new State(stockOrderRedLeafId, parentId, quantity, true, stockSkuItemsAvailable, stockSkuItemsConsumed);
+    }
+
+    State on(StockOrderUpdatedEvent event) {
+      return this;
     }
   }
 
@@ -412,39 +427,57 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     }
   }
 
-  public record Consumed(OrderItemRedLeafId orderItemRedLeafId, List<StockSkuItemToOrderSkuItem> stockSkuItemsToOrderSkuItems) {}
+  public record Consumed(OrderItemRedLeafId orderItemRedLeafId, List<StockSkuItemToOrderSkuItem> stockSkuItemsToOrderSkuItems) {
+    static int quantityConsumed(List<Consumed> consumed) {
+      return consumed.stream()
+          .flatMap(consumed1 -> consumed1.stockSkuItemsToOrderSkuItems().stream())
+          .mapToInt(stockSkuItemToOrderSkuItem -> 1)
+          .sum();
+    }
+  }
 
   public record StockSkuItemToOrderSkuItem(StockSkuItemId stockSkuItemId, OrderSkuItemId orderSkuItemId) {}
 
   public interface Event {}
 
-  public record StockOrderRedLeafCreateCommand(StockOrderRedLeafId stockOrderRedLeafId, int quantity) {}
+  public record StockOrderCreateCommand(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId, int quantity) {}
 
-  public record StockOrderRedLeafCreatedEvent(StockOrderRedLeafId stockOrderRedLeafId, int quantity, List<StockSkuItemId> stockSkuItemsAvailable) implements Event {}
+  public record StockOrderCreatedEvent(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId,
+      int quantity,
+      List<StockSkuItemId> stockSkuItemsAvailable) implements Event {}
 
   public record StockOrderRequestsOrderSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, List<StockSkuItemId> stockSkuItemIds) implements Event {}
 
   public record OrderItemRequestsStockSkuItemsCommand(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId,
       List<OrderSkuItemId> orderSkuItemsAvailable) {}
 
-  public record OrderItemConsumedStockSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId, boolean availableToBeConsumed,
+  public record OrderItemConsumedStockSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId,
+      OrderItemRedLeafId orderItemRedLeafId,
+      boolean availableToBeConsumed,
       List<StockSkuItemId> stockSkuItemsAvailable, List<Consumed> stockSkuItemsConsumed, Consumed consumed) implements Event {}
 
   public record OrderItemReleaseStockSkuItemsCommand(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId) {}
 
-  public record OrderItemReleasedStockSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId,
+  public record OrderItemReleasedStockSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId,
+      OrderItemRedLeafId orderItemRedLeafId,
       List<StockSkuItemId> stockSkuItemsAvailable, List<Consumed> stockSkuItemsConsumed) implements Event {}
 
   public record StockOrderConsumedOrderSkuItemsCommand(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId,
       List<StockSkuItemToOrderSkuItem> stockSkuItemsConsumed) {}
 
-  public record StockOrderConsumedOrderSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId, boolean availableToBeConsumed,
+  public record StockOrderConsumedOrderSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId,
+      OrderItemRedLeafId orderItemRedLeafId,
+      boolean availableToBeConsumed,
       List<StockSkuItemId> stockSkuItemsAvailable, List<Consumed> stockSkuItemsConsumed) implements Event {}
 
-  public record StockOrderReleasedOrderSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId,
+  public record StockOrderReleasedOrderSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId,
+      OrderItemRedLeafId orderItemRedLeafId,
       List<StockSkuItemToOrderSkuItem> stockSkuItemsReleased) implements Event {}
 
   public record StockOrderSetAvailableToBeConsumedCommand(StockOrderRedLeafId stockOrderRedLeafId) {}
 
-  public record StockOrderSetAvailableToBeConsumedEvent(StockOrderRedLeafId stockOrderRedLeafId) implements Event {}
+  public record StockOrderSetAvailableToBeConsumedEvent(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId) implements Event {}
+
+  public record StockOrderUpdatedEvent(StockOrderRedLeafId stockOrderRedLeafId, StockOrderRedTreeId parentId,
+      int quantity, int quantityOrdered) implements Event {}
 }

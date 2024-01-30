@@ -42,7 +42,7 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
 
     return effects()
-        .emitEvent(currentState().eventFor(command))
+        .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
   }
 
@@ -97,12 +97,17 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
       return stockOrderRedTreeId() != null;
     }
 
-    Event eventFor(StockOrderRedTreeCreateCommand command) {
-      return new StockOrderRedTreeCreatedEvent(
-          command.stockOrderRedTreeId(),
-          command.parentId(),
-          command.quantity(),
-          SubBranch.subBranchesOf(command.stockOrderRedTreeId(), command.quantity()));
+    List<Event> eventsFor(StockOrderRedTreeCreateCommand command) {
+      if (alreadyCreated()) {
+        return List.of();
+      }
+
+      return List.of(
+          new StockOrderRedTreeCreatedEvent(
+              command.stockOrderRedTreeId(),
+              command.parentId(),
+              command.quantity(),
+              SubBranch.subBranchesOf(command.stockOrderRedTreeId(), command.quantity())));
     }
 
     List<Event> eventsFor(StockOrderSubBranchUpdateCommand command) {
@@ -206,13 +211,14 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
 
     static List<Integer> subBranchQuantities(int quantity) {
       var subBranchesCount = (int) Math.min(maxSubBranchesPerBranch, Math.ceil((double) quantity / maxSubBranchesPerBranch));
-      var leavesPerBranch = (int) Math.ceil((double) quantity / subBranchesCount);
+      var leavesPerBranch = (int) Math.max(maxLeavesPerBranch, Math.ceil((double) quantity / subBranchesCount));
       var range = (int) Math.min(maxSubBranchesPerBranch, Math.ceil((double) quantity / maxSubBranchesPerBranch));
 
       return IntStream.rangeClosed(1, range)
           .mapToObj(i -> (int) (i * leavesPerBranch > quantity
               ? quantity - (i - 1) * leavesPerBranch
               : leavesPerBranch))
+          .filter(qty -> qty > 0)
           .toList();
     };
 

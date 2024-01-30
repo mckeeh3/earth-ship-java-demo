@@ -38,11 +38,11 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
   }
 
   @PutMapping("/order-item-create")
-  public Effect<String> orderItemCreate(@RequestBody OrderItemRedTreeCreateCommand command) {
+  public Effect<String> orderItemCreate(@RequestBody OrderItemCreateCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
 
     return effects()
-        .emitEvent(currentState().eventFor(command))
+        .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
   }
 
@@ -76,12 +76,6 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
     return currentState().on(event);
   }
 
-  @EventHandler
-  public State on(OrderItemSubBranchParentUpdatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
-    return currentState().on(event);
-  }
-
   public record State(
       OrderItemRedTreeId orderItemRedTreeId,
       OrderItemRedTreeId parentId,
@@ -98,12 +92,17 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
       return orderItemRedTreeId != null;
     }
 
-    Event eventFor(OrderItemRedTreeCreateCommand command) {
-      return new OrderItemRedTreeCreatedEvent(
-          command.orderItemRedTreeId(),
-          command.parentId(),
-          command.quantity(),
-          SubBranch.subBranchesOf(command.orderItemRedTreeId, command.quantity));
+    List<Event> eventsFor(OrderItemCreateCommand command) {
+      if (alreadyCreated()) {
+        return List.of();
+      }
+
+      return List.of(
+          new OrderItemRedTreeCreatedEvent(
+              command.orderItemRedTreeId(),
+              command.parentId(),
+              command.quantity(),
+              SubBranch.subBranchesOf(command.orderItemRedTreeId, command.quantity)));
     }
 
     List<Event> eventsFor(OrderItemSubBranchUpdateCommand command) {
@@ -121,23 +120,13 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
       var reduced = SubBranch.reduce(newSubBranches);
 
       var event = new OrderItemSubBranchUpdatedEvent(
-          command.orderItemRedTreeId,
-          command.parentId,
-          command.quantity,
-          command.quantityReadyToShip,
-          command.quantityBackOrdered);
-      var parentEvent = parentId == null
-          ? null
-          : new OrderItemSubBranchParentUpdatedEvent(
-              orderItemRedTreeId,
-              parentId,
-              reduced.quantity(),
-              reduced.quantityReadyToShip(),
-              reduced.quantityBackOrdered());
+          orderItemRedTreeId,
+          parentId,
+          quantity,
+          reduced.quantityReadyToShip,
+          reduced.quantityBackOrdered);
 
-      return parentEvent == null
-          ? List.of(event)
-          : List.of(event, parentEvent);
+      return List.of(event);
     }
 
     State on(OrderItemRedTreeCreatedEvent event) {
@@ -166,15 +155,15 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
           reduced.quantityBackOrdered(),
           newSubBranches);
     }
-
-    State on(OrderItemSubBranchParentUpdatedEvent event) {
-      return this;
-    }
   }
 
   public record OrderItemRedTreeId(String orderId, String skuId, UUID uuId) {
     public static OrderItemRedTreeId of(String orderId, String skuId) {
       return new OrderItemRedTreeId(orderId, skuId, UUID.randomUUID());
+    }
+
+    public static OrderItemRedTreeId of(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId) {
+      return new OrderItemRedTreeId(orderItemRedLeafId.orderId(), orderItemRedLeafId.skuId(), orderItemRedLeafId.uuId());
     }
 
     public String toEntityId() {
@@ -215,13 +204,14 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
 
     static List<Integer> subBranchQuantities(int quantity) {
       var subBranchesCount = (int) Math.min(maxSubBranchesPerBranch, Math.ceil((double) quantity / maxSubBranchesPerBranch));
-      var leavesPerBranch = (int) Math.ceil((double) quantity / subBranchesCount);
+      var leavesPerBranch = (int) Math.max(maxLeavesPerBranch, Math.ceil((double) quantity / subBranchesCount));
       var range = (int) Math.min(maxSubBranchesPerBranch, Math.ceil((double) quantity / maxSubBranchesPerBranch));
 
       return IntStream.rangeClosed(1, range)
           .mapToObj(i -> (int) (i * leavesPerBranch > quantity
               ? quantity - (i - 1) * leavesPerBranch
               : leavesPerBranch))
+          .filter(qth -> qth > 0)
           .toList();
     };
 
@@ -246,13 +236,14 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
 
   public interface Event {}
 
-  public record OrderItemRedTreeCreateCommand(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId, int quantity) {}
+  public record OrderItemCreateCommand(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId, int quantity) {}
 
-  public record OrderItemRedTreeCreatedEvent(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId, int quantity, List<SubBranch> suBranches) implements Event {}
+  public record OrderItemRedTreeCreatedEvent(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId,
+      int quantity, List<SubBranch> suBranches) implements Event {}
 
-  public record OrderItemSubBranchUpdateCommand(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId, int quantity, int quantityReadyToShip, int quantityBackOrdered) {}
+  public record OrderItemSubBranchUpdateCommand(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId,
+      int quantity, int quantityReadyToShip, int quantityBackOrdered) {}
 
-  public record OrderItemSubBranchUpdatedEvent(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId, int quantity, int quantityReadyToShip, int quantityBackOrdered) implements Event {}
-
-  public record OrderItemSubBranchParentUpdatedEvent(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId, int quantity, int quantityReadyToShip, int quantityBackOrdered) implements Event {}
+  public record OrderItemSubBranchUpdatedEvent(OrderItemRedTreeId orderItemRedTreeId, OrderItemRedTreeId parentId,
+      int quantity, int quantityReadyToShip, int quantityBackOrdered) implements Event {}
 }

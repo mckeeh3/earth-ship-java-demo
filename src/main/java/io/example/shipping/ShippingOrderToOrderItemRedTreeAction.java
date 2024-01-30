@@ -21,13 +21,13 @@ public class ShippingOrderToOrderItemRedTreeAction extends Action {
     this.componentClient = componentClient;
   }
 
-  public Effect<String> on(ShippingOrderEntity.CreatedShippingOrderEvent event) {
+  public Effect<String> on(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     log.info("Event: {}", event);
 
     return callFor(event);
   }
 
-  private Effect<String> callFor(ShippingOrderEntity.CreatedShippingOrderEvent event) {
+  Effect<String> callFor(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     var results = event.orderItems().stream()
         .map(orderItem -> toCommand(event, orderItem))
         .map(command -> callFor(command))
@@ -36,7 +36,7 @@ public class ShippingOrderToOrderItemRedTreeAction extends Action {
     return effects().asyncReply(waitForCallsToFinish(results));
   }
 
-  private CompletionStage<String> callFor(OrderItemRedTreeEntity.OrderItemRedTreeCreateCommand command) {
+  CompletionStage<String> callFor(OrderItemRedTreeEntity.OrderItemCreateCommand command) {
     LogEvent.log("ShippingOrder", command.orderItemRedTreeId().orderId(), "OrderItemRedTree", command.orderItemRedTreeId().toEntityId(), "color yellow");
 
     return componentClient.forEventSourcedEntity(command.orderItemRedTreeId().toEntityId())
@@ -45,16 +45,16 @@ public class ShippingOrderToOrderItemRedTreeAction extends Action {
         .execute();
   }
 
-  private OrderItemRedTreeEntity.OrderItemRedTreeCreateCommand toCommand(ShippingOrderEntity.CreatedShippingOrderEvent event, ShippingOrderEntity.OrderItem orderItem) {
+  OrderItemRedTreeEntity.OrderItemCreateCommand toCommand(ShippingOrderEntity.ShippingOrderCreatedEvent event, ShippingOrderEntity.OrderItem orderItem) {
     var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of(event.orderId(), orderItem.skuId());
 
-    return new OrderItemRedTreeEntity.OrderItemRedTreeCreateCommand(
+    return new OrderItemRedTreeEntity.OrderItemCreateCommand(
         orderItemRedTreeId,
         null, // this is the tree trunk, so it has no parent
         orderItem.quantity());
   }
 
-  private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
+  CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
     return CompletableFuture.allOf(results.toArray(new CompletableFuture[results.size()]))
         .thenApply(__ -> "OK");
   }

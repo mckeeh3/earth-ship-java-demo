@@ -32,7 +32,7 @@ public class StockOrderRedLeafAvailableView extends View<StockOrderRedLeafAvaila
     return null;
   }
 
-  public UpdateEffect<StockOrderRedLeafRow> on(StockOrderRedLeafEntity.StockOrderRedLeafCreatedEvent event) {
+  public UpdateEffect<StockOrderRedLeafRow> on(StockOrderRedLeafEntity.StockOrderCreatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new StockOrderRedLeafRow(event.stockOrderRedLeafId(), event.stockOrderRedLeafId().skuId(), false));

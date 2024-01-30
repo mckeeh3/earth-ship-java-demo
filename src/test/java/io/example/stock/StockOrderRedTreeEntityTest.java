@@ -212,6 +212,16 @@ class StockOrderRedTreeEntityTest {
     testSubBranchCreation(19);
     testSubBranchCreation(20);
     testSubBranchCreation(21);
+    testSubBranchCreation(22);
+    testSubBranchCreation(29);
+    testSubBranchCreation(39);
+    testSubBranchCreation(40);
+    testSubBranchCreation(41);
+    testSubBranchCreation(176);
+    testSubBranchCreation(199);
+    testSubBranchCreation(1247);
+    testSubBranchCreation(125);
+    testSubBranchCreation(122);
 
     var subBranch = testSubBranchCreation(12479);
     while (subBranch.isPresent()) {

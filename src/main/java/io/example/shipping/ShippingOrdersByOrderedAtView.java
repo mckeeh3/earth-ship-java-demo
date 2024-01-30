@@ -39,49 +39,49 @@ public class ShippingOrdersByOrderedAtView extends View<ShippingOrderEntity.Stat
     return ShippingOrderEntity.State.emptyState();
   }
 
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.CreatedShippingOrderEvent event) {
+  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
     return effects()
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.ReadyToShipOrderItemEvent event) {
+  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderItemReadyToShipEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
     return effects()
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.ReadyToShipOrderEvent event) {
+  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderReadyToShipEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
     return effects()
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.ReleasedOrderItemEvent event) {
+  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderItemUpdatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
     return effects()
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.ReleasedOrderEvent event) {
+  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderUpdatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
     return effects()
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.BackOrderedOrderItemEvent event) {
+  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderItemBackOrderedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
     return effects()
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.BackOrderedOrderEvent event) {
+  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderBackOrderedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
     return effects()

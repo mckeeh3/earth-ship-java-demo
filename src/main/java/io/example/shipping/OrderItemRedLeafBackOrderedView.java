@@ -32,7 +32,7 @@ public class OrderItemRedLeafBackOrderedView extends View<OrderItemRedLeafBackOr
     return null;
   }
 
-  public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.OrderItemRedLeafCreatedEvent event) {
+  public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.OrderItemCreatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), false));

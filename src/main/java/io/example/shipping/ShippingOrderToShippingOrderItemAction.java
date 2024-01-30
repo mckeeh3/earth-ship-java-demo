@@ -21,13 +21,13 @@ public class ShippingOrderToShippingOrderItemAction extends Action {
     this.componentClient = componentClient;
   }
 
-  public Effect<String> on(ShippingOrderEntity.CreatedShippingOrderEvent event) {
+  public Effect<String> on(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     log.info("Event: {}", event);
 
     return callFor(event);
   }
 
-  private Effect<String> callFor(ShippingOrderEntity.CreatedShippingOrderEvent event) {
+  private Effect<String> callFor(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     var results = event.orderItems().stream()
         .map(orderItem -> toCommand(event, orderItem))
         .map(command -> callFor(command))
@@ -45,7 +45,7 @@ public class ShippingOrderToShippingOrderItemAction extends Action {
         .execute();
   }
 
-  private ShippingOrderItemEntity.CreateShippingOrderItemCommand toCommand(ShippingOrderEntity.CreatedShippingOrderEvent event, ShippingOrderEntity.OrderItem orderItem) {
+  private ShippingOrderItemEntity.CreateShippingOrderItemCommand toCommand(ShippingOrderEntity.ShippingOrderCreatedEvent event, ShippingOrderEntity.OrderItem orderItem) {
     return new ShippingOrderItemEntity.CreateShippingOrderItemCommand(
         ShippingOrderItemEntity.ShippingOrderItemId.of(event.orderId(), orderItem.skuId()),
         orderItem.skuName(),
