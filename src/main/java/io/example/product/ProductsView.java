@@ -53,7 +53,7 @@ public class ProductsView extends View<ProductEntity.State> {
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ProductEntity.State> on(ProductEntity.UpdatedProductsBackOrderedEvent event) {
+  public UpdateEffect<ProductEntity.State> on(ProductEntity.UpdatedProductsBackOrderedEventOLD event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(viewState().on(event));

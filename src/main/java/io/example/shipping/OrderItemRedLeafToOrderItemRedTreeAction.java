@@ -40,7 +40,7 @@ public class OrderItemRedLeafToOrderItemRedTreeAction extends Action {
     return callFor(event);
   }
 
-  public Effect<String> on(OrderItemRedLeafEntity.OrderItemSetBackOrderedEvent event) {
+  public Effect<String> on(OrderItemRedLeafEntity.OrderItemSetBackOrderedOnEvent event) {
     log.info("Event: {}", event);
     LogEvent.log("OrderItemRedLeaf", event.parentId().orderId(), "OrderItemRedTree", event.orderItemRedLeafId().toEntityId(), "color red");
 
@@ -62,7 +62,7 @@ public class OrderItemRedLeafToOrderItemRedTreeAction extends Action {
     return callFor(event.orderItemRedLeafId(), event.parentId(), backOrdered, event.orderSkuItemsAvailable(), event.orderSkuItemsConsumed());
   }
 
-  Effect<String> callFor(OrderItemRedLeafEntity.OrderItemSetBackOrderedEvent event) {
+  Effect<String> callFor(OrderItemRedLeafEntity.OrderItemSetBackOrderedOnEvent event) {
     var backOrdered = true;
     return callFor(event.orderItemRedLeafId(), event.parentId(), backOrdered, event.orderSkuItemsAvailable(), event.orderSkuItemsConsumed());
   }

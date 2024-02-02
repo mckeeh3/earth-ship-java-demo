@@ -46,7 +46,7 @@ public class ShippingOrderToOrderItemRedTreeAction extends Action {
   }
 
   OrderItemRedTreeEntity.OrderItemCreateCommand toCommand(ShippingOrderEntity.ShippingOrderCreatedEvent event, ShippingOrderEntity.OrderItem orderItem) {
-    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of(event.orderId(), orderItem.skuId());
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId(event.orderId(), orderItem.skuId());
 
     return new OrderItemRedTreeEntity.OrderItemCreateCommand(
         orderItemRedTreeId,

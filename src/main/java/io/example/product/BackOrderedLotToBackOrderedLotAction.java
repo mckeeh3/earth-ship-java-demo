@@ -60,7 +60,7 @@ public class BackOrderedLotToBackOrderedLotAction extends Action {
 
   private Effect<String> callForProduct(BackOrderedLotEntity.ReleasedBackOrderedLotEvent event) {
     var skuId = event.backOrderedLotId().skuId();
-    var command = new ProductEntity.UpdateProductsBackOrderedCommand(skuId, event.backOrderedLot());
+    var command = new ProductEntity.UpdateProductsBackOrderedCommandOLD(skuId, event.backOrderedLot());
 
     var message = "color %s".formatted(event.backOrderedLot().quantityBackOrdered() > 0 ? "red" : "green");
     LogEvent.log("BackOrderedLot", event.backOrderedLotId().toEntityId(), "Product", skuId, message);

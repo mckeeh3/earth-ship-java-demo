@@ -56,7 +56,7 @@ public class StockOrderRedLeafToOrderItemRedLeafAction extends Action {
     if (count > 0) {
       var randomIndex = random.nextInt(count);
       var orderItemRedLeafRow = queryReply.orderItemRedLeafRows().get(randomIndex);
-      log.info("Found {} order item leaf branches, skuId: {}\n_for stock order: {}\n_attempt join to order item leaf branch: {}",
+      log.info("Found {} order item leaf branches, skuId: {}\n_for stock order: {} attempt join to order item leaf branch: {}",
           count, event.stockOrderRedLeafId().skuId(), event.stockOrderRedLeafId().toEntityId(), orderItemRedLeafRow.orderItemRedLeafId().toEntityId());
       return callFor(event, orderItemRedLeafRow);
     } else {

@@ -23,7 +23,7 @@ public class ProductsBackOrderedView extends View<ProductEntity.State> {
   @Query("""
       SELECT * AS products, next_page_token() AS nextPageToken, has_more() AS hasMore
         FROM products_back_ordered
-       WHERE backOrdered > 0
+       WHERE quantityBackOrdered > 0
       OFFSET page_token_offset(:nextPageToken)
        LIMIT 100
       """)
@@ -54,7 +54,7 @@ public class ProductsBackOrderedView extends View<ProductEntity.State> {
         .updateState(viewState().on(event));
   }
 
-  public UpdateEffect<ProductEntity.State> on(ProductEntity.UpdatedProductsBackOrderedEvent event) {
+  public UpdateEffect<ProductEntity.State> on(ProductEntity.UpdatedProductsBackOrderedEventOLD event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
         .updateState(viewState().on(event));

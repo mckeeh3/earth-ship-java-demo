@@ -21,16 +21,16 @@ public class StockOrderToStockOrderAction extends Action {
 
   public Effect<String> on(StockOrderEntity.CreatedStockOrderEvent event) {
     log.info("Event: {}", event);
-    return effects().forward(callFor(event.stockOrderId()));
+    return effects().forward(callFor(event.stockOrderId(), event.skuId()));
   }
 
   public Effect<String> on(StockOrderEntity.GeneratedStockSkuItemIdsEvent event) {
     log.info("Event: {}", event);
-    return effects().forward(callFor(event.stockOrderId()));
+    return effects().forward(callFor(event.stockOrderId(), event.skuId()));
   }
 
-  private DeferredCall<Any, String> callFor(String stockOrderId) {
-    var command = new StockOrderEntity.GenerateStockSkuItemIdsCommand(stockOrderId);
+  private DeferredCall<Any, String> callFor(String stockOrderId, String skuId) {
+    var command = new StockOrderEntity.GenerateStockSkuItemIdsCommand(stockOrderId, skuId);
 
     return componentClient.forEventSourcedEntity(stockOrderId)
         .call(StockOrderEntity::generateStockSkuItemIds)

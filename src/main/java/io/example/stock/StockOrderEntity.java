@@ -2,6 +2,7 @@ package io.example.stock;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
-import io.example.stock.StockSkuItemEntity.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -129,13 +129,10 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
     GeneratedStockSkuItemIdsEvent eventFor(GenerateStockSkuItemIdsCommand command) {
       var limit = Math.min(quantityCreated + generateBatchSize, quantityTotal);
-      var generateCommands = IntStream.range(quantityCreated, limit)
-          .mapToObj(i -> {
-            var stockSkuItemId = StockSkuItemId.of(stockOrderId, quantityTotal, i);
-            return new GenerateStockSkuItem(stockSkuItemId, skuId, skuName);
-          })
+      var stockSkuItemIds = IntStream.range(quantityCreated, limit)
+          .mapToObj(i -> StockSkuItemId.of(command.stockOrderId(), skuId))
           .toList();
-      return new GeneratedStockSkuItemIdsEvent(command.stockOrderId(), generateCommands);
+      return new GeneratedStockSkuItemIdsEvent(command.stockOrderId(), command.skuId(), quantityTotal, generateBatchSize, stockSkuItemIds);
     }
 
     State on(CreatedStockOrderEvent event) {
@@ -168,10 +165,16 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
           skuId,
           skuName,
           quantityTotal,
-          quantityCreated + event.generateStockSkuItems().size(),
+          quantityCreated + event.stockSkuItemIds().size(),
           quantityOrdered,
-          quantityAvailable + event.generateStockSkuItems().size(),
+          quantityAvailable + event.stockSkuItemIds().size(),
           stockOrderReceivedAt);
+    }
+  }
+
+  public record StockSkuItemId(String stockOrderId, String skuId, UUID uuid) {
+    static StockSkuItemId of(String stockOrderId, String skuId) {
+      return new StockSkuItemId(stockOrderId, skuId, UUID.randomUUID());
     }
   }
 
@@ -185,9 +188,9 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
   public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal, int quantityOrdered) implements Event {}
 
-  public record GenerateStockSkuItemIdsCommand(String stockOrderId) {}
+  public record GenerateStockSkuItemIdsCommand(String stockOrderId, String skuId) {}
 
-  public record GeneratedStockSkuItemIdsEvent(String stockOrderId, List<GenerateStockSkuItem> generateStockSkuItems) implements Event {}
+  public record GeneratedStockSkuItemIdsEvent(String stockOrderId, String skuId, int quantityTotal, int quantityPerBatch, List<StockSkuItemId> stockSkuItemIds) implements Event {}
 
-  public record GenerateStockSkuItem(StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
+  public record GenerateStockSkuItem(String stockOrder, StockSkuItemId stockSkuItemId, String skuId, String skuName) {}
 }

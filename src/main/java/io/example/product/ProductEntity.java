@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +27,8 @@ import kalix.javasdk.annotations.EventHandler;
 public class ProductEntity extends EventSourcedEntity<ProductEntity.State, ProductEntity.Event> {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final String entityId;
-  private static final int stockOrderSize = 100;
+  static final int quantityPerStockOrder = 100;
+  static final int quantityAvailableLowThreshold = quantityPerStockOrder / 2;
 
   public ProductEntity(EventSourcedEntityContext context) {
     this.entityId = context.entityId();
@@ -44,7 +46,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
         .isEmpty(command.skuId(), "Cannot create Product without skuId")
         .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
-            .emitEvent(currentState().eventFor(command))
+            .emitEvents(currentState().eventsFor(command))
             .thenReply(__ -> "OK"));
   }
 
@@ -65,7 +67,15 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
   }
 
   @PutMapping("/update-units-back-ordered")
-  public Effect<String> updateUnitsBackOrdered(@RequestBody UpdateProductsBackOrderedCommand command) {
+  public Effect<String> updateUnitsBackOrdered(@RequestBody UpdateProductsBackOrderedCommandOLD command) {
+    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    return effects()
+        .emitEvents(currentState().eventsFor(command))
+        .thenReply(__ -> "OK");
+  }
+
+  @PatchMapping("/update-back-ordered")
+  public Effect<String> updateBackOrdered(@RequestBody UpdateBackOrderedCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -100,7 +110,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
   }
 
   @EventHandler
-  public State on(UpdatedProductsBackOrderedEvent event) {
+  public State on(UpdatedProductsBackOrderedEventOLD event) {
     log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
@@ -111,15 +121,21 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
     return currentState().on(event);
   }
 
+  @EventHandler
+  public State on(UpdatedBackOrderedEvent event) {
+    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    return currentState().on(event);
+  }
+
   public record State(
       String skuId,
       String skuName,
       String skuDescription,
-      int available,
-      int backOrdered,
+      int quantityAvailable,
+      int quantityBackOrdered,
       BigDecimal skuPrice,
       List<StockOrder> stockOrders,
-      List<BackOrderedLot> backOrderedLots) {
+      List<BackOrderedLot> backOrderedLotsOLD) {
 
     static State emptyState() {
       return new State(null, null, null, 0, 0, null, List.of(), List.of());
@@ -129,37 +145,54 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
       return skuId == null || skuId.isEmpty();
     }
 
-    CreatedProductEvent eventFor(CreateProductCommand command) {
-      return new CreatedProductEvent(command.skuId(), command.skuName(), command.skuDescription(), command.skuPrice());
+    List<Event> eventsFor(CreateProductCommand command) {
+      if (!isEmpty()) {
+        return List.of();
+      }
+      return List.of(new CreatedProductEvent(command.skuId(), command.skuName(), command.skuDescription(), command.skuPrice()));
     }
 
-    AddedStockOrderEvent eventFor(AddStockOrderCommand command) {
+    Event eventFor(AddStockOrderCommand command) {
       return new AddedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityTotal());
     }
 
-    List<? extends Event> eventsFor(UpdateStockOrderCommand command) {
+    List<Event> eventsFor(UpdateStockOrderCommand command) {
       var event = new UpdatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityOrdered());
       var newState = on(event);
-      if (newState.available < stockOrderSize / 2) {
+      if (newState.quantityAvailable < quantityAvailableLowThreshold) {
         var stockOrderId = generateStockOrderId(skuId);
         return List.of(
             event,
-            new AddedStockOrderEvent(stockOrderId, skuId, stockOrderSize),
-            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, stockOrderSize));
+            new AddedStockOrderEvent(stockOrderId, skuId, quantityPerStockOrder),
+            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantityPerStockOrder));
       }
       return List.of(event);
     }
 
-    List<? extends Event> eventsFor(UpdateProductsBackOrderedCommand command) {
-      var event = new UpdatedProductsBackOrderedEvent(command.skuId(), command.backOrderedLot());
+    List<Event> eventsFor(UpdateProductsBackOrderedCommandOLD command) {
+      var event = new UpdatedProductsBackOrderedEventOLD(command.skuId(), command.backOrderedLot());
       var newState = on(event);
 
-      if (newState.backOrdered > newState.available) {
+      if (newState.quantityBackOrdered > newState.quantityAvailable) {
         var stockOrderId = generateStockOrderId(skuId);
         return List.of(
             event,
-            new AddedStockOrderEvent(stockOrderId, skuId, stockOrderSize),
-            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, stockOrderSize));
+            new AddedStockOrderEvent(stockOrderId, skuId, quantityPerStockOrder),
+            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantityPerStockOrder));
+      }
+      return List.of(event);
+    }
+
+    List<Event> eventsFor(UpdateBackOrderedCommand command) {
+      var event = new UpdatedBackOrderedEvent(command.skuId(), command.quantityBackOrdered());
+      var newState = on(event);
+
+      if (newState.quantityBackOrdered > newState.quantityAvailable) {
+        var stockOrderId = generateStockOrderId(skuId);
+        return List.of(
+            event,
+            new AddedStockOrderEvent(stockOrderId, skuId, quantityPerStockOrder),
+            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantityPerStockOrder));
       }
       return List.of(event);
     }
@@ -169,11 +202,11 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
           event.skuId(),
           event.skuName(),
           event.skuDescription(),
-          isEmpty() ? 0 : available,
-          isEmpty() ? 0 : backOrdered,
+          isEmpty() ? 0 : quantityAvailable,
+          isEmpty() ? 0 : quantityBackOrdered,
           event.skuPrice(),
           stockOrders,
-          backOrderedLots);
+          backOrderedLotsOLD);
     }
 
     State on(AddedStockOrderEvent event) {
@@ -182,17 +215,17 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
       }
       var addStockOrder = Stream.of(new StockOrder(event.stockOrderId(), event.quantityTotal(), 0, event.quantityTotal()));
       var newStockOrders = Stream.concat(stockOrders.stream(), addStockOrder).toList();
-      var quantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
+      var newQuantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
 
       return new State(
-          event.skuId(),
+          skuId,
           skuName,
           skuDescription,
-          quantityAvailable,
-          backOrdered,
+          newQuantityAvailable,
+          quantityBackOrdered,
           skuPrice,
           newStockOrders,
-          backOrderedLots);
+          backOrderedLotsOLD);
     }
 
     State on(UpdatedStockOrderEvent event) {
@@ -202,21 +235,21 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
               : s)
           .filter(s -> s.quantityAvailable() > 0)
           .toList();
-      var quantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
+      var newQuantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
 
       return new State(
-          event.skuId,
+          skuId,
           skuName,
           skuDescription,
-          quantityAvailable,
-          backOrdered,
+          newQuantityAvailable,
+          quantityBackOrdered,
           skuPrice,
           newStockOrders,
-          backOrderedLots);
+          backOrderedLotsOLD);
     }
 
-    State on(UpdatedProductsBackOrderedEvent event) {
-      var filteredLots = backOrderedLots.stream()
+    State on(UpdatedProductsBackOrderedEventOLD event) {
+      var filteredLots = backOrderedLotsOLD.stream()
           .filter(lot -> !lot.backOrderedLotId().equals(event.backOrderedLot().backOrderedLotId()));
       var addLot = event.backOrderedLot().quantityBackOrdered() > 0 ? Stream.of(event.backOrderedLot) : Stream.<BackOrderedLot>empty();
       var newBackOrderedLots = Stream.concat(filteredLots, addLot).toList();
@@ -226,7 +259,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
           event.skuId,
           skuName,
           skuDescription,
-          available,
+          quantityAvailable,
           quantityBackOrdered,
           skuPrice,
           stockOrders,
@@ -237,14 +270,26 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
       return this;
     }
 
+    State on(UpdatedBackOrderedEvent event) {
+      return new State(
+          skuId,
+          skuName,
+          skuDescription,
+          quantityAvailable,
+          event.quantityBackOrdered,
+          skuPrice,
+          stockOrders,
+          backOrderedLotsOLD);
+    }
+
     String generateStockOrderId(String skuId) {
       return "%s-%s".formatted(skuId(), UUID.randomUUID().toString());
     }
   }
 
-  public interface Event {}
-
   public record StockOrder(String stockOrderId, int quantityTotal, int quantityOrdered, int quantityAvailable) {}
+
+  public interface Event {}
 
   public record CreateProductCommand(String skuId, String skuName, String skuDescription, BigDecimal skuPrice) {}
 
@@ -258,9 +303,13 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityOrdered) implements Event {}
 
-  public record UpdateProductsBackOrderedCommand(String skuId, BackOrderedLot backOrderedLot) {}
+  public record UpdateProductsBackOrderedCommandOLD(String skuId, BackOrderedLot backOrderedLot) {}
 
-  public record UpdatedProductsBackOrderedEvent(String skuId, BackOrderedLot backOrderedLot) implements Event {}
+  public record UpdatedProductsBackOrderedEventOLD(String skuId, BackOrderedLot backOrderedLot) implements Event {}
 
   public record CreateStockOrderRequestedEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) implements Event {}
+
+  public record UpdateBackOrderedCommand(String skuId, int quantityBackOrdered) {}
+
+  public record UpdatedBackOrderedEvent(String skuId, int quantityBackOrdered) implements Event {}
 }

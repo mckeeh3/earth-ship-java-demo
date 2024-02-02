@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
 import io.grpc.Status;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
-import kalix.javasdk.annotations.EventHandler;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 
 @Id("backOrderedLotId")
 @TypeId("backOrderedLot")

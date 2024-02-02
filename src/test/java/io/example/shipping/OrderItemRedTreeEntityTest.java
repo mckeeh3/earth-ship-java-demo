@@ -15,7 +15,7 @@ class OrderItemRedTreeEntityTest {
   @Test
   void orderItemCreateTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedTreeEntity::new);
-    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderId", "skuId");
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderId", "skuId");
     var quantity = 1247;
 
     {
@@ -56,7 +56,7 @@ class OrderItemRedTreeEntityTest {
   @Test
   void getTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedTreeEntity::new);
-    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderId", "skuId");
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderId", "skuId");
     var quantity = 1247;
 
     {
@@ -79,7 +79,7 @@ class OrderItemRedTreeEntityTest {
   @Test
   void updateOneSubBranchOnTrunkTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedTreeEntity::new);
-    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderId", "skuId");
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderId", "skuId");
 
     var quantity = 1247;
     var quantityReadyToShip = 12;
@@ -95,7 +95,7 @@ class OrderItemRedTreeEntityTest {
     {
       var subBranch = testKit.getState().subBranches().get(0);
       var command = new OrderItemRedTreeEntity.OrderItemSubBranchUpdateCommand(
-          subBranch.orderItemRedTreeId(),
+          subBranch.subBranchId(),
           subBranch.parentId(),
           subBranch.quantity(),
           quantityReadyToShip,
@@ -109,7 +109,7 @@ class OrderItemRedTreeEntityTest {
       assertEquals(1, eventCount);
 
       var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
-      assertEquals(orderItemRedTreeId, event.orderItemRedTreeId());
+      assertEquals(orderItemRedTreeId, event.subBranchId());
       assertNull(event.parentId());
       assertEquals(quantity, event.quantity());
       assertEquals(quantityReadyToShip, event.quantityReadyToShip());
@@ -134,8 +134,8 @@ class OrderItemRedTreeEntityTest {
   @Test
   void updateTwoSubBranchesOnNonTrunkBranchTest() {
     var testKit = EventSourcedTestKit.of(OrderItemRedTreeEntity::new);
-    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderId", "skuId");
-    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("parent-orderId", "skuId");
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderId", "skuId");
+    var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("parent-orderId", "skuId");
 
     var quantity = 1247;
     var quantityReadyToShip1 = 12;
@@ -154,7 +154,7 @@ class OrderItemRedTreeEntityTest {
       var subBranchIdx = 0;
       var subBranch = testKit.getState().subBranches().get(subBranchIdx);
       var command = new OrderItemRedTreeEntity.OrderItemSubBranchUpdateCommand(
-          subBranch.orderItemRedTreeId(),
+          subBranch.subBranchId(),
           subBranch.parentId(),
           subBranch.quantity(),
           quantityReadyToShip1,
@@ -168,7 +168,7 @@ class OrderItemRedTreeEntityTest {
       assertEquals(1, eventCount);
 
       var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
-      assertEquals(orderItemRedTreeId, event.orderItemRedTreeId());
+      assertEquals(orderItemRedTreeId, event.subBranchId());
       assertNotNull(event.parentId());
       assertEquals(quantity, event.quantity());
       assertEquals(quantityReadyToShip1, event.quantityReadyToShip());
@@ -179,7 +179,7 @@ class OrderItemRedTreeEntityTest {
       var subBranchIdx = 1;
       var subBranch = testKit.getState().subBranches().get(subBranchIdx);
       var command = new OrderItemRedTreeEntity.OrderItemSubBranchUpdateCommand(
-          subBranch.orderItemRedTreeId(),
+          subBranch.subBranchId(),
           subBranch.parentId(),
           subBranch.quantity(),
           quantityReadyToShip2,
@@ -193,7 +193,7 @@ class OrderItemRedTreeEntityTest {
       assertEquals(1, eventCount);
 
       var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
-      assertEquals(orderItemRedTreeId, event.orderItemRedTreeId());
+      assertEquals(orderItemRedTreeId, event.subBranchId());
       assertNotNull(event.parentId());
       assertEquals(quantity, event.quantity());
       assertEquals(quantityReadyToShip1 + quantityReadyToShip2, event.quantityReadyToShip());
@@ -202,8 +202,74 @@ class OrderItemRedTreeEntityTest {
   }
 
   @Test
+  void updateBackOrderedThenConsumedTest() {
+    var testKit = EventSourcedTestKit.of(OrderItemRedTreeEntity::new);
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderId", "skuId");
+
+    var quantity = 10;
+    var quantityReadyToShip = 10;
+    var quantityBackOrdered = 10;
+
+    {
+      var command = new OrderItemRedTreeEntity.OrderItemCreateCommand(orderItemRedTreeId, null, quantity);
+      var result = testKit.call(e -> e.orderItemCreate(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+    }
+
+    var subBranchId = testKit.getState().subBranches().get(0).subBranchId();
+    var parentId = orderItemRedTreeId;
+
+    {
+      var command = new OrderItemRedTreeEntity.OrderItemSubBranchUpdateCommand(
+          subBranchId,
+          parentId,
+          quantity,
+          0,
+          quantityBackOrdered);
+
+      var result = testKit.call(e -> e.orderItemSubBranchUpdate(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+
+      var eventCount = result.getAllEvents().size();
+      assertEquals(1, eventCount);
+
+      var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
+      assertEquals(orderItemRedTreeId, event.subBranchId());
+      assertNull(event.parentId());
+      assertEquals(quantity, event.quantity());
+      assertEquals(0, event.quantityReadyToShip());
+      assertEquals(quantityBackOrdered, event.quantityBackOrdered());
+    }
+
+    {
+      var command = new OrderItemRedTreeEntity.OrderItemSubBranchUpdateCommand(
+          subBranchId,
+          parentId,
+          quantity,
+          quantityReadyToShip,
+          0);
+
+      var result = testKit.call(e -> e.orderItemSubBranchUpdate(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+
+      var eventCount = result.getAllEvents().size();
+      assertEquals(1, eventCount);
+
+      var event = result.getNextEventOfType(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent.class);
+      assertEquals(orderItemRedTreeId, event.subBranchId());
+      assertNull(event.parentId());
+      assertEquals(quantity, event.quantity());
+      assertEquals(quantityReadyToShip, event.quantityReadyToShip());
+      assertEquals(0, event.quantityBackOrdered());
+    }
+  }
+
+  @Test
   void subBranchTest() {
-    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderId-1", "skuId-1");
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderId-1", "skuId-1");
 
     var quantity = 1247;
     var subBranches = OrderItemRedTreeEntity.SubBranch.subBranchesOf(orderItemRedTreeId, quantity);
@@ -238,7 +304,7 @@ class OrderItemRedTreeEntityTest {
   }
 
   Optional<OrderItemRedTreeEntity.SubBranch> testSubBranchCreation(int quantity) {
-    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.of("orderId-1", "skuId-1");
+    var orderItemRedTreeId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderId-1", "skuId-1");
     var subBranches = OrderItemRedTreeEntity.SubBranch.subBranchesOf(orderItemRedTreeId, quantity);
     var reduced = OrderItemRedTreeEntity.SubBranch.reduce(subBranches);
 

@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import io.example.shipping.OrderItemRedLeafEntity.OrderItemRedLeafId;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.annotations.Table;
@@ -41,28 +40,40 @@ public class OrderItemRedLeafBackOrderedView extends View<OrderItemRedLeafBackOr
   public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), event.backOrderedAt() != null));
+        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), viewState().backOrdered()));
   }
 
   public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.StockOrderReleasedOrderSkuItemsEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), false));
+        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), viewState().backOrdered()));
   }
 
   public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.OrderItemConsumedStockSkuItemsEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
-        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), event.backOrderedAt() != null));
+        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), viewState().backOrdered()));
   }
 
   public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.OrderItemReleasedStockSkuItemsEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
     return effects()
+        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), viewState().backOrdered()));
+  }
+
+  public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.OrderItemSetBackOrderedOnEvent event) {
+    log.info("State: {}\n_Event: {}", viewState(), event);
+    return effects()
+        .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), true));
+  }
+
+  public UpdateEffect<OrderItemRedLeafRow> on(OrderItemRedLeafEntity.OrderItemSetBackOrderedOffEvent event) {
+    log.info("State: {}\n_Event: {}", viewState(), event);
+    return effects()
         .updateState(new OrderItemRedLeafRow(event.orderItemRedLeafId(), event.orderItemRedLeafId().skuId(), false));
   }
 
-  public record OrderItemRedLeafRow(OrderItemRedLeafId orderItemRedLeafId, String skuId, boolean backOrdered) {}
+  public record OrderItemRedLeafRow(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId, String skuId, boolean backOrdered) {}
 
   public record OrderItemRedLeafRows(List<OrderItemRedLeafRow> orderItemRedLeafRows) {}
 }

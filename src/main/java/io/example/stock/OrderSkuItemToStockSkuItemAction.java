@@ -7,12 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.example.LogEvent;
+import io.example.shipping.OrderItemRedLeafEntity;
 import io.example.shipping.OrderSkuItemEntity;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
 
-@Subscribe.EventSourcedEntity(value = OrderSkuItemEntity.class, ignoreUnknown = true)
+@Subscribe.EventSourcedEntity(value = OrderItemRedLeafEntity.class, ignoreUnknown = true)
 public class OrderSkuItemToStockSkuItemAction extends Action {
   private static final Logger log = LoggerFactory.getLogger(OrderSkuItemToStockSkuItemAction.class);
   private static final Random random = new Random();
