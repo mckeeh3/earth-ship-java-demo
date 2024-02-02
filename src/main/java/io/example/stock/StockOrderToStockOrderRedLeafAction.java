@@ -23,7 +23,7 @@ public class StockOrderToStockOrderRedLeafAction extends Action {
   }
 
   private Effect<String> callFor(StockOrderEntity.GeneratedStockSkuItemIdsEvent event) {
-    var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.of(event.stockOrderId(), event.skuId(), event.quantityTotal(), event.quantityTotal());
+    var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId(event.stockOrderId(), event.skuId(), event.quantityTotal(), event.quantityTotal());
     var stockSkuItemIds = event.stockSkuItemIds().stream()
         .map(s -> StockOrderRedLeafEntity.StockSkuItemId.of(s.stockOrderId(), s.skuId(), s.uuid()))
         .toList();

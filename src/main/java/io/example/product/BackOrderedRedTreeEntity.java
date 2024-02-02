@@ -140,8 +140,8 @@ public class BackOrderedRedTreeEntity extends EventSourcedEntity<BackOrderedRedT
     }
 
     static BackOrderedRedTreeId of(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId) {
-      var lotNumber = Math.abs(orderItemRedLeafId.toEntityId().hashCode()) % totalLeaves;
-      return new BackOrderedRedTreeId(orderItemRedLeafId.skuId(), leafLevel, lotNumber, orderItemRedLeafId);
+      var leafNumber = Math.abs(orderItemRedLeafId.toEntityId().hashCode()) % totalLeaves;
+      return new BackOrderedRedTreeId(orderItemRedLeafId.skuId(), leafLevel, leafNumber, orderItemRedLeafId);
     }
 
     BackOrderedRedTreeId levelDown() {

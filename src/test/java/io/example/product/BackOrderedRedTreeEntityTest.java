@@ -45,6 +45,7 @@ public class BackOrderedRedTreeEntityTest {
     }
 
     var stateBefore = testKit.getState();
+
     {
       assertEquals(parentId, stateBefore.backOrderedRedTreeId());
       assertTrue(stateBefore.hasChanged());

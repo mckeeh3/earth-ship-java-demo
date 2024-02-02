@@ -169,7 +169,7 @@ class StockOrderRedLeafEntityTest {
   @Test
   void singleStockOrderConsumesOrderSkuItemsIdempotentTest() {
     var stockOrderRedLeafId = stockOrderRedLeafIdOf("stockOrderId", "skuId");
-    var parentId = StockOrderRedTreeEntity.StockOrderRedTreeId.of("stockOrderId", "skuId");
+    var parentId = stockOrderRedLeafId.parentId();
 
     var quantityStockOrder = 17;
     var quantityRequested = 10;
@@ -213,7 +213,7 @@ class StockOrderRedLeafEntityTest {
   @Test
   void allocateStockSkuItemsToMultipleOrderItemsTest() {
     var stockOrderRedLeafId = stockOrderRedLeafIdOf("stockOrderId", "skuId");
-    var parentId = StockOrderRedTreeEntity.StockOrderRedTreeId.of("stockOrderId", "skuId");
+    var parentId = stockOrderRedLeafId.parentId();
 
     var quantityStockOrder = 17;
     var quantityRequested1 = 10;
@@ -278,7 +278,7 @@ class StockOrderRedLeafEntityTest {
     var stockOrderRedLeafId = stockOrderRedLeafIdOf("stockOrderId", "skuId");
     var orderItemRedLeafId1 = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderItemId-1", "skuId");
     var orderItemRedLeafId2 = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderItemId-2", "skuId");
-    var parentId = StockOrderRedTreeEntity.StockOrderRedTreeId.of("stockOrderId", "skuId");
+    var parentId = stockOrderRedLeafId.parentId();
 
     var quantityStockOrder = 17;
     var quantityRequested1 = 10;
@@ -564,7 +564,7 @@ class StockOrderRedLeafEntityTest {
   }
 
   private static StockOrderRedLeafEntity.StockOrderRedLeafId stockOrderRedLeafIdOf(String stockOrderId, String skuId) {
-    return StockOrderRedLeafEntity.StockOrderRedLeafId.of(stockOrderId, skuId, quantityLeavesPerTree, quantityLeavesPerBranch);
+    return StockOrderRedLeafEntity.StockOrderRedLeafId.genId(stockOrderId, skuId, quantityLeavesPerTree, quantityLeavesPerBranch);
   }
 
   private static StockOrderRedLeafEntity.StockOrderCreateCommand stockOrderCreateCommand(StockOrderRedLeafEntity.StockOrderRedLeafId stockOrderRedLeafId, int quantity) {

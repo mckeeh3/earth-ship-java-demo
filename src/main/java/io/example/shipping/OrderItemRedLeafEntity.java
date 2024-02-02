@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import io.example.Validator;
 import io.example.shipping.OrderItemRedTreeEntity.OrderItemRedTreeId;
 import io.example.stock.StockOrderRedLeafEntity;
-// import io.example.stock.StockOrderRedLeafEntity.StockOrderRedLeafId;
-// import io.example.stock.StockOrderRedLeafEntity.StockSkuItemId;
 import io.grpc.Status;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;

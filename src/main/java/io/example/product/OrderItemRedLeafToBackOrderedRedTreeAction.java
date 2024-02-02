@@ -47,6 +47,8 @@ public class OrderItemRedLeafToBackOrderedRedTreeAction extends Action {
     var parentId = subBranchId.levelDown();
     var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
 
+    log.info("========== Command: {}", command);
+
     return effects().forward(
         componentClient.forEventSourcedEntity(parentId.toEntityId())
             .call(BackOrderedRedTreeEntity::updateSubBranch)

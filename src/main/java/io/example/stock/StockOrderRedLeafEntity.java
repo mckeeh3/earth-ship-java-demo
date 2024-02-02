@@ -407,7 +407,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
   }
 
   public record StockOrderRedLeafId(String stockOrderId, String skuId, int branchLevel, int branchNumber, UUID uuid) {
-    public static StockOrderRedLeafId of(String stockOrderId, String skuId, int quantityLeavesPerTree, int quantityLeavesPerBranch) {
+    public static StockOrderRedLeafId genId(String stockOrderId, String skuId, int quantityLeavesPerTree, int quantityLeavesPerBranch) {
       var uuid = UUID.randomUUID();
       var branchLevel = (int) Math.ceil(Math.log(quantityLeavesPerTree) / Math.log(quantityLeavesPerBranch));
       var branchNumber = Math.abs(uuid.hashCode() % quantityLeavesPerBranch);
@@ -417,6 +417,10 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
     public String toEntityId() {
       return "%s_%s_%d_%d_%s".formatted(stockOrderId, skuId, branchLevel, branchNumber, uuid);
+    }
+
+    public StockOrderRedTreeEntity.StockOrderRedTreeId parentId() {
+      return StockOrderRedTreeEntity.StockOrderRedTreeId.of(this).levelDown();
     }
   }
 

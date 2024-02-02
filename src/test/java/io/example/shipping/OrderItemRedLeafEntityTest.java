@@ -298,6 +298,7 @@ class OrderItemRedLeafEntityTest {
   void multipleStockOrdersConsumeOrderSkuItemsAndReleaseTest() {
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderItemId", "skuId");
     var parentId = OrderItemRedTreeEntity.OrderItemRedTreeId.genId("orderItemId2", "skuId");
+    var stockOrderRedLeafIdRelease = stockOrderRedLeafIdOf("orderItemId-2", "skuId");
 
     var quantityOrderItem = 17;
     var quantityRequested1 = 10;
@@ -331,18 +332,17 @@ class OrderItemRedLeafEntityTest {
     }
 
     { // this order item will be partially allocated
-      var stockOrderRedLeafId = stockOrderRedLeafIdOf("orderItemId-2", "skuId");
       var stockSkuItemIds2 = IntStream.range(0, quantityRequested2)
-          .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafId))
+          .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafIdRelease))
           .toList();
-      var command = new OrderItemRedLeafEntity.StockOrderRequestsOrderSkuItemsCommand(orderItemRedLeafId, stockOrderRedLeafId, stockSkuItemIds2);
+      var command = new OrderItemRedLeafEntity.StockOrderRequestsOrderSkuItemsCommand(orderItemRedLeafId, stockOrderRedLeafIdRelease, stockSkuItemIds2);
       var result = testKit.call(e -> e.stockOrderRequestsOrderSkuItems(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
 
       var event = result.getNextEventOfType(OrderItemRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
+      assertEquals(stockOrderRedLeafIdRelease, event.stockOrderRedLeafId());
       var quantityExpected = Math.max(0, quantityOrderItem - quantityRequested1);
       assertEquals(2, event.orderSkuItemsConsumed().size());
       assertEquals(quantityExpected, event.orderSkuItemsConsumed().get(1).orderSkuItemsToStockSkuItems().size());
@@ -356,8 +356,7 @@ class OrderItemRedLeafEntityTest {
     }
 
     { // release order-2 orderSkuItems
-      var stockOrderRedLeafId = stockOrderRedLeafIdOf("orderItemId-2", "skuId");
-      var command = new OrderItemRedLeafEntity.StockOrderReleaseOrderSkuItemsCommand(orderItemRedLeafId, stockOrderRedLeafId);
+      var command = new OrderItemRedLeafEntity.StockOrderReleaseOrderSkuItemsCommand(orderItemRedLeafId, stockOrderRedLeafIdRelease);
       var result = testKit.call(e -> e.stockOrderReleaseOrderSkuItems(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
@@ -598,6 +597,6 @@ class OrderItemRedLeafEntityTest {
   }
 
   private static StockOrderRedLeafEntity.StockOrderRedLeafId stockOrderRedLeafIdOf(String stockOrderId, String skuId) {
-    return StockOrderRedLeafEntity.StockOrderRedLeafId.of(stockOrderId, skuId, quantityLeavesPerTree, quantityLeavesPerBranch);
+    return StockOrderRedLeafEntity.StockOrderRedLeafId.genId(stockOrderId, skuId, quantityLeavesPerTree, quantityLeavesPerBranch);
   }
 }
