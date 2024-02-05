@@ -10,10 +10,11 @@ services:
       - '9000:9000'
     extra_hosts:
       - 'host.docker.internal:host-gateway'
-    volumes:
-      - /tmp/kalix-db:/var/kalix
+    # volumes:
+    #   - /tmp/kalix-db:/var/kalix
+    #   - ./target/kalix:/var/kalix
     environment:
-      PERSISTENCE_ENABLED: 'true'
+      # PERSISTENCE_ENABLED: 'true'
       JAVA_TOOL_OPTIONS: >
         -Dakka.persistence.r2dbc.query.refresh-interval=50ms
       # jvm -D properties can be added under this environment map (note: remove this comment when adding properties)

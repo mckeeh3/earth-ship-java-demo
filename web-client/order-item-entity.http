@@ -1,6 +1,0 @@
-@urlPrefix = http://localhost:9000
-@orderItemId = 55a6b7d7-d1d3-4fb2-83b2-1cb5ba62d296_sku-1
-
-### get order item
-
-GET {{urlPrefix}}/order-item/{{orderItemId}}

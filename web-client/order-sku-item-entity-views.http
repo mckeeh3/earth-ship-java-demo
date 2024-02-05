@@ -1,7 +1,0 @@
-# @urlPrefix = http://localhost:9000
-@urlPrefix = https://cold-poetry-2720.eu-central-1.kalix.app
-@skuId = P0024
-
-### get back ordered order sku items
-
-GET {{urlPrefix}}/order-sku-items-back-ordered/{{skuId}}
