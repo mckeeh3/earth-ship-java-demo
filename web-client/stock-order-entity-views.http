@@ -1,6 +1,6 @@
 @urlPrefix = http://localhost:9000
-@stockOrderReceivedAtFrom = 2023-01-01T00:00:00.000Z
-@stockOrderReceivedAtTo = 2024-01-01T00:00:00.999Z
+@stockOrderReceivedAtFrom = 2024-01-01T00:00:00.000Z
+@stockOrderReceivedAtTo = 2025-01-01T00:00:00.999Z
 
 ### Query all stock orders
 

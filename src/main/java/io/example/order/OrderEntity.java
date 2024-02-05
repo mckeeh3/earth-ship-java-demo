@@ -82,7 +82,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
   }
 
   @PutMapping("/ready-to-ship-order-item")
-  public Effect<String> shipOrderSku(@RequestBody ReadyToShipOrderItemCommand command) {
+  public Effect<String> shipOrderItem(@RequestBody ReadyToShipOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isEmpty(command.orderId(), "Cannot ship order sku without order id")
@@ -94,7 +94,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
   }
 
   @PutMapping("/release-order-item")
-  public Effect<String> releaseOrderSku(@RequestBody ReleaseOrderItemCommand command) {
+  public Effect<String> releaseOrderItem(@RequestBody ReleaseOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isEmpty(command.orderId(), "Cannot release order sku without order id")
@@ -106,7 +106,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
   }
 
   @PutMapping("/back-order-order-item")
-  public Effect<String> backOrderSku(@RequestBody BackOrderOrderItemCommand command) {
+  public Effect<String> backOrderItem(@RequestBody BackOrderOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator.<Effect<String>>start()
         .isEmpty(command.orderId(), "Cannot back order sku without order id")

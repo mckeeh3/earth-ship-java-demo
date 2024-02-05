@@ -36,7 +36,7 @@ public class OrderItemRedLeafToStockOrderRedLeafAction extends Action {
 
   public Effect<String> on(OrderItemRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent event) {
     log.info("Event: {}", event);
-    LogEvent.log("OrderItemRedLeaf", event.orderItemRedLeafId().toEntityId(), "StockOrderRedLeaf", event.stockOrderRedLeafId().toEntityId(), "color green");
+    LogEvent.log("OrderItemRedLeaf", event.orderItemRedLeafId().toEntityId(), "StockOrderRedLeaf", event.stockOrderRedLeafId().toEntityId(), "");
 
     return callFor(event);
   }

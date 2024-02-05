@@ -76,7 +76,7 @@ public class StockOrderRedLeafToOrderItemRedLeafAction extends Action {
   }
 
   CompletionStage<String> callFor(StockOrderRedLeafEntity.StockOrderRequestsOrderSkuItemsEvent event) {
-    var command = new StockOrderRedLeafEntity.StockOrderSetAvailableToBeConsumedCommand(event.stockOrderRedLeafId());
+    var command = new StockOrderRedLeafEntity.StockOrderSetAvailableToBeConsumedOnCommand(event.stockOrderRedLeafId());
 
     return componentClient.forEventSourcedEntity(event.stockOrderRedLeafId().toEntityId())
         .call(StockOrderRedLeafEntity::stockOrderSetAvailableToBeConsumed)

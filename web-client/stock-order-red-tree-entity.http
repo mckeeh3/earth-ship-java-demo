@@ -1,0 +1,7 @@
+@urlPrefix = http://localhost:9000
+@entityId = Y_P0001-2920fb02-90b3-4a3a-a443-05f77994d981_P0001_0_0
+
+# Get the entity
+
+GET {{urlPrefix}}/stock-order-red-tree/{{entityId}}
+

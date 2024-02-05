@@ -174,7 +174,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
   }
 
   @PatchMapping("/stock-order-set-available-to-be-consumed")
-  public Effect<String> stockOrderSetAvailableToBeConsumed(@RequestBody StockOrderSetAvailableToBeConsumedCommand command) {
+  public Effect<String> stockOrderSetAvailableToBeConsumed(@RequestBody StockOrderSetAvailableToBeConsumedOnCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -326,11 +326,11 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     }
 
     List<Event> eventsFor(StockOrderConsumedOrderSkuItemsCommand command) {
-      boolean alreadyConsumed = stockSkuItemsConsumed.stream()
-          .anyMatch(consumed -> consumed.orderItemRedLeafId().equals(command.orderItemRedLeafId));
-      if (alreadyConsumed) {
-        return List.of();
-      }
+      // boolean alreadyConsumed = stockSkuItemsConsumed.stream()
+      // .anyMatch(consumed -> consumed.orderItemRedLeafId().equals(command.orderItemRedLeafId));
+      // if (alreadyConsumed) {
+      // return List.of();
+      // }
 
       var areAllStockSkuItemsToBeConsumedAvailable = command.stockSkuItemsConsumed.stream()
           .allMatch(stockSkuItemToOrderSkuItem -> stockSkuItemsAvailable.contains(stockSkuItemToOrderSkuItem.stockSkuItemId()));
@@ -357,17 +357,21 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
       var event = new StockOrderConsumedOrderSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId, newAvailableToBeConsumed,
           newStockSkuItemsAvailable, newOrderItemsConsumed);
 
+      log.info("===== {} -> {}, available {}, consumed {}, available {}, consumed {}", stockOrderRedLeafId, command.orderItemRedLeafId,
+          stockSkuItemsAvailable.size(), command.stockSkuItemsConsumed.size(),
+          newStockSkuItemsAvailable.size(), consumed.stockSkuItemsToOrderSkuItems().size()); // TODO: remove after testing
+
       return newStockSkuItemsAvailable.isEmpty()
           ? List.of(event)
           : List.of(event, new StockOrderRequestsOrderSkuItemsEvent(stockOrderRedLeafId, newStockSkuItemsAvailable));
     }
 
-    List<Event> eventsFor(StockOrderSetAvailableToBeConsumedCommand command) {
+    List<Event> eventsFor(StockOrderSetAvailableToBeConsumedOnCommand command) {
       if (availableToBeConsumed) {
         return List.of();
       }
 
-      var event = new StockOrderSetAvailableToBeConsumedEvent(stockOrderRedLeafId);
+      var event = new StockOrderSetAvailableToBeConsumedEvent(stockOrderRedLeafId, true);
       var updatedEvent = new StockOrderUpdatedEvent(stockOrderRedLeafId, quantity, quantity - stockSkuItemsAvailable.size());
 
       return List.of(event, updatedEvent);
@@ -398,7 +402,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     }
 
     State on(StockOrderSetAvailableToBeConsumedEvent event) {
-      return new State(stockOrderRedLeafId, quantity, true, stockSkuItemsAvailable, stockSkuItemsConsumed);
+      return new State(stockOrderRedLeafId, quantity, event.availableToBeConsumed, stockSkuItemsAvailable, stockSkuItemsConsumed);
     }
 
     State on(StockOrderUpdatedEvent event) {
@@ -476,9 +480,9 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
   public record StockOrderReleasedOrderSkuItemsEvent(StockOrderRedLeafId stockOrderRedLeafId, OrderItemRedLeafId orderItemRedLeafId,
       List<StockSkuItemToOrderSkuItem> stockSkuItemsReleased) implements Event {}
 
-  public record StockOrderSetAvailableToBeConsumedCommand(StockOrderRedLeafId stockOrderRedLeafId) {}
+  public record StockOrderSetAvailableToBeConsumedOnCommand(StockOrderRedLeafId stockOrderRedLeafId) {}
 
-  public record StockOrderSetAvailableToBeConsumedEvent(StockOrderRedLeafId stockOrderRedLeafId) implements Event {}
+  public record StockOrderSetAvailableToBeConsumedEvent(StockOrderRedLeafId stockOrderRedLeafId, boolean availableToBeConsumed) implements Event {}
 
   public record StockOrderUpdatedEvent(StockOrderRedLeafId stockOrderRedLeafId, int quantity, int quantityOrdered) implements Event {}
 }

@@ -62,6 +62,12 @@ public class StockOrderRedLeafAvailableView extends View<StockOrderRedLeafAvaila
         .updateState(new StockOrderRedLeafRow(event.stockOrderRedLeafId(), event.stockOrderRedLeafId().skuId(), true));
   }
 
+  public UpdateEffect<StockOrderRedLeafRow> on(StockOrderRedLeafEntity.StockOrderSetAvailableToBeConsumedEvent event) {
+    log.info("State: {}\n_Event: {}", viewState(), event);
+    return effects()
+        .updateState(new StockOrderRedLeafRow(event.stockOrderRedLeafId(), event.stockOrderRedLeafId().skuId(), event.availableToBeConsumed()));
+  }
+
   public record StockOrderRedLeafRow(StockOrderRedLeafId stockOrderRedLeafId, String skuId, boolean available) {}
 
   public record StockOrderRedLeafRows(List<StockOrderRedLeafRow> stockOrderRedLeafRows) {}

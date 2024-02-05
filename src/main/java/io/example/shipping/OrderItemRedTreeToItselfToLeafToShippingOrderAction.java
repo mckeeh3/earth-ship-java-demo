@@ -56,7 +56,7 @@ public class OrderItemRedTreeToItselfToLeafToShippingOrderAction extends Action 
   }
 
   CompletionStage<String> callForTree(OrderItemRedTreeEntity.OrderItemCreateCommand command) {
-    LogEvent.log("OrderItemRedTree", command.orderItemRedTreeId().orderId(), "ShippingOrder", command.orderItemRedTreeId().toEntityId(), "color yellow");
+    LogEvent.log("OrderItemRedTree", command.orderItemRedTreeId().orderId(), "OrderItemRedTree", command.orderItemRedTreeId().toEntityId(), "color yellow");
 
     return componentClient.forEventSourcedEntity(command.orderItemRedTreeId().toEntityId())
         .call(OrderItemRedTreeEntity::orderItemCreate)
@@ -65,7 +65,7 @@ public class OrderItemRedTreeToItselfToLeafToShippingOrderAction extends Action 
   }
 
   CompletionStage<String> callForLeaf(OrderItemRedLeafEntity.OrderItemCreateCommand command) {
-    LogEvent.log("OrderItemRedLeaf", command.orderItemRedLeafId().orderId(), "ShippingOrder", command.orderItemRedLeafId().toEntityId(), "color yellow");
+    LogEvent.log("OrderItemRedTree", command.orderItemRedLeafId().orderId(), "OrderItemRedLeaf", command.orderItemRedLeafId().toEntityId(), "color yellow");
 
     return componentClient.forEventSourcedEntity(command.orderItemRedLeafId().toEntityId())
         .call(OrderItemRedLeafEntity::orderItemCreate)
@@ -104,7 +104,17 @@ public class OrderItemRedTreeToItselfToLeafToShippingOrderAction extends Action 
     return callForParentBranch(event);
   }
 
-  private Effect<String> callForShippingOrder(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent event) {
+  Effect<String> callForParentBranch(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent event) {
+    var command = new OrderItemRedTreeEntity.OrderItemSubBranchUpdateCommand(event.subBranchId(), event.parentId(),
+        event.quantity(), event.quantityReadyToShip(), event.quantityBackOrdered());
+
+    return effects().forward(
+        componentClient.forEventSourcedEntity(event.parentId().toEntityId())
+            .call(OrderItemRedTreeEntity::orderItemSubBranchUpdate)
+            .params(command));
+  }
+
+  Effect<String> callForShippingOrder(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent event) {
     var orderId = event.subBranchId().orderId();
     var skuId = event.subBranchId().skuId();
     var readyToShipAt = event.quantityBackOrdered() == 0 && event.quantityReadyToShip() == event.quantity() ? Instant.now() : null;
@@ -114,16 +124,6 @@ public class OrderItemRedTreeToItselfToLeafToShippingOrderAction extends Action 
     return effects().forward(
         componentClient.forEventSourcedEntity(event.subBranchId().orderId())
             .call(ShippingOrderEntity::orderItemUpdate)
-            .params(command));
-  }
-
-  private Effect<String> callForParentBranch(OrderItemRedTreeEntity.OrderItemSubBranchUpdatedEvent event) {
-    var command = new OrderItemRedTreeEntity.OrderItemSubBranchUpdateCommand(event.subBranchId(), event.parentId(),
-        event.quantity(), event.quantityReadyToShip(), event.quantityBackOrdered());
-
-    return effects().forward(
-        componentClient.forEventSourcedEntity(event.parentId().toEntityId())
-            .call(OrderItemRedTreeEntity::orderItemSubBranchUpdate)
             .params(command));
   }
 }

@@ -93,10 +93,10 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
     List<? extends Event> eventsFor(UpdateSubBranchCommand command) {
       var filteredSubBranches = subBranches.stream()
           .filter(subBranch -> !subBranch.stockOrderRedTreeId().equals(command.subBranch().stockOrderRedTreeId()))
-          .filter(subBranch -> subBranch.quantityStockOrder() > 0)
+          .filter(subBranch -> subBranch.quantityConsumed() > 0)
           .toList();
-      var newSubBranch = new SubBranch(command.subBranch().stockOrderRedTreeId(), command.subBranch().quantityStockOrder());
-      var newSubBranches = newSubBranch.quantityStockOrder() > 0
+      var newSubBranch = new SubBranch(command.subBranch().stockOrderRedTreeId(), command.subBranch().quantityConsumed());
+      var newSubBranches = newSubBranch.quantityConsumed() > 0
           ? Stream.concat(filteredSubBranches.stream(), Stream.of(newSubBranch)).toList()
           : filteredSubBranches;
       var event = new UpdatedSubBranchEvent(command.subBranchId(), command.parentId(), newSubBranch, true, newSubBranches);
@@ -135,10 +135,6 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
       return "%s_%s_%s_%d_%d".formatted(orderItemRedLeafId == null ? "Y" : orderItemRedLeafId, stockOrderId, skuId, branchLevel, branchNumber);
     }
 
-    static StockOrderRedTreeId of(String stockOrderId, String skuId, int leafLevel, int leafNumber) {
-      return new StockOrderRedTreeId(stockOrderId, skuId, leafLevel, leafNumber, null);
-    }
-
     static StockOrderRedTreeId of(StockOrderRedLeafEntity.StockOrderRedLeafId orderItemRedLeafId) {
       var stockOrderId = orderItemRedLeafId.stockOrderId();
       var skuId = orderItemRedLeafId.skuId();
@@ -154,15 +150,15 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
       var newBranchLevel = branchLevel - 1;
       var newBranchNumber = branchNumber / subBranchesPerBranch;
 
-      return StockOrderRedTreeId.of(stockOrderId, skuId, newBranchLevel, newBranchNumber);
+      return new StockOrderRedTreeId(stockOrderId, skuId, newBranchLevel, newBranchNumber, null);
     }
   }
 
-  public record SubBranch(StockOrderRedTreeId stockOrderRedTreeId, int quantityStockOrder) {
+  public record SubBranch(StockOrderRedTreeId stockOrderRedTreeId, int quantityConsumed) {
 
     static SubBranch reduce(StockOrderRedTreeId stockOrderRedTreeId, List<SubBranch> subBranches) {
       var quantityStockOrder = subBranches.stream()
-          .mapToInt(subBranch -> subBranch.quantityStockOrder())
+          .mapToInt(subBranch -> subBranch.quantityConsumed())
           .sum();
       return new SubBranch(stockOrderRedTreeId, quantityStockOrder);
     }

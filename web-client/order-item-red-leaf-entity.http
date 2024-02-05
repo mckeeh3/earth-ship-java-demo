@@ -1,0 +1,7 @@
+@urlPrefix = http://localhost:9000
+@entityId = 275b33f6-3c23-47f8-aedb-209a0e2c4446_P0001_a81a866b-482d-493e-87eb-3e8fb5af8590
+
+# Get order item red leaf entity
+
+GET {{urlPrefix}}/order-item-red-leaf/{{entityId}}
+

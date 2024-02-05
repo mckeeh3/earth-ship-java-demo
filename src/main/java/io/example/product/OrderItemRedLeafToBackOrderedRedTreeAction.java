@@ -42,12 +42,12 @@ public class OrderItemRedLeafToBackOrderedRedTreeAction extends Action {
   }
 
   Effect<String> callFor(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId, int quantityBackOrdered) {
+    log.info("===== {}, quantity back ordered {}", orderItemRedLeafId, quantityBackOrdered); // TODO: remove after testing
+
     var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
     var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered);
     var parentId = subBranchId.levelDown();
     var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
-
-    log.info("========== Command: {}", command);
 
     return effects().forward(
         componentClient.forEventSourcedEntity(parentId.toEntityId())

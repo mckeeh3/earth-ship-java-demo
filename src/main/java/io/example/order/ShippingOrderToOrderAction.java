@@ -29,11 +29,6 @@ public class ShippingOrderToOrderAction extends Action {
     return callFor(event);
   }
 
-  public Effect<String> on(ShippingOrderEntity.OrderItemUpdatedEvent event) {
-    log.info("Event: {}", event);
-    return callFor(event);
-  }
-
   public Effect<String> on(ShippingOrderEntity.OrderUpdatedEvent event) {
     log.info("Event: {}", event);
     LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), "color yellow");
@@ -55,7 +50,7 @@ public class ShippingOrderToOrderAction extends Action {
     var command = new OrderEntity.ReadyToShipOrderItemCommand(event.orderId(), event.skuId(), event.readyToShipAt());
     return effects().forward(
         componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::shipOrderSku)
+            .call(OrderEntity::shipOrderItem)
             .params(command));
   }
 
@@ -64,14 +59,6 @@ public class ShippingOrderToOrderAction extends Action {
     return effects().forward(
         componentClient.forEventSourcedEntity(event.orderId())
             .call(OrderEntity::shipOrder)
-            .params(command));
-  }
-
-  private Effect<String> callFor(ShippingOrderEntity.OrderItemUpdatedEvent event) {
-    var command = new OrderEntity.ReleaseOrderItemCommand(event.orderId(), event.skuId());
-    return effects().forward(
-        componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::releaseOrderSku)
             .params(command));
   }
 
@@ -87,7 +74,7 @@ public class ShippingOrderToOrderAction extends Action {
     var command = new OrderEntity.BackOrderOrderItemCommand(event.orderId(), event.skuId(), event.backOrderedAt());
     return effects().forward(
         componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::backOrderSku)
+            .call(OrderEntity::backOrderItem)
             .params(command));
   }
 

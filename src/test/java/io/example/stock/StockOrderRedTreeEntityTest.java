@@ -12,7 +12,9 @@ public class StockOrderRedTreeEntityTest {
   void updateOneSubBranch() {
     var testKit = EventSourcedTestKit.of(StockOrderRedTreeEntity::new);
 
-    var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId("stockOrderId", "skuId", 100, 32);
+    var stockOrderId = "stockOrderId";
+    var skuId = "skuId";
+    var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId(stockOrderId, skuId, 100, 32);
     var subBranchId = StockOrderRedTreeEntity.StockOrderRedTreeId.of(stockOrderRedLeafId);
     var parentId = subBranchId.levelDown();
     var quantityOrdered = 10;
@@ -32,7 +34,7 @@ public class StockOrderRedTreeEntityTest {
 
         var subBranches = event.subBranches();
         var quantityStockOrdered = subBranches.stream()
-            .mapToInt(subBranch_ -> subBranch_.quantityStockOrder())
+            .mapToInt(subBranch_ -> subBranch_.quantityConsumed())
             .sum();
         assertEquals(quantityOrdered, quantityStockOrdered);
       }
@@ -40,6 +42,18 @@ public class StockOrderRedTreeEntityTest {
       {
         var event = result.getNextEventOfType(StockOrderRedTreeEntity.UpdatedBranchEvent.class);
         assertEquals(parentId, event.stockOrderRedTreeId());
+      }
+
+      {
+        var state = testKit.getState();
+        assertEquals(parentId, state.stockOrderRedTreeId());
+        assertEquals(stockOrderId, state.stockOrderRedTreeId().stockOrderId());
+        assertEquals(skuId, state.stockOrderRedTreeId().skuId());
+        assertTrue(state.hasChanged());
+        var quantityOrderedState = state.subBranches().stream()
+            .mapToInt(subBranch_ -> subBranch_.quantityConsumed())
+            .sum();
+        assertEquals(quantityOrdered, quantityOrderedState);
       }
     }
 
@@ -49,7 +63,7 @@ public class StockOrderRedTreeEntityTest {
       assertEquals(parentId, stateBefore.stockOrderRedTreeId());
       assertTrue(stateBefore.hasChanged());
       var quantityOrderedState = stateBefore.subBranches().stream()
-          .mapToInt(subBranch_ -> subBranch_.quantityStockOrder())
+          .mapToInt(subBranch_ -> subBranch_.quantityConsumed())
           .sum();
       assertEquals(quantityOrdered, quantityOrderedState);
     }
@@ -68,7 +82,7 @@ public class StockOrderRedTreeEntityTest {
 
         var subBranches = event.subBranches();
         var quantityStockOrdered = subBranches.stream()
-            .mapToInt(subBranch_ -> subBranch_.quantityStockOrder())
+            .mapToInt(subBranch_ -> subBranch_.quantityConsumed())
             .sum();
         assertEquals(quantityOrdered, quantityStockOrdered);
       }
@@ -106,7 +120,7 @@ public class StockOrderRedTreeEntityTest {
 
         var subBranches = event.subBranches();
         var quantityStockOrderEvent = subBranches.stream()
-            .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityStockOrder)
+            .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityConsumed)
             .sum();
         assertEquals(quantityStockOrder1, quantityStockOrderEvent);
       }
@@ -135,7 +149,7 @@ public class StockOrderRedTreeEntityTest {
 
         var subBranches = event.subBranches();
         var quantityStockOrderEvent = subBranches.stream()
-            .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityStockOrder)
+            .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityConsumed)
             .sum();
         assertEquals(quantityStockOrder1 + quantityStockOrder2, quantityStockOrderEvent);
       }
@@ -145,7 +159,7 @@ public class StockOrderRedTreeEntityTest {
       var state = testKit.getState();
       var subBranches = state.subBranches();
       var quantityStockOrderState = subBranches.stream()
-          .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityStockOrder)
+          .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityConsumed)
           .sum();
       assertEquals(quantityStockOrder1 + quantityStockOrder2, quantityStockOrderState);
     }
@@ -199,7 +213,7 @@ public class StockOrderRedTreeEntityTest {
       var state = testKit.getState();
       var subBranches = state.subBranches();
       var quantityStockOrderState = subBranches.stream()
-          .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityStockOrder)
+          .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityConsumed)
           .sum();
       assertEquals(quantityStockOrder1 + quantityStockOrder2 + quantityStockOrder3, quantityStockOrderState);
       assertEquals(3, state.subBranches().size());
@@ -219,7 +233,7 @@ public class StockOrderRedTreeEntityTest {
       var state = testKit.getState();
       var subBranches = state.subBranches();
       var quantityStockOrderState = subBranches.stream()
-          .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityStockOrder)
+          .mapToInt(StockOrderRedTreeEntity.SubBranch::quantityConsumed)
           .sum();
       assertEquals(quantityStockOrder1 + quantityStockOrder3, quantityStockOrderState);
       assertEquals(2, state.subBranches().size());
@@ -233,13 +247,14 @@ public class StockOrderRedTreeEntityTest {
     var quantityStockOrder1 = 12;
     var quantityStockOrder2 = 23;
     var quantityStockOrder3 = 34;
-    var parentId = StockOrderRedTreeEntity.StockOrderRedTreeId
-        .of(StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId", "skuId", 100, 32))
-        .levelDown();
+    var stockOrderRedTreeId = StockOrderRedTreeEntity.StockOrderRedTreeId
+        .of(StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId-1", "skuId", 100, 30));
+    var parentId = stockOrderRedTreeId.levelDown();
 
     {
-      var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId-1", "skuId", 100, 32);
+      var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId-1", "skuId", 100, 31);
       var subBranchId = StockOrderRedTreeEntity.StockOrderRedTreeId.of(stockOrderRedLeafId);
+      assertEquals(parentId, subBranchId.levelDown());
       var subBranch = new StockOrderRedTreeEntity.SubBranch(subBranchId, quantityStockOrder1);
       var command = new StockOrderRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -249,8 +264,9 @@ public class StockOrderRedTreeEntityTest {
     }
 
     {
-      var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId-2", "skuId", 100, 32);
+      var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId-1", "skuId", 100, 32);
       var subBranchId = StockOrderRedTreeEntity.StockOrderRedTreeId.of(stockOrderRedLeafId);
+      assertEquals(parentId, subBranchId.levelDown());
       var subBranch = new StockOrderRedTreeEntity.SubBranch(subBranchId, quantityStockOrder2);
       var command = new StockOrderRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -260,8 +276,9 @@ public class StockOrderRedTreeEntityTest {
     }
 
     {
-      var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId-3", "skuId", 100, 32);
+      var stockOrderRedLeafId = StockOrderRedLeafEntity.StockOrderRedLeafId.genId("orderId-1", "skuId", 100, 33);
       var subBranchId = StockOrderRedTreeEntity.StockOrderRedTreeId.of(stockOrderRedLeafId);
+      assertEquals(parentId, subBranchId.levelDown());
       var subBranch = new StockOrderRedTreeEntity.SubBranch(subBranchId, quantityStockOrder3);
       var command = new StockOrderRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -271,7 +288,7 @@ public class StockOrderRedTreeEntityTest {
     }
 
     {
-      var command = new StockOrderRedTreeEntity.ReleaseToParentCommand(parentId, parentId.levelDown());
+      var command = new StockOrderRedTreeEntity.ReleaseToParentCommand(stockOrderRedTreeId, parentId);
       var result = testKit.call(e -> e.releaseToParent(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
@@ -279,9 +296,10 @@ public class StockOrderRedTreeEntityTest {
       assertEquals(1, result.getAllEvents().size());
 
       var event = result.getNextEventOfType(StockOrderRedTreeEntity.ReleasedToParentEvent.class);
-      assertEquals(parentId.levelDown(), event.parentId());
+      assertEquals(stockOrderRedTreeId, event.subBranchId());
+      assertEquals(parentId, event.parentId());
       assertEquals(parentId, event.subBranch().stockOrderRedTreeId());
-      assertEquals(quantityStockOrder1 + quantityStockOrder2 + quantityStockOrder3, event.subBranch().quantityStockOrder());
+      assertEquals(quantityStockOrder1 + quantityStockOrder2 + quantityStockOrder3, event.subBranch().quantityConsumed());
     }
   }
 }

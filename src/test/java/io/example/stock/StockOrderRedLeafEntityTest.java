@@ -116,7 +116,7 @@ class StockOrderRedLeafEntityTest {
     }
 
     { // set available to be consumed
-      var command = new StockOrderRedLeafEntity.StockOrderSetAvailableToBeConsumedCommand(stockOrderRedLeafId);
+      var command = new StockOrderRedLeafEntity.StockOrderSetAvailableToBeConsumedOnCommand(stockOrderRedLeafId);
       var result = testKit.call(e -> e.stockOrderSetAvailableToBeConsumed(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
@@ -157,7 +157,7 @@ class StockOrderRedLeafEntityTest {
     }
 
     if (makeAvailableToConsume) {
-      var command = new StockOrderRedLeafEntity.StockOrderSetAvailableToBeConsumedCommand(stockOrderRedLeafId);
+      var command = new StockOrderRedLeafEntity.StockOrderSetAvailableToBeConsumedOnCommand(stockOrderRedLeafId);
       var result = testKit.call(e -> e.stockOrderSetAvailableToBeConsumed(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());

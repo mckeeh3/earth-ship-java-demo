@@ -302,21 +302,23 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
       var newReadyToShipAt = newOrderSkuItemsAvailable.isEmpty()
           ? Instant.now()
           : null;
-      var newBackOrderedAt = newOrderSkuItemsAvailable.isEmpty()
-          ? null
-          : backOrderedAt;
+      // var newBackOrderedAt = newOrderSkuItemsAvailable.isEmpty()
+      // ? null
+      // : backOrderedAt;
       var consumed = new Consumed(command.stockOrderRedLeafId(), orderSkuItemsForStockOrder);
       var newOrderSkuItemsConsumed = Stream.concat(this.orderSkuItemsConsumed.stream(), Stream.of(consumed)).toList();
 
       var event = new StockOrderConsumedOrderSkuItemsEvent(orderItemRedLeafId, parentId, command.stockOrderRedLeafId,
-          newReadyToShipAt, newBackOrderedAt, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed, consumed);
-      var eventBackOrdered = backOrderedAt != null && newBackOrderedAt == null
-          ? new OrderItemSetBackOrderedOffEvent(orderItemRedLeafId, parentId, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed)
-          : null;
+          newReadyToShipAt, null, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed, consumed);
+      var eventBackOrderedOff = new OrderItemSetBackOrderedOffEvent(orderItemRedLeafId, parentId, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed);
+      var eventRequests = new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, newOrderSkuItemsAvailable);
 
-      return eventBackOrdered != null
-          ? List.of(event, eventBackOrdered)
-          : List.of(event);
+      log.info("===== {} -> {}, available {}, requested {}, consumed {}, available {}", command.stockOrderRedLeafId, orderItemRedLeafId, orderSkuItemsAvailable.size(),
+          command.stockSkuItemsAvailable().size(), consumed.orderSkuItemsToStockSkuItems.size(), newOrderSkuItemsAvailable.size()); // TODO: remove after testing
+
+      return newOrderSkuItemsAvailable.isEmpty()
+          ? List.of(event, eventBackOrderedOff)
+          : List.of(event, eventRequests, eventBackOrderedOff);
     }
 
     List<Event> eventsFor(StockOrderReleaseOrderSkuItemsCommand command) {

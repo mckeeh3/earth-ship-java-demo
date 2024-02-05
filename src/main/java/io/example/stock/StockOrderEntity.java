@@ -119,15 +119,15 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
       return stockOrderId.isEmpty();
     }
 
-    CreatedStockOrderEvent eventFor(CreateStockOrderCommand command) {
+    Event eventFor(CreateStockOrderCommand command) {
       return new CreatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.skuName(), command.quantityTotal());
     }
 
-    UpdatedStockOrderEvent eventFor(UpdateStockOrderCommand command) {
-      return new UpdatedStockOrderEvent(command.stockOrderId(), skuId, command.quantityTotal(), command.quantityOrdered());
+    Event eventFor(UpdateStockOrderCommand command) {
+      return new UpdatedStockOrderEvent(command.stockOrderId(), skuId, command.quantityOrdered());
     }
 
-    GeneratedStockSkuItemIdsEvent eventFor(GenerateStockSkuItemIdsCommand command) {
+    Event eventFor(GenerateStockSkuItemIdsCommand command) {
       var limit = Math.min(quantityCreated + generateBatchSize, quantityTotal);
       var stockSkuItemIds = IntStream.range(quantityCreated, limit)
           .mapToObj(i -> StockSkuItemId.of(command.stockOrderId(), skuId))
@@ -184,9 +184,9 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
   public record CreatedStockOrderEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) implements Event {}
 
-  public record UpdateStockOrderCommand(String stockOrderId, int quantityTotal, int quantityOrdered) {}
+  public record UpdateStockOrderCommand(String stockOrderId, int quantityOrdered) {}
 
-  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal, int quantityOrdered) implements Event {}
+  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityOrdered) implements Event {}
 
   public record GenerateStockSkuItemIdsCommand(String stockOrderId, String skuId) {}
 

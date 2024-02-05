@@ -51,6 +51,8 @@ public class StockOrderRedLeafToStockOrderRedTreeAction extends Action {
   Effect<String> callFor(StockOrderRedLeafEntity.StockOrderRedLeafId stockOrderRedLeafId, List<StockOrderRedLeafEntity.Consumed> consumed) {
     var quantityConsumed = StockOrderRedLeafEntity.Consumed.quantityConsumed(consumed);
 
+    log.info("===== {}, tree quantity consumed {}", stockOrderRedLeafId, quantityConsumed); // TODO: remove after testing
+
     var subBranchId = StockOrderRedTreeEntity.StockOrderRedTreeId.of(stockOrderRedLeafId);
     var subBranch = new StockOrderRedTreeEntity.SubBranch(subBranchId, quantityConsumed);
     var parentId = subBranchId.levelDown();

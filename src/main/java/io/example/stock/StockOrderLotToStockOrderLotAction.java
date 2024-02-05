@@ -58,7 +58,7 @@ public class StockOrderLotToStockOrderLotAction extends Action {
 
   private Effect<String> callForStockOrder(StockOrderLotEntity.ReleasedStockOrderLotEvent event) {
     var stockOrderId = event.stockOrderLotId().stockOrderId();
-    var command = new StockOrderEntity.UpdateStockOrderCommand(stockOrderId, event.stockOrderLot().quantityTotal(), event.stockOrderLot().quantityOrdered());
+    var command = new StockOrderEntity.UpdateStockOrderCommand(stockOrderId, event.stockOrderLot().quantityOrdered());
 
     LogEvent.log("StockOrderLot", event.stockOrderLotId().toEntityId(), "StockOrder", stockOrderId, "");
 
