@@ -141,11 +141,11 @@ class OrderItemRedLeafEntityTest {
       var state = testKit.getState();
       assertEquals(quantityOrderItem - quantityRequested, state.orderSkuItemsAvailable().size());
       assertNull(state.readyToShipAt());
-      assertNotNull(state.backOrderedAt());
+      assertNull(state.backOrderedAt());
     }
   }
 
-  EventSourcedTestKit<State, Event, OrderItemRedLeafEntity> createOrderItemRedLeaf(
+  EventSourcedTestKit<State, Event, OrderItemRedLeafEntity> createOrderItemRedLeafAndSetToBackOrdered(
       OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId, OrderItemRedTreeEntity.OrderItemRedTreeId parentId,
       int quantityOrderItem, boolean makeAvailableToConsume) {
     var testKit = EventSourcedTestKit.of(OrderItemRedLeafEntity::new);
@@ -174,7 +174,7 @@ class OrderItemRedLeafEntityTest {
     var quantityOrderItem = 17;
     var quantityRequested = 10;
 
-    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, parentId, quantityOrderItem, true);
+    var testKit = createOrderItemRedLeafAndSetToBackOrdered(orderItemRedLeafId, parentId, quantityOrderItem, true);
 
     var stockOrderRedLeafId = stockOrderRedLeafIdOf("stockOrderId", "skuId");
     var stockSkuItems = IntStream.range(0, quantityRequested)
@@ -192,6 +192,13 @@ class OrderItemRedLeafEntityTest {
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
       assertEquals(1, event.orderSkuItemsConsumed().size());
       assertEquals(quantityRequested, event.orderSkuItemsConsumed().get(0).orderSkuItemsToStockSkuItems().size());
+    }
+
+    { // set to back ordered
+      var command = new OrderItemRedLeafEntity.OrderItemSetBackOrderedCommand(orderItemRedLeafId);
+      var result = testKit.call(e -> e.orderItemSetBackOrdered(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
     }
 
     { // second request
@@ -220,9 +227,9 @@ class OrderItemRedLeafEntityTest {
     var quantityRequested2 = 11;
     var quantityRequested3 = 12;
 
-    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, parentId, quantityOrderItem, true);
+    var testKit = createOrderItemRedLeafAndSetToBackOrdered(orderItemRedLeafId, parentId, quantityOrderItem, true);
 
-    { // this order will be fully allocated
+    { // this stock order request will be fully consumed
       var stockOrderRedLeafId1 = stockOrderRedLeafIdOf("orderItemId-1", "skuId");
       var stockSkuItemIds1 = IntStream.range(0, quantityRequested1)
           .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafId1))
@@ -243,10 +250,17 @@ class OrderItemRedLeafEntityTest {
       var state = testKit.getState();
       assertEquals(quantityOrderItem - quantityRequested1, state.orderSkuItemsAvailable().size());
       assertNull(state.readyToShipAt());
-      assertNotNull(state.backOrderedAt());
+      assertNull(state.backOrderedAt());
     }
 
-    { // this order will be partially allocated
+    { // set to back ordered
+      var command = new OrderItemRedLeafEntity.OrderItemSetBackOrderedCommand(orderItemRedLeafId);
+      var result = testKit.call(e -> e.orderItemSetBackOrdered(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+    }
+
+    { // this stock order request will be partially consumed
       var stockOrderRedLeafId2 = stockOrderRedLeafIdOf("orderItemId-2", "skuId");
       var stockSkuItemIds2 = IntStream.range(0, quantityRequested2)
           .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafId2))
@@ -271,7 +285,7 @@ class OrderItemRedLeafEntityTest {
       assertNull(state.backOrderedAt());
     }
 
-    { // this order will not be allocated
+    { // this order will not be consumed
       var stockOrderRedLeafId2 = stockOrderRedLeafIdOf("orderItemId-3", "skuId");
       var stockSkuItemIds2 = IntStream.range(0, quantityRequested3)
           .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafId2))
@@ -305,9 +319,9 @@ class OrderItemRedLeafEntityTest {
     var quantityRequested2 = 11;
     var quantityRequested3 = 12;
 
-    var testKit = createOrderItemRedLeaf(orderItemRedLeafId, parentId, quantityOrderItem, true);
+    var testKit = createOrderItemRedLeafAndSetToBackOrdered(orderItemRedLeafId, parentId, quantityOrderItem, true);
 
-    { // this order item will be fully allocated
+    { // this stock order request will be fully consumed
       var stockOrderRedLeafId = stockOrderRedLeafIdOf("orderItemId-1", "skuId");
       var stockSkuItemIds1 = IntStream.range(0, quantityRequested1)
           .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafId))
@@ -317,21 +331,43 @@ class OrderItemRedLeafEntityTest {
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
 
-      var event = result.getNextEventOfType(OrderItemRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
-      assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-      assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
-      assertEquals(1, event.orderSkuItemsConsumed().size());
-      assertEquals(quantityRequested1, event.orderSkuItemsConsumed().get(0).orderSkuItemsToStockSkuItems().size());
+      assertEquals(3, result.getAllEvents().size());
+
+      {
+        var event = result.getNextEventOfType(OrderItemRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
+        assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
+        assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
+        assertEquals(1, event.orderSkuItemsConsumed().size());
+        assertEquals(quantityRequested1, event.orderSkuItemsConsumed().get(0).orderSkuItemsToStockSkuItems().size());
+      }
+
+      {
+        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemRequestsStockSkuItemsEvent.class);
+        assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
+        assertEquals(quantityOrderItem - quantityRequested1, event.orderSkuItemIds().size());
+      }
+
+      {
+        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemSetBackOrderedOffEvent.class);
+        assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
+      }
     }
 
     {
       var state = testKit.getState();
       assertEquals(quantityOrderItem - quantityRequested1, state.orderSkuItemsAvailable().size());
       assertNull(state.readyToShipAt());
-      assertNotNull(state.backOrderedAt());
+      assertNull(state.backOrderedAt());
     }
 
-    { // this order item will be partially allocated
+    { // set to back ordered
+      var command = new OrderItemRedLeafEntity.OrderItemSetBackOrderedCommand(orderItemRedLeafId);
+      var result = testKit.call(e -> e.orderItemSetBackOrdered(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+    }
+
+    { // this stock order request will be partially consumed
       var stockSkuItemIds2 = IntStream.range(0, quantityRequested2)
           .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafIdRelease))
           .toList();
@@ -343,9 +379,8 @@ class OrderItemRedLeafEntityTest {
       var event = result.getNextEventOfType(OrderItemRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
       assertEquals(stockOrderRedLeafIdRelease, event.stockOrderRedLeafId());
-      var quantityExpected = Math.max(0, quantityOrderItem - quantityRequested1);
       assertEquals(2, event.orderSkuItemsConsumed().size());
-      assertEquals(quantityExpected, event.orderSkuItemsConsumed().get(1).orderSkuItemsToStockSkuItems().size());
+      assertEquals(quantityOrderItem - quantityRequested1, event.consumed().orderSkuItemsToStockSkuItems().size());
     }
 
     {
@@ -369,7 +404,7 @@ class OrderItemRedLeafEntityTest {
       assertEquals(quantityOrderItem - quantityRequested1, state.orderSkuItemsAvailable().size());
     }
 
-    { // this order will not be allocated because it is no longer in a back ordered state
+    { // this stock order request will not be consumed because the order item is no longer in a back ordered state
       var stockOrderRedLeafId2 = stockOrderRedLeafIdOf("orderItemId-3", "skuId");
       var stockSkuItemIds2 = IntStream.range(0, quantityRequested3)
           .mapToObj(i -> StockOrderRedLeafEntity.StockSkuItemId.of(stockOrderRedLeafId2))
@@ -503,7 +538,7 @@ class OrderItemRedLeafEntityTest {
       assertEquals("OK", result.getReply());
 
       var eventCount = result.getAllEvents().size();
-      assertEquals(1, eventCount); // only one event because the order is fully allocated and no request event is emitted
+      assertEquals(1, eventCount); // only one event because the order is fully consumed and no request event is emitted
 
       var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
@@ -558,7 +593,7 @@ class OrderItemRedLeafEntityTest {
       assertEquals("OK", result.getReply());
 
       var eventCount = result.getAllEvents().size();
-      assertEquals(2, eventCount); // two events because the order is not fully allocated and a request event is emitted
+      assertEquals(2, eventCount); // two events because the order is not fully consumed and a request event is emitted
 
       var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
       assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());

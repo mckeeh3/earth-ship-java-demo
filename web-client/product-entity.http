@@ -1,7 +1,7 @@
 @urlPrefix = http://localhost:9000
 # @urlPrefix = https://cold-poetry-2720.eu-central-1.kalix.app
 # @urlPrefix = https://hidden-dew-3004.us-east1.kalix.app
-@skuId = P0001
+@skuId = P0003
 
 ### get product
 

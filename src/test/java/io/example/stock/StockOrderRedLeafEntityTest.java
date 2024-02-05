@@ -222,7 +222,7 @@ class StockOrderRedLeafEntityTest {
 
     var testKit = createStockOrderRedLeaf(stockOrderRedLeafId, parentId, quantityStockOrder, true);
 
-    { // this order will be fully allocated
+    { // this order will be fully consumed
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderItemId-1", "skuId");
       var orderSkuItems = IntStream.range(0, quantityRequested1)
           .mapToObj(i -> OrderItemRedLeafEntity.OrderSkuItemId.genId(orderItemRedLeafId))
@@ -239,7 +239,7 @@ class StockOrderRedLeafEntityTest {
       assertEquals(quantityRequested1, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
     }
 
-    { // this order will be partially allocated
+    { // this order will be partially consumed
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderItemId-2", "skuId");
       var orderSkuItems = IntStream.range(0, quantityRequested2)
           .mapToObj(i -> OrderItemRedLeafEntity.OrderSkuItemId.genId(orderItemRedLeafId))
@@ -257,7 +257,7 @@ class StockOrderRedLeafEntityTest {
       assertEquals(quantityExpected, event.stockSkuItemsConsumed().get(1).stockSkuItemsToOrderSkuItems().size());
     }
 
-    { // this order will not be allocated
+    { // this order will not be consumed
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderItemId-3", "skuId");
       var orderSkuItems = IntStream.range(0, quantityRequested3)
           .mapToObj(i -> OrderItemRedLeafEntity.OrderSkuItemId.genId(orderItemRedLeafId))
@@ -287,7 +287,7 @@ class StockOrderRedLeafEntityTest {
 
     var testKit = createStockOrderRedLeaf(stockOrderRedLeafId, parentId, quantityStockOrder, true);
 
-    { // this order will be fully allocated
+    { // this order will be fully consumed
       var orderSkuItems = IntStream.range(0, quantityRequested1)
           .mapToObj(i -> OrderItemRedLeafEntity.OrderSkuItemId.genId(orderItemRedLeafId1))
           .toList();
@@ -309,7 +309,7 @@ class StockOrderRedLeafEntityTest {
       assertTrue(state.availableToBeConsumed());
     }
 
-    { // this order will be partially allocated
+    { // this order will be partially consumed
       var orderSkuItems = IntStream.range(0, quantityRequested2)
           .mapToObj(i -> OrderItemRedLeafEntity.OrderSkuItemId.genId(orderItemRedLeafId2))
           .toList();
@@ -343,7 +343,7 @@ class StockOrderRedLeafEntityTest {
       assertEquals(quantityStockOrder - quantityRequested1, state.stockSkuItemsAvailable().size());
     }
 
-    { // this order will not be allocated because it is no longer available to be consumed
+    { // this order will not be consumed because it is no longer available to be consumed
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderItemId-3", "skuId");
       var orderSkuItems = IntStream.range(0, quantityRequested3)
           .mapToObj(i -> OrderItemRedLeafEntity.OrderSkuItemId.genId(orderItemRedLeafId))
@@ -472,7 +472,7 @@ class StockOrderRedLeafEntityTest {
       assertEquals("OK", result.getReply());
 
       var eventCount = result.getAllEvents().size();
-      assertEquals(1, eventCount); // only one event because stock order is fully allocated and no request event is emitted
+      assertEquals(1, eventCount); // only one event because stock order is fully consumed and no request event is emitted
 
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
@@ -525,7 +525,7 @@ class StockOrderRedLeafEntityTest {
       assertEquals("OK", result.getReply());
 
       var eventCount = result.getAllEvents().size();
-      assertEquals(2, eventCount); // two events because stock order is not fully allocated and a request event is emitted
+      assertEquals(2, eventCount); // two events because stock order is not fully consumed and a request event is emitted
 
       var event = result.getNextEventOfType(StockOrderRedLeafEntity.StockOrderConsumedOrderSkuItemsEvent.class);
       assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());

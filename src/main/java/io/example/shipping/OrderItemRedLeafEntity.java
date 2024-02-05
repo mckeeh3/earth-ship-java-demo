@@ -284,7 +284,7 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
 
       boolean alreadyConsumed = orderSkuItemsConsumed.stream()
           .anyMatch(consumed -> consumed.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()));
-      if (!isAvailableToBeConsumed() || alreadyConsumed) {
+      if (alreadyConsumed) {
         return List.of();
       }
 
@@ -302,11 +302,10 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
       var newReadyToShipAt = newOrderSkuItemsAvailable.isEmpty()
           ? Instant.now()
           : null;
-      // var newBackOrderedAt = newOrderSkuItemsAvailable.isEmpty()
-      // ? null
-      // : backOrderedAt;
       var consumed = new Consumed(command.stockOrderRedLeafId(), orderSkuItemsForStockOrder);
-      var newOrderSkuItemsConsumed = Stream.concat(this.orderSkuItemsConsumed.stream(), Stream.of(consumed)).toList();
+      var newOrderSkuItemsConsumed = Stream.concat(this.orderSkuItemsConsumed.stream(), Stream.of(consumed))
+          .filter(c -> c.orderSkuItemsToStockSkuItems().size() > 0)
+          .toList();
 
       var event = new StockOrderConsumedOrderSkuItemsEvent(orderItemRedLeafId, parentId, command.stockOrderRedLeafId,
           newReadyToShipAt, null, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed, consumed);
@@ -351,8 +350,9 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
     }
 
     List<Event> eventsFor(OrderItemConsumedStockSkuItemsCommand command) {
+      var consumed = new Consumed(command.stockOrderRedLeafId, command.orderSkuItemsConsumed);
       boolean alreadyConsumed = orderSkuItemsConsumed.stream()
-          .anyMatch(consumed -> consumed.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()));
+          .anyMatch(c -> c.equals(consumed));
       if (alreadyConsumed) {
         return List.of();
       }
@@ -374,8 +374,12 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
       var newOrderSkuItemsAvailable = orderSkuItemsAvailable.stream()
           .filter(orderSkuItem -> !orderSkuItemIdsConsumed.contains(orderSkuItem))
           .toList();
-      var consumed = new Consumed(command.stockOrderRedLeafId, command.orderSkuItemsConsumed);
-      var newOrderSkuItemsConsumed = Stream.concat(this.orderSkuItemsConsumed.stream(), Stream.of(consumed)).toList();
+      var filteredOrderSkuItemsConsumed = orderSkuItemsConsumed.stream()
+          .filter(c -> !c.stockOrderRedLeafId().equals(command.stockOrderRedLeafId()))
+          .toList();
+      var newOrderSkuItemsConsumed = Stream.concat(filteredOrderSkuItemsConsumed.stream(), Stream.of(consumed))
+          .filter(c -> c.orderSkuItemsToStockSkuItems().size() > 0)
+          .toList();
       var newReadyToShipAt = newOrderSkuItemsAvailable.isEmpty()
           ? Instant.now()
           : null;
