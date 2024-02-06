@@ -317,7 +317,7 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
 
       return newOrderSkuItemsAvailable.isEmpty()
           ? List.of(event, eventBackOrderedOff)
-          : List.of(event, eventRequests, eventBackOrderedOff);
+          : List.of(event, eventBackOrderedOff, eventRequests);
     }
 
     List<Event> eventsFor(StockOrderReleaseOrderSkuItemsCommand command) {
@@ -344,9 +344,9 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
 
       var eventReleased = new StockOrderReleasedOrderSkuItemsEvent(orderItemRedLeafId, parentId, command.stockOrderRedLeafId(),
           newReadyToShipAt, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed);
-      var eventNeeded = new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, newOrderSkuItemsAvailable);
+      var eventRequests = new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, newOrderSkuItemsAvailable);
 
-      return List.of(eventReleased, eventNeeded);
+      return List.of(eventReleased, eventRequests);
     }
 
     List<Event> eventsFor(OrderItemConsumedStockSkuItemsCommand command) {
@@ -396,7 +396,7 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
       return eventBackOrderedOff != null
           ? newOrderSkuItemsAvailable.isEmpty()
               ? List.of(event, eventBackOrderedOff)
-              : List.of(event, eventRequests, eventBackOrderedOff)
+              : List.of(event, eventBackOrderedOff, eventRequests)
           : newOrderSkuItemsAvailable.isEmpty()
               ? List.of(event)
               : List.of(event, eventRequests);

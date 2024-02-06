@@ -322,9 +322,9 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
       var eventReleased = new OrderItemReleasedStockSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId,
           newStockSkuItemAvailable, newConsumedOrderItems);
-      var eventNeeded = new StockOrderRequestsOrderSkuItemsEvent(stockOrderRedLeafId, newStockSkuItemAvailable);
+      var eventRequests = new StockOrderRequestsOrderSkuItemsEvent(stockOrderRedLeafId, newStockSkuItemAvailable);
 
-      return List.of(eventReleased, eventNeeded);
+      return List.of(eventReleased, eventRequests);
     }
 
     List<Event> eventsFor(StockOrderConsumedOrderSkuItemsCommand command) {
