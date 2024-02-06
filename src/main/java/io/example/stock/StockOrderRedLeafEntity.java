@@ -184,10 +184,10 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
   @GetMapping
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}", entityId, currentState());
-    return Validator.<Effect<State>>start()
+    return Validator
         .isFalse(currentState().alreadyCreated(), "StockOrderRedLeaf '%s' not found".formatted(entityId))
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @EventHandler

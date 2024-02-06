@@ -42,12 +42,12 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
   @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateProductCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.skuId(), "Cannot create Product without skuId")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvents(currentState().eventsFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/add-stock-order")
@@ -77,10 +77,10 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
   @GetMapping
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}\n_GetProduct", entityId, currentState());
-    return Validator.<Effect<State>>start()
+    return Validator
         .isTrue(currentState().isEmpty(), "Product not found")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.NOT_FOUND))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.NOT_FOUND));
   }
 
   @EventHandler

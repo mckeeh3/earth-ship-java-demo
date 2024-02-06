@@ -39,14 +39,14 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
   @PutMapping("/create")
   public Effect<String> createOrder(@RequestBody CreateOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot create order without order id")
         .isEmpty(command.customerId(), "Cannot create order without customer id")
         .isEmpty(command.orderItems(), "Cannot create order without items")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvents(currentState().eventsFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PatchMapping("/order-item-update")
@@ -60,48 +60,48 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
   @PatchMapping("/deliver")
   public Effect<String> deliverOrder(@RequestBody DeliverOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot deliver order without order id")
         .isNull(currentState().readyToShipAt(), "Cannot deliver order without shipping")
         .isNotNull(currentState().canceledAt, "Cannot deliver canceled order")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PatchMapping("/return")
   public Effect<String> returnOrder(@RequestBody ReturnOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot return order without order id")
         .isNull(currentState().readyToShipAt(), "Cannot return order without shipping")
         .isNull(currentState().deliveredAt, "Cannot return order without delivery")
         .isNotNull(currentState().canceledAt, "Cannot return canceled order")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PatchMapping("/cancel")
   public Effect<String> cancelOrder(@RequestBody CancelOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot cancel order without order id")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @GetMapping
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), "GetOrder");
-    return Validator.<Effect<State>>start()
+    return Validator
         .isTrue(currentState().isEmpty(), "Order is not found")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @EventHandler

@@ -39,60 +39,60 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
   @PutMapping("/items/add")
   public Effect<String> addLineItem(@RequestBody AddLineItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.customerId(), "Cannot add item to cart without customer id")
         .isEmpty(command.skuId(), "Cannot add item to cart without sku id")
         .isEmpty(command.skuName(), "Cannot add item to cart without sku name")
         .isLtEqZero(command.quantity(), "Cannot add item to cart with quantity <= 0")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/items/{sku_id}/change")
   public Effect<String> changeLineItem(@RequestBody ChangeLineItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isFalse(currentState().containsLineItem(command.skuId), "Item '%s' not found in cart".formatted(command.skuId))
         .isEmpty(currentState().lineItems, "Cannot change item in empty cart")
         .isEmpty(command.skuId(), "Cannot change item in cart without sku id")
         .isLtEqZero(command.quantity(), "Cannot change item in cart with quantity <= 0")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/items/{sku_id}/remove")
   public Effect<String> removeLineItem(@RequestBody RemoveLineItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.skuId(), "Cannot remove item from cart without sku id")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/checkout")
   public Effect<String> checkout(@RequestBody CheckoutCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(currentState().lineItems, "Cannot checkout empty cart")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @GetMapping()
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}\n_GetShoppingCart", entityId, currentState());
-    return Validator.<Effect<State>>start()
+    return Validator
         .isTrue(currentState().isEmpty(), "Shopping cart is not found")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @EventHandler

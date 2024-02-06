@@ -43,16 +43,16 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
     if (currentState().stockOrderId() != null && !currentState().stockOrderId().isEmpty()) {
       return effects().reply("OK");
     }
-    return Validator.<Effect<String>>start()
+    return Validator
         .isLtEqZero(command.quantityTotal(), "quantityTotal must be greater than 0")
         .isGtLimit(command.quantityTotal(), 1_000, "quantityTotal must be less than or equal to 1_000")
         .isEmpty(command.skuId, "SkuId must not be empty")
         .isEmpty(command.skuName, "SkuName must not be empty")
         .isEmpty(command.stockOrderId, "StockOrderId must not be empty")
-        .onError(errorMessages -> effects().error(errorMessages, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessages -> effects().error(errorMessages, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/update")
@@ -77,10 +77,10 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
   @GetMapping
   public Effect<State> get() {
     log.info("EntityID: {}\n_State: {}\n_GetStockOrder", entityId, currentState());
-    return Validator.<Effect<State>>start()
+    return Validator
         .isEmpty(currentState().stockOrderId(), "StockOrder does not exist")
-        .onError(errorMessages -> effects().error(errorMessages))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessages -> effects().error(errorMessages));
   }
 
   @EventHandler

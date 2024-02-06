@@ -54,10 +54,10 @@ public class BackOrderedRedTreeEntity extends EventSourcedEntity<BackOrderedRedT
   @GetMapping
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}\n_GetBackOrderedRedTree", entityId, currentState());
-    return Validator.<Effect<State>>start()
+    return Validator
         .isTrue(currentState().isEmpty(), "BackOrderedRedTree not found")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.NOT_FOUND))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.NOT_FOUND));
   }
 
   @EventHandler
