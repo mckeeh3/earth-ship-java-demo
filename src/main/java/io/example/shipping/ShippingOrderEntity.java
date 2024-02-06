@@ -78,10 +78,10 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
   @GetMapping
   public Effect<State> get() {
     log.info("EntityId: {}\n_State: {}\n_GetShippingOrder", entityId, currentState());
-    return Validator.<Effect<State>>start()
+    return Validator
         .isTrue(currentState().isEmpty(), "ShippingOrder is not found")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @EventHandler

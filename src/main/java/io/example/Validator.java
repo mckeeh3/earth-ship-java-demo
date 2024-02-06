@@ -5,65 +5,121 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public record Validator<T>(List<String> reasons, Function<String, T> error) {
+public class Validator {
 
-  public static <T> Validator<T> start() {
-    return new Validator<T>(List.of(), null);
+  private static ValidatorBuilder newBuilder(String reason) {
+    return new ValidatorBuilder(List.of(reason));
   }
 
-  public Validator<T> isTrue(boolean test, String reason) {
-    return test ? addError(reason) : this;
+  private static ValidatorBuilder empty() {
+    return new ValidatorBuilder(List.of());
   }
 
-  public Validator<T> isFalse(boolean test, String reason) {
-    return !test ? addError(reason) : this;
+  public static ValidatorBuilder isTrue(boolean test, String reason) {
+    return test ? newBuilder(reason) : empty();
   }
 
-  public Validator<T> isNull(Object test, String reason) {
-    return test == null ? addError(reason) : this;
+  public static ValidatorBuilder isFalse(boolean test, String reason) {
+    return !test ? newBuilder(reason) : empty();
   }
 
-  public Validator<T> isNotNull(Object test, String reason) {
-    return test != null ? addError(reason) : this;
+  public static ValidatorBuilder isFutureDate(Long dateTestMillis, Long thresholdMillis, Long baselineMillis, String reason) {
+    return dateTestMillis + thresholdMillis > baselineMillis ? newBuilder(reason) : empty();
   }
 
-  public Validator<T> isEmpty(String test, String reason) {
-    return test == null || test.isEmpty() ? addError(reason) : this;
+  public static ValidatorBuilder isNull(Object test, String reason) {
+    return test == null ? newBuilder(reason) : empty();
   }
 
-  public Validator<T> isNotEmpty(String test, String reason) {
-    return test != null && !test.isEmpty() ? addError(reason) : this;
+  public static ValidatorBuilder isNotNull(Object test, String reason) {
+    return test != null ? newBuilder(reason) : empty();
   }
 
-  public Validator<T> isEmpty(List<?> test, String reason) {
-    return test == null || test.isEmpty() ? addError(reason) : this;
+  public static ValidatorBuilder isEmpty(String test, String reason) {
+    return test == null || test.isEmpty() ? newBuilder(reason) : empty();
   }
 
-  public Validator<T> isLtEqZero(int test, String reason) {
-    return test <= 0 ? addError(reason) : this;
+  public static ValidatorBuilder isNotEmpty(String test, String reason) {
+    return test != null && !test.isEmpty() ? newBuilder(reason) : empty();
   }
 
-  public Validator<T> isGtLimit(int test, int limit, String reason) {
-    return test > limit ? addError(reason) : this;
+  public static ValidatorBuilder isEmpty(List<?> test, String reason) {
+    return test == null || test.isEmpty() ? newBuilder(reason) : empty();
   }
 
-  private Validator<T> addError(String message) {
-    var newReasons = Stream.concat(reasons.stream(), Stream.of(message)).toList();
-    return new Validator<T>(newReasons, error);
+  public static ValidatorBuilder isLtEqZero(int test, String reason) {
+    return test <= 0 ? newBuilder(reason) : empty();
   }
 
-  public ErrorOrSuccess<T> onError(Function<String, T> error) {
-    var message = reasons.stream().reduce("", (a, b) -> "%s\n%s".formatted(a, b));
-    return new ErrorOrSuccess<T>(message, error);
+  public static ValidatorBuilder isGtLimit(int test, int limit, String reason) {
+    return test > limit ? newBuilder(reason) : empty();
   }
 
-  public record ErrorOrSuccess<T>(String errorMessage, Function<String, T> error) {
-    public T onSuccess(Supplier<T> success) {
-      if (errorMessage == null || errorMessage.isEmpty()) {
-        return success.get();
-      } else {
-        return error.apply(errorMessage);
+
+  public record ValidatorBuilder(List<String> reasons) {
+
+    public ValidatorBuilder isTrue(boolean test, String reason) {
+      return test ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isFalse(boolean test, String reason) {
+      return !test ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isFutureDate(Long dateTestMillis, Long thresholdMillis, Long baselineMillis, String reason) {
+      return dateTestMillis + thresholdMillis > baselineMillis ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isNull(Object test, String reason) {
+      return test == null ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isNotNull(Object test, String reason) {
+      return test != null ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isEmpty(String test, String reason) {
+      return test == null || test.isEmpty() ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isNotEmpty(String test, String reason) {
+      return test != null && !test.isEmpty() ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isEmpty(List<?> test, String reason) {
+      return test == null || test.isEmpty() ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isLtEqZero(int test, String reason) {
+      return test <= 0 ? addError(reason) : this;
+    }
+
+    public ValidatorBuilder isGtLimit(int test, int limit, String reason) {
+      return test > limit ? addError(reason) : this;
+    }
+    public static ValidatorBuilder start() {
+      return new ValidatorBuilder(List.of());
+    }
+
+    private ValidatorBuilder addError(String message) {
+      var newReasons = Stream.concat(reasons.stream(), Stream.of(message)).toList();
+      return new ValidatorBuilder(newReasons);
+    }
+
+    public <T> SuccessOrError<T>  onSuccess(Supplier<T> success) {
+      return new SuccessOrError<>(success, reasons);
+    }
+
+    public record SuccessOrError<T>(Supplier<T> supplier, List<String> reasons) {
+      public T onError(Function<String, T> error) {
+        if (reasons.isEmpty()) {
+          return supplier.get();
+        } else {
+          var message = reasons.stream().reduce("", (a, b) -> "%s\n%s".formatted(a, b));
+          return error.apply(message);
+        }
       }
     }
   }
+
 }

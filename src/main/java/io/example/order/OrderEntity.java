@@ -38,130 +38,130 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
   @PutMapping("/create")
   public Effect<String> createOrder(@RequestBody CreateOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot create order without order id")
         .isEmpty(command.customerId(), "Cannot create order without customer id")
         .isEmpty(command.orderItems(), "Cannot create order without items")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/ready-to-ship")
   public Effect<String> shipOrder(@RequestBody ReadyToShipOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot ship order without order id")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/release")
   public Effect<String> releaseOrder(@RequestBody ReleaseOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot release order without order id")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/back-order")
   public Effect<String> backOrder(@RequestBody BackOrderOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot back order without order id")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/ready-to-ship-order-item")
   public Effect<String> shipOrderItem(@RequestBody ReadyToShipOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot ship order sku without order id")
         .isEmpty(command.skuId(), "Cannot ship order sku without sku")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/release-order-item")
   public Effect<String> releaseOrderItem(@RequestBody ReleaseOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot release order sku without order id")
         .isEmpty(command.skuId(), "Cannot release order sku without sku")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/back-order-order-item")
   public Effect<String> backOrderItem(@RequestBody BackOrderOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot back order sku without order id")
         .isEmpty(command.skuId(), "Cannot back order sku without sku")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/deliver")
   public Effect<String> deliverOrder(@RequestBody DeliverOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot deliver order without order id")
         .isNull(currentState().readyToShipAt(), "Cannot deliver order without shipping")
         .isNotNull(currentState().canceledAt, "Cannot deliver canceled order")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/return")
   public Effect<String> returnOrder(@RequestBody ReturnOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot return order without order id")
         .isNull(currentState().readyToShipAt(), "Cannot return order without shipping")
         .isNull(currentState().deliveredAt, "Cannot return order without delivery")
         .isNotNull(currentState().canceledAt, "Cannot return canceled order")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @PutMapping("/cancel")
   public Effect<String> cancelOrder(@RequestBody CancelOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return Validator.<Effect<String>>start()
+    return Validator
         .isEmpty(command.orderId(), "Cannot cancel order without order id")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
         .onSuccess(() -> effects()
             .emitEvent(currentState().eventFor(command))
-            .thenReply(__ -> "OK"));
+            .thenReply(__ -> "OK"))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @GetMapping
   public Effect<State> getOrder() {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), "GetOrder");
-    return Validator.<Effect<State>>start()
+    return Validator
         .isTrue(currentState().isEmpty(), "Order is not found")
-        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT))
-        .onSuccess(() -> effects().reply(currentState()));
+        .onSuccess(() -> effects().reply(currentState()))
+        .onError(errorMessage -> effects().error(errorMessage, Status.Code.INVALID_ARGUMENT));
   }
 
   @EventHandler
