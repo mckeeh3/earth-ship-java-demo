@@ -1,5 +1,5 @@
 @urlPrefix = http://localhost:9000
-@orderId = 30414c0f-a187-4c3e-8179-2f358b10c55b
+@orderId = geoOrder-id_51.5924834973659_-0.3731747457475
 @skuId = sku-2
 @orderSkuItemId = 1a24df69-e13b-4755-bc6f-ba5d7bae62f8
 @readyToShipAt = 2023-01-22T00:00:00.000Z

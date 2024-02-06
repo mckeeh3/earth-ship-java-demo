@@ -8,7 +8,7 @@
 
 ### Get all orders in from/to range
 
-POST {{urlPrefix}}/orders-by-ordered-at?nextPageToken={{}}
+POST {{urlPrefix}}/orders-by-ordered-at?nextPageToken={{nextPageToken}}
 Content-Type: application/json
 
 {

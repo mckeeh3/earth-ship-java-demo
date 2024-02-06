@@ -18,71 +18,29 @@ public class ShippingOrderToOrderAction extends Action {
     this.componentClient = componentClient;
   }
 
-  public Effect<String> on(ShippingOrderEntity.OrderItemReadyToShipEvent event) {
+  public Effect<String> on(ShippingOrderEntity.OrderItemUpdatedEvent event) {
     log.info("Event: {}", event);
+
     return callFor(event);
   }
 
-  public Effect<String> on(ShippingOrderEntity.OrderReadyToShipEvent event) {
-    log.info("Event: {}", event);
-    LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), "color green");
-    return callFor(event);
-  }
+  private Effect<String> callFor(ShippingOrderEntity.OrderItemUpdatedEvent event) {
+    var orderItem = event.orderItems().stream()
+        .filter(i -> i.skuId().equals(event.skuId()))
+        .findFirst()
+        .orElse(new ShippingOrderEntity.OrderItem(event.skuId(), null, 0, null, null));
+    var command = new OrderEntity.OrderItemUpdateCommand(event.orderId(), event.skuId(), orderItem.readyToShipAt(), orderItem.backOrderedAt());
 
-  public Effect<String> on(ShippingOrderEntity.OrderUpdatedEvent event) {
-    log.info("Event: {}", event);
-    LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), "color yellow");
-    return callFor(event);
-  }
+    var statusColor = event.orderBackOrderedAt() != null
+        ? "color red"
+        : event.orderReadyToShipAt() != null
+            ? "color green"
+            : "color yellow";
+    LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), statusColor);
 
-  public Effect<String> on(ShippingOrderEntity.OrderItemBackOrderedEvent event) {
-    log.info("Event: {}", event);
-    return callFor(event);
-  }
-
-  public Effect<String> on(ShippingOrderEntity.OrderBackOrderedEvent event) {
-    log.info("Event: {}", event);
-    LogEvent.log("ShippingOrder", event.orderId(), "Order", event.orderId(), "color red");
-    return callFor(event);
-  }
-
-  private Effect<String> callFor(ShippingOrderEntity.OrderItemReadyToShipEvent event) {
-    var command = new OrderEntity.ReadyToShipOrderItemCommand(event.orderId(), event.skuId(), event.readyToShipAt());
     return effects().forward(
         componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::shipOrderItem)
-            .params(command));
-  }
-
-  private Effect<String> callFor(ShippingOrderEntity.OrderReadyToShipEvent event) {
-    var command = new OrderEntity.ReadyToShipOrderCommand(event.orderId(), event.readyToShipAt());
-    return effects().forward(
-        componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::shipOrder)
-            .params(command));
-  }
-
-  private Effect<String> callFor(ShippingOrderEntity.OrderUpdatedEvent event) {
-    var command = new OrderEntity.ReleaseOrderCommand(event.orderId());
-    return effects().forward(
-        componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::releaseOrder)
-            .params(command));
-  }
-
-  private Effect<String> callFor(ShippingOrderEntity.OrderItemBackOrderedEvent event) {
-    var command = new OrderEntity.BackOrderOrderItemCommand(event.orderId(), event.skuId(), event.backOrderedAt());
-    return effects().forward(
-        componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::backOrderItem)
-            .params(command));
-  }
-
-  private Effect<String> callFor(ShippingOrderEntity.OrderBackOrderedEvent event) {
-    var command = new OrderEntity.BackOrderOrderCommand(event.orderId(), event.backOrderedAt());
-    return effects().forward(
-        componentClient.forEventSourcedEntity(event.orderId())
-            .call(OrderEntity::backOrder)
+            .call(OrderEntity::orderItemUpdate)
             .params(command));
   }
 }

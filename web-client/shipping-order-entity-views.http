@@ -1,6 +1,6 @@
 @urlPrefix = http://localhost:9000
-@orderedAtFrom = 2023-01-01T00:00:00.000Z
-@orderedAtTo = 2024-01-01T00:00:00.999Z
+@orderedAtFrom = 2024-01-01T00:00:00.000Z
+@orderedAtTo = 2025-01-01T00:00:00.999Z
 @nextPageToken = ABCD
 @customerId = customer-1
 

@@ -312,7 +312,7 @@ public class OrderItemRedLeafEntity extends EventSourcedEntity<OrderItemRedLeafE
       var eventBackOrderedOff = new OrderItemSetBackOrderedOffEvent(orderItemRedLeafId, parentId, newOrderSkuItemsAvailable, newOrderSkuItemsConsumed);
       var eventRequests = new OrderItemRequestsStockSkuItemsEvent(orderItemRedLeafId, newOrderSkuItemsAvailable);
 
-      log.info("===== {} -> {}, available {}, requested {}, consumed {}, available {}", command.stockOrderRedLeafId, orderItemRedLeafId, orderSkuItemsAvailable.size(),
+      log.debug("===== {} -> {}, available {}, requested {}, consumed {}, available {}", command.stockOrderRedLeafId, orderItemRedLeafId, orderSkuItemsAvailable.size(),
           command.stockSkuItemsAvailable().size(), consumed.orderSkuItemsToStockSkuItems.size(), newOrderSkuItemsAvailable.size()); // TODO: remove after testing
 
       return newOrderSkuItemsAvailable.isEmpty()

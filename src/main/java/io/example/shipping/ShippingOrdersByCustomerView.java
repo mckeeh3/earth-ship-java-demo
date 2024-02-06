@@ -38,50 +38,13 @@ public class ShippingOrdersByCustomerView extends View<ShippingOrderEntity.State
   public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
-    return effects()
-        .updateState(viewState().on(event));
-  }
-
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderItemReadyToShipEvent event) {
-    log.info("State: {}\n_Event: {}", viewState(), event);
-
-    return effects()
-        .updateState(viewState().on(event));
-  }
-
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderReadyToShipEvent event) {
-    log.info("State: {}\n_Event: {}", viewState(), event);
-
-    return effects()
-        .updateState(viewState().on(event));
+    return effects().updateState(viewState().on(event));
   }
 
   public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderItemUpdatedEvent event) {
     log.info("State: {}\n_Event: {}", viewState(), event);
 
-    return effects()
-        .updateState(viewState().on(event));
-  }
-
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderUpdatedEvent event) {
-    log.info("State: {}\n_Event: {}", viewState(), event);
-
-    return effects()
-        .updateState(viewState().on(event));
-  }
-
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderItemBackOrderedEvent event) {
-    log.info("State: {}\n_Event: {}", viewState(), event);
-
-    return effects()
-        .updateState(viewState().on(event));
-  }
-
-  public UpdateEffect<ShippingOrderEntity.State> on(ShippingOrderEntity.OrderBackOrderedEvent event) {
-    log.info("State: {}\n_Event: {}", viewState(), event);
-
-    return effects()
-        .updateState(viewState().on(event));
+    return effects().updateState(viewState().on(event));
   }
 
   public record ShippingOrders(List<ShippingOrderEntity.State> shippingOrders) {}

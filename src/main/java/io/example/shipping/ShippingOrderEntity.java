@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
 import io.grpc.Status;
+import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
-import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 
@@ -36,7 +36,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
   }
 
   @PutMapping("/create")
-  public Effect<String> orderCreate(@RequestBody shippingOrderCreateCommand command) {
+  public Effect<String> shippingOrderCreate(@RequestBody ShippingOrderCreateCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -45,30 +45,6 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @PatchMapping("/order-item-update")
   public Effect<String> orderItemUpdate(@RequestBody OrderItemUpdateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return effects()
-        .emitEvents(currentState().eventsFor(command))
-        .thenReply(__ -> "OK");
-  }
-
-  @PutMapping("/ready-to-ship-order-item")
-  public Effect<String> readyToShipOrderItem(@RequestBody ReadyToShipOrderItemCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return effects()
-        .emitEvents(currentState().eventsFor(command))
-        .thenReply(__ -> "OK");
-  }
-
-  @PutMapping("/release-order-item")
-  public Effect<String> releaseOrderItem(@RequestBody ReleaseOrderItemCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
-    return effects()
-        .emitEvents(currentState().eventsFor(command))
-        .thenReply(__ -> "OK");
-  }
-
-  @PutMapping("/back-order-order-item")
-  public Effect<String> backOrderOrderItem(@RequestBody BackOrderOrderItemCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -91,37 +67,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
   }
 
   @EventHandler
-  public State on(OrderItemReadyToShipEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
-    return currentState().on(event);
-  }
-
-  @EventHandler
-  public State on(OrderReadyToShipEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
-    return currentState().on(event);
-  }
-
-  @EventHandler
   public State on(OrderItemUpdatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
-    return currentState().on(event);
-  }
-
-  @EventHandler
-  public State on(OrderUpdatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
-    return currentState().on(event);
-  }
-
-  @EventHandler
-  public State on(OrderItemBackOrderedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
-    return currentState().on(event);
-  }
-
-  @EventHandler
-  public State on(OrderBackOrderedEvent event) {
     log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
@@ -146,50 +92,11 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       return orderId != null && !orderId.isEmpty();
     }
 
-    List<Event> eventsFor(shippingOrderCreateCommand command) {
+    List<Event> eventsFor(ShippingOrderCreateCommand command) {
       if (isAlreadyCreated()) {
         return List.of();
       }
       return List.of(new ShippingOrderCreatedEvent(command.orderId(), command.customerId(), command.orderedAt(), toOrderItems(command)));
-    }
-
-    List<Event> eventsFor(ReadyToShipOrderItemCommand command) {
-      var event = new OrderItemReadyToShipEvent(command.orderId(), command.skuId(), command.readyToShipAt(), List.of());
-      var newState = on(event);
-      if (newState.readyToShip()) {
-        return List.of(event, new OrderReadyToShipEvent(command.orderId(), command.readyToShipAt()));
-      }
-      return List.of(event);
-    }
-
-    private boolean readyToShip() {
-      return orderItems.stream().allMatch(i -> i.readyToShipAt != null);
-    }
-
-    List<Event> eventsFor(ReleaseOrderItemCommand command) {
-      var event = new OrderItemUpdatedEvent(command.orderId(), command.skuId(), null, null, List.of());
-      var newState = on(event);
-      if (newState.released()) {
-        return List.of(event, new OrderUpdatedEvent(command.orderId()));
-      }
-      return List.of(event);
-    }
-
-    private boolean released() {
-      return orderItems.stream().allMatch(i -> i.readyToShipAt == null);
-    }
-
-    List<Event> eventsFor(BackOrderOrderItemCommand command) {
-      var event = new OrderItemBackOrderedEvent(command.orderId(), command.skuId(), command.backOrderedAt(), List.of());
-      var newState = on(event);
-      if (newState.backOrdered()) {
-        return List.of(event, new OrderBackOrderedEvent(command.orderId(), command.backOrderedAt()));
-      }
-      return List.of(event);
-    }
-
-    private boolean backOrdered() {
-      return orderItems.stream().anyMatch(i -> i.backOrderedAt != null);
     }
 
     List<Event> eventsFor(OrderItemUpdateCommand command) {
@@ -199,31 +106,15 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
                   i.skuId(),
                   i.skuName(),
                   i.quantity(),
-                  command.readyToShipAt,
-                  command.backOrderedAt)
+                  command.readyToShipAt(),
+                  command.backOrderedAt())
               : i)
           .toList();
-      var newBackOrderedAt = newOrderItems.stream().anyMatch(i -> i.backOrderedAt() != null) ? command.backOrderedAt : null;
-      var newReadyToShipAt = newBackOrderedAt == null && newOrderItems.stream().allMatch(i -> i.readyToShipAt() != null) ? command.readyToShipAt : null;
-
-      if (instantsChanged(newReadyToShipAt, readyToShipAt)) {
-        var event = new OrderItemReadyToShipEvent(command.orderId(), command.skuId(), newReadyToShipAt, newOrderItems);
-
-        return newReadyToShipAt == null
-            ? List.of(event)
-            : List.of(event, new OrderReadyToShipEvent(command.orderId(), newReadyToShipAt));
-      }
-
-      if (instantsChanged(newBackOrderedAt, readyToShipAt)) {
-        var event = new OrderItemBackOrderedEvent(command.orderId(), command.skuId(), newBackOrderedAt, newOrderItems);
-
-        return newBackOrderedAt == null
-            ? List.of(event)
-            : List.of(event, new OrderBackOrderedEvent(command.orderId(), newBackOrderedAt));
-      }
+      var newBackOrderedAt = newOrderItems.stream().anyMatch(i -> i.backOrderedAt() != null) ? Instant.now() : null;
+      var newReadyToShipAt = newBackOrderedAt == null && newOrderItems.stream().allMatch(i -> i.readyToShipAt() != null) ? Instant.now() : null;
 
       return List.of(
-          new OrderItemUpdatedEvent(command.orderId(), command.skuId(), command.readyToShipAt(), command.backOrderedAt(), List.of()));
+          new OrderItemUpdatedEvent(command.orderId(), command.skuId(), newReadyToShipAt, newBackOrderedAt, newOrderItems));
     }
 
     boolean instantsChanged(Instant a, Instant b) {
@@ -244,49 +135,17 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
       }
     }
 
-    State on(OrderItemReadyToShipEvent event) {
-      return new State(
-          orderId,
-          customerId,
-          orderedAt,
-          event.readyToShipAt(),
-          null,
-          event.orderItems());
-    }
-
-    State on(OrderItemBackOrderedEvent event) {
-      return new State(
-          orderId,
-          customerId,
-          orderedAt,
-          null,
-          event.backOrderedAt(),
-          event.orderItems());
-    }
-
     State on(OrderItemUpdatedEvent event) {
       return new State(
           orderId,
           customerId,
           orderedAt,
-          event.readyToShipAt,
-          event.backOrderedAt,
-          event.orderItems);
+          event.orderReadyToShipAt(),
+          event.orderBackOrderedAt(),
+          event.orderItems());
     }
 
-    State on(OrderReadyToShipEvent event) {
-      return this;
-    }
-
-    State on(OrderUpdatedEvent event) {
-      return this;
-    }
-
-    State on(OrderBackOrderedEvent event) {
-      return this;
-    }
-
-    private List<OrderItem> toOrderItems(shippingOrderCreateCommand command) {
+    private List<OrderItem> toOrderItems(ShippingOrderCreateCommand command) {
       return command.orderItems().stream()
           .map(i -> new OrderItem(
               i.skuId(),
@@ -307,27 +166,11 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   public interface Event {}
 
-  public record shippingOrderCreateCommand(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) {}
+  public record ShippingOrderCreateCommand(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) {}
 
   public record ShippingOrderCreatedEvent(String orderId, String customerId, Instant orderedAt, List<OrderItem> orderItems) implements Event {}
 
-  public record ReadyToShipOrderItemCommand(String orderId, String skuId, Instant readyToShipAt) {}
-
-  public record ReleaseOrderItemCommand(String orderId, String skuId) {}
-
-  public record BackOrderOrderItemCommand(String orderId, String skuId, Instant backOrderedAt) {}
-
   public record OrderItemUpdateCommand(String orderId, String skuId, Instant readyToShipAt, Instant backOrderedAt) {}
 
-  public record OrderItemUpdatedEvent(String orderId, String skuId, Instant readyToShipAt, Instant backOrderedAt, List<OrderItem> orderItems) implements Event {}
-
-  public record OrderUpdatedEvent(String orderId) implements Event {}
-
-  public record OrderItemReadyToShipEvent(String orderId, String skuId, Instant readyToShipAt, List<OrderItem> orderItems) implements Event {}
-
-  public record OrderReadyToShipEvent(String orderId, Instant readyToShipAt) implements Event {}
-
-  public record OrderItemBackOrderedEvent(String orderId, String skuId, Instant backOrderedAt, List<OrderItem> orderItems) implements Event {}
-
-  public record OrderBackOrderedEvent(String orderId, Instant backOrderedAt) implements Event {}
+  public record OrderItemUpdatedEvent(String orderId, String skuId, Instant orderReadyToShipAt, Instant orderBackOrderedAt, List<OrderItem> orderItems) implements Event {}
 }

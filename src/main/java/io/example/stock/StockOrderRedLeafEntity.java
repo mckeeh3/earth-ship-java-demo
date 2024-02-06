@@ -364,7 +364,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
       var event = new StockOrderConsumedOrderSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId, newAvailableToBeConsumed,
           newStockSkuItemsAvailable, newOrderItemsConsumed);
 
-      log.info("===== {} -> {}, available {}, consumed {}, available {}, consumed {}", stockOrderRedLeafId, command.orderItemRedLeafId,
+      log.debug("===== {} -> {}, available {}, consumed {}, available {}, consumed {}", stockOrderRedLeafId, command.orderItemRedLeafId,
           stockSkuItemsAvailable.size(), command.stockSkuItemsConsumed.size(),
           newStockSkuItemsAvailable.size(), consumed.stockSkuItemsToOrderSkuItems().size()); // TODO: remove after testing
 

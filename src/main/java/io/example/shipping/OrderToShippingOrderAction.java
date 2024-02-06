@@ -30,12 +30,12 @@ public class OrderToShippingOrderAction extends Action {
   private Effect<String> callFor(OrderEntity.CreatedOrderEvent event) {
     return effects().forward(
         componentClient.forEventSourcedEntity(event.orderId())
-            .call(ShippingOrderEntity::orderCreate)
+            .call(ShippingOrderEntity::shippingOrderCreate)
             .params(toCommand(event)));
   }
 
-  private ShippingOrderEntity.shippingOrderCreateCommand toCommand(OrderEntity.CreatedOrderEvent event) {
-    return new ShippingOrderEntity.shippingOrderCreateCommand(event.orderId(), event.customerId(), event.orderedAt(), toOrderItems(event.orderItems()));
+  private ShippingOrderEntity.ShippingOrderCreateCommand toCommand(OrderEntity.CreatedOrderEvent event) {
+    return new ShippingOrderEntity.ShippingOrderCreateCommand(event.orderId(), event.customerId(), event.orderedAt(), toOrderItems(event.orderItems()));
   }
 
   private List<ShippingOrderEntity.OrderItem> toOrderItems(List<OrderEntity.OrderItem> items) {
