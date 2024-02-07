@@ -1,6 +1,7 @@
 package io.example.product;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,7 @@ public class BackOrderedRedTreeEntityTest {
     var testKit = EventSourcedTestKit.of(BackOrderedRedTreeEntity::new);
 
     var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId");
-    var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+    var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
     var parentId = subBranchId.levelDown();
     var quantityBackOrdered = 12;
     var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered);
@@ -86,12 +87,12 @@ public class BackOrderedRedTreeEntityTest {
     var quantityBackOrdered1 = 12;
     var quantityBackOrdered2 = 23;
     var parentId = BackOrderedRedTreeEntity.BackOrderedRedTreeId
-        .of(OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId"))
+        .genId(OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId"))
         .levelDown();
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-1", "skuId");
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered1);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -120,7 +121,7 @@ public class BackOrderedRedTreeEntityTest {
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-2", "skuId");
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered2);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -161,12 +162,12 @@ public class BackOrderedRedTreeEntityTest {
     var quantityBackOrdered3 = 34;
     var orderItemRedLeafId2 = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-2", "skuId");
     var parentId = BackOrderedRedTreeEntity.BackOrderedRedTreeId
-        .of(OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId"))
+        .genId(OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId"))
         .levelDown();
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-1", "skuId");
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered1);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -176,7 +177,7 @@ public class BackOrderedRedTreeEntityTest {
     }
 
     {
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId2);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId2);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered2);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -187,7 +188,7 @@ public class BackOrderedRedTreeEntityTest {
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-3", "skuId");
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered3);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -207,7 +208,7 @@ public class BackOrderedRedTreeEntityTest {
     }
 
     {
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId2);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId2);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, 0);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -235,12 +236,12 @@ public class BackOrderedRedTreeEntityTest {
     var quantityBackOrdered2 = 23;
     var quantityBackOrdered3 = 34;
     var parentId = BackOrderedRedTreeEntity.BackOrderedRedTreeId
-        .of(OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId"))
+        .genId(OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId"))
         .levelDown();
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-1", "skuId");
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered1);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -251,7 +252,7 @@ public class BackOrderedRedTreeEntityTest {
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-2", "skuId");
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered2);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -262,7 +263,7 @@ public class BackOrderedRedTreeEntityTest {
 
     {
       var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId-3", "skuId");
-      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+      var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
       var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered3);
       var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
       var result = testKit.call(e -> e.updateSubBranch(command));
@@ -283,6 +284,40 @@ public class BackOrderedRedTreeEntityTest {
       assertEquals(parentId.levelDown(), event.parentId());
       assertEquals(parentId, event.subBranch().backOrderedRedTreeId());
       assertEquals(quantityBackOrdered1 + quantityBackOrdered2 + quantityBackOrdered3, event.subBranch().quantityBackOrdered());
+    }
+  }
+
+  @Test
+  void levelDownTest() {
+
+    var orderId = "orderId";
+    var skuId = "skuId";
+    var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId(orderId, skuId);
+    var backOrderedRedTreeId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
+    var branchLevel = backOrderedRedTreeId.branchLevel();
+
+    {
+      var levelDown = backOrderedRedTreeId.levelDown();
+      assertEquals(skuId, levelDown.skuId());
+      assertEquals(branchLevel - 1, levelDown.branchLevel());
+      assertTrue(levelDown.branchNumber() >= 0);
+      assertFalse(levelDown.trunkLevel());
+    }
+
+    {
+      var levelDown = backOrderedRedTreeId.levelDown().levelDown();
+      assertEquals(skuId, levelDown.skuId());
+      assertEquals(branchLevel - 2, levelDown.branchLevel());
+      assertTrue(levelDown.branchNumber() >= 0);
+      assertFalse(levelDown.trunkLevel());
+    }
+
+    {
+      var levelDown = backOrderedRedTreeId.levelDown().levelDown().levelDown();
+      assertEquals(skuId, levelDown.skuId());
+      assertEquals(branchLevel - 3, levelDown.branchLevel());
+      assertTrue(levelDown.branchNumber() >= 0);
+      assertTrue(levelDown.trunkLevel());
     }
   }
 }

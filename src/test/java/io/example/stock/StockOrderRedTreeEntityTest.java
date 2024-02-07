@@ -1,6 +1,7 @@
 package io.example.stock;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -300,6 +301,51 @@ public class StockOrderRedTreeEntityTest {
       assertEquals(parentId, event.parentId());
       assertEquals(parentId, event.subBranch().stockOrderRedTreeId());
       assertEquals(quantityStockOrder1 + quantityStockOrder2 + quantityStockOrder3, event.subBranch().quantityConsumed());
+    }
+  }
+
+  @Test
+  void levelDownTest() {
+    var stockOrderId = "orderId";
+    var skuId = "skuId";
+    var branchLevel = 4;
+    var branchNumber = 4321;
+    var stockOrderRedTreeId = new StockOrderRedTreeEntity.StockOrderRedTreeId(stockOrderId, skuId, branchLevel, branchNumber, null);
+
+    {
+      var levelDown = stockOrderRedTreeId.levelDown();
+      assertEquals(stockOrderId, levelDown.stockOrderId());
+      assertEquals(skuId, levelDown.skuId());
+      assertEquals(branchLevel - 1, levelDown.branchLevel());
+      assertTrue(levelDown.branchNumber() >= 0);
+      assertFalse(levelDown.trunkLevel());
+    }
+
+    {
+      var levelDown = stockOrderRedTreeId.levelDown().levelDown();
+      assertEquals(stockOrderId, levelDown.stockOrderId());
+      assertEquals(skuId, levelDown.skuId());
+      assertEquals(branchLevel - 2, levelDown.branchLevel());
+      assertTrue(levelDown.branchNumber() >= 0);
+      assertFalse(levelDown.trunkLevel());
+    }
+
+    {
+      var levelDown = stockOrderRedTreeId.levelDown().levelDown().levelDown();
+      assertEquals(stockOrderId, levelDown.stockOrderId());
+      assertEquals(skuId, levelDown.skuId());
+      assertEquals(branchLevel - 3, levelDown.branchLevel());
+      assertTrue(levelDown.branchNumber() >= 0);
+      assertFalse(levelDown.trunkLevel());
+    }
+
+    {
+      var levelDown = stockOrderRedTreeId.levelDown().levelDown().levelDown().levelDown();
+      assertEquals(stockOrderId, levelDown.stockOrderId());
+      assertEquals(skuId, levelDown.skuId());
+      assertEquals(branchLevel - 4, levelDown.branchLevel());
+      assertTrue(levelDown.branchNumber() >= 0);
+      assertTrue(levelDown.trunkLevel());
     }
   }
 }

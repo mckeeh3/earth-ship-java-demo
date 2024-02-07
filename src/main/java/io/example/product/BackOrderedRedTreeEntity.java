@@ -139,7 +139,7 @@ public class BackOrderedRedTreeEntity extends EventSourcedEntity<BackOrderedRedT
       return new BackOrderedRedTreeId(skuId, leafLevel, leafNumber, null);
     }
 
-    static BackOrderedRedTreeId of(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId) {
+    static BackOrderedRedTreeId genId(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId) {
       var leafNumber = Math.abs(orderItemRedLeafId.toEntityId().hashCode()) % totalLeaves;
       return new BackOrderedRedTreeId(orderItemRedLeafId.skuId(), leafLevel, leafNumber, orderItemRedLeafId);
     }
@@ -152,6 +152,10 @@ public class BackOrderedRedTreeEntity extends EventSourcedEntity<BackOrderedRedT
       var newBranchNumber = branchNumber / subBranchesPerBranch;
 
       return BackOrderedRedTreeId.of(skuId, newBranchLevel, newBranchNumber);
+    }
+
+    boolean trunkLevel() {
+      return this.equals(this.levelDown());
     }
   }
 

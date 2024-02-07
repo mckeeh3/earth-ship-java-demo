@@ -1,6 +1,6 @@
 @urlPrefix = http://localhost:9000
 # @urlPrefix = https://cold-poetry-2720.eu-central-1.kalix.app
-@skuId = P0003
+@skuId = P0023
 
 ### query for available stock order red leaves for a sku
 

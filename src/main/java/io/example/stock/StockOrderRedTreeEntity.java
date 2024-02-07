@@ -152,6 +152,10 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
 
       return new StockOrderRedTreeId(stockOrderId, skuId, newBranchLevel, newBranchNumber, null);
     }
+
+    boolean trunkLevel() {
+      return this.equals(this.levelDown());
+    }
   }
 
   public record SubBranch(StockOrderRedTreeId stockOrderRedTreeId, int quantityConsumed) {

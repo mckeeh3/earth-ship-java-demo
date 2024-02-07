@@ -44,7 +44,7 @@ public class OrderItemRedLeafToBackOrderedRedTreeAction extends Action {
   Effect<String> callFor(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId, int quantityBackOrdered) {
     log.info("===== {}, quantity back ordered {}", orderItemRedLeafId, quantityBackOrdered); // TODO: remove after testing
 
-    var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId);
+    var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
     var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered);
     var parentId = subBranchId.levelDown();
     var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
@@ -56,6 +56,6 @@ public class OrderItemRedLeafToBackOrderedRedTreeAction extends Action {
   }
 
   static BackOrderedRedTreeEntity.BackOrderedRedTreeId parentIdOf(OrderItemRedLeafEntity.OrderItemRedLeafId orderItemRedLeafId) {
-    return BackOrderedRedTreeEntity.BackOrderedRedTreeId.of(orderItemRedLeafId).levelDown();
+    return BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId).levelDown();
   }
 }

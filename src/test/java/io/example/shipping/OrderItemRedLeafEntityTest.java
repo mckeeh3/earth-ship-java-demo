@@ -342,14 +342,14 @@ class OrderItemRedLeafEntityTest {
       }
 
       {
-        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemRequestsStockSkuItemsEvent.class);
+        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemSetBackOrderedOffEvent.class);
         assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
-        assertEquals(quantityOrderItem - quantityRequested1, event.orderSkuItemIds().size());
       }
 
       {
-        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemSetBackOrderedOffEvent.class);
+        var event = result.getNextEventOfType(OrderItemRedLeafEntity.OrderItemRequestsStockSkuItemsEvent.class);
         assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
+        assertEquals(quantityOrderItem - quantityRequested1, event.orderSkuItemIds().size());
       }
     }
 

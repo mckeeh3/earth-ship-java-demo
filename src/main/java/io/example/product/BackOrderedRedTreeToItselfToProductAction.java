@@ -39,10 +39,10 @@ public class BackOrderedRedTreeToItselfToProductAction extends Action {
   }
 
   private Effect<String> callFor(BackOrderedRedTreeEntity.ReleasedToParentEvent event) {
-    if (event.parentId().branchLevel() > 0) {
-      return callForBackOrderedRedTree(event);
-    } else {
+    if (event.parentId().trunkLevel()) {
       return callForProduct(event);
+    } else {
+      return callForBackOrderedRedTree(event);
     }
   }
 
