@@ -272,7 +272,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
             availableToBeConsumed, stockSkuItemsAvailable, stockSkuItemsConsumed, consumed));
       }
 
-      boolean alreadyConsumed = stockSkuItemsConsumed.stream()
+      var alreadyConsumed = stockSkuItemsConsumed.stream()
           .anyMatch(consumed -> consumed.orderItemRedLeafId().equals(command.orderItemRedLeafId()));
       if (alreadyConsumed) {
         return List.of();
@@ -328,8 +328,14 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     }
 
     List<Event> eventsFor(StockOrderConsumedOrderSkuItemsCommand command) {
+      if (command.stockSkuItemsConsumed.isEmpty()) {
+        return stockSkuItemsAvailable.isEmpty()
+            ? List.of()
+            : List.of(new StockOrderRequestsOrderSkuItemsEvent(stockOrderRedLeafId, stockSkuItemsAvailable));
+      }
+
       var consumed = new Consumed(command.orderItemRedLeafId(), command.stockSkuItemsConsumed());
-      boolean alreadyConsumed = stockSkuItemsConsumed.stream()
+      var alreadyConsumed = stockSkuItemsConsumed.stream()
           .anyMatch(c -> c.equals(consumed));
       if (alreadyConsumed) {
         return List.of();

@@ -97,6 +97,11 @@ public class BackOrderedRedTreeEntity extends EventSourcedEntity<BackOrderedRedT
       var newSubBranches = newSubBranch.quantityBackOrdered() > 0
           ? Stream.concat(filteredSubBranches.stream(), Stream.of(newSubBranch)).toList()
           : filteredSubBranches;
+
+      if (subBranches.equals(newSubBranches)) {
+        return List.of();
+      }
+
       var event = new UpdatedSubBranchEvent(command.subBranchId(), command.parentId(), newSubBranch, true, newSubBranches);
 
       return hasChanged

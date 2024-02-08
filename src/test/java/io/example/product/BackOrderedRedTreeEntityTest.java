@@ -45,12 +45,11 @@ public class BackOrderedRedTreeEntityTest {
       }
     }
 
-    var stateBefore = testKit.getState();
-
     {
-      assertEquals(parentId, stateBefore.backOrderedRedTreeId());
-      assertTrue(stateBefore.hasChanged());
-      var quantityBackOrderedState = stateBefore.subBranches().stream()
+      var state = testKit.getState();
+      assertEquals(parentId, state.backOrderedRedTreeId());
+      assertTrue(state.hasChanged());
+      var quantityBackOrderedState = state.subBranches().stream()
           .mapToInt(BackOrderedRedTreeEntity.SubBranch::quantityBackOrdered)
           .sum();
       assertEquals(quantityBackOrdered, quantityBackOrderedState);
@@ -60,23 +59,7 @@ public class BackOrderedRedTreeEntityTest {
       var result = testKit.call(e -> e.updateSubBranch(command));
       assertTrue(result.isReply());
       assertEquals("OK", result.getReply());
-      assertEquals(1, result.getAllEvents().size());
-
-      {
-        var event = result.getNextEventOfType(BackOrderedRedTreeEntity.UpdatedSubBranchEvent.class);
-        assertEquals(subBranchId, event.subBranchId());
-        assertEquals(parentId, event.parentId());
-        assertEquals(subBranch, event.subBranch());
-
-        var subBranches = event.subBranches();
-        var quantityBackOrderedEvent = subBranches.stream()
-            .mapToInt(BackOrderedRedTreeEntity.SubBranch::quantityBackOrdered)
-            .sum();
-        assertEquals(quantityBackOrdered, quantityBackOrderedEvent);
-      }
-
-      var stateAfter = testKit.getState();
-      assertEquals(stateBefore, stateAfter);
+      assertEquals(0, result.getAllEvents().size());
     }
   }
 
@@ -284,6 +267,90 @@ public class BackOrderedRedTreeEntityTest {
       assertEquals(parentId.levelDown(), event.parentId());
       assertEquals(parentId, event.subBranch().backOrderedRedTreeId());
       assertEquals(quantityBackOrdered1 + quantityBackOrdered2 + quantityBackOrdered3, event.subBranch().quantityBackOrdered());
+    }
+  }
+
+  @Test
+  void updateTheSameSubBranchMultipleTimesWithNonZeroBackOrderedQuantity() {
+    var testKit = EventSourcedTestKit.of(BackOrderedRedTreeEntity::new);
+
+    var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId");
+    var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
+    var parentId = subBranchId.levelDown();
+    var quantityBackOrdered = 12;
+    var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered);
+    var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
+
+    {
+      var result = testKit.call(e -> e.updateSubBranch(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+      assertEquals(2, result.getAllEvents().size());
+    }
+
+    {
+      var result = testKit.call(e -> e.updateSubBranch(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+      assertEquals(0, result.getAllEvents().size());
+    }
+
+    {
+      var result = testKit.call(e -> e.updateSubBranch(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+      assertEquals(0, result.getAllEvents().size());
+    }
+
+    {
+      var state = testKit.getState();
+      var subBranches = state.subBranches();
+      var quantityBackOrderedState = subBranches.stream()
+          .mapToInt(BackOrderedRedTreeEntity.SubBranch::quantityBackOrdered)
+          .sum();
+      assertEquals(quantityBackOrdered, quantityBackOrderedState);
+    }
+  }
+
+  @Test
+  void updateTheSameSubBranchMultipleTimesWithZeroBackOrderedQuantity() {
+    var testKit = EventSourcedTestKit.of(BackOrderedRedTreeEntity::new);
+
+    var orderItemRedLeafId = OrderItemRedLeafEntity.OrderItemRedLeafId.genId("orderId", "skuId");
+    var subBranchId = BackOrderedRedTreeEntity.BackOrderedRedTreeId.genId(orderItemRedLeafId);
+    var parentId = subBranchId.levelDown();
+    var quantityBackOrdered = 0;
+    var subBranch = new BackOrderedRedTreeEntity.SubBranch(subBranchId, quantityBackOrdered);
+    var command = new BackOrderedRedTreeEntity.UpdateSubBranchCommand(subBranchId, parentId, subBranch);
+
+    {
+      var result = testKit.call(e -> e.updateSubBranch(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+      assertEquals(0, result.getAllEvents().size());
+    }
+
+    {
+      var result = testKit.call(e -> e.updateSubBranch(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+      assertEquals(0, result.getAllEvents().size());
+    }
+
+    {
+      var result = testKit.call(e -> e.updateSubBranch(command));
+      assertTrue(result.isReply());
+      assertEquals("OK", result.getReply());
+      assertEquals(0, result.getAllEvents().size());
+    }
+
+    {
+      var state = testKit.getState();
+      var subBranches = state.subBranches();
+      var quantityBackOrderedState = subBranches.stream()
+          .mapToInt(BackOrderedRedTreeEntity.SubBranch::quantityBackOrdered)
+          .sum();
+      assertEquals(quantityBackOrdered, quantityBackOrderedState);
     }
   }
 
