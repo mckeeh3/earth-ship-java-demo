@@ -38,7 +38,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
 
   @PutMapping("/create")
   public Effect<String> createOrder(@RequestBody CreateOrderCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(command.orderId(), "Cannot create order without order id")
         .isEmpty(command.customerId(), "Cannot create order without customer id")
@@ -51,7 +51,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
 
   @PatchMapping("/order-item-update")
   public Effect<String> orderItemUpdate(@RequestBody OrderItemUpdateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -59,7 +59,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
 
   @PatchMapping("/deliver")
   public Effect<String> deliverOrder(@RequestBody DeliverOrderCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(command.orderId(), "Cannot deliver order without order id")
         .isNull(currentState().readyToShipAt(), "Cannot deliver order without shipping")
@@ -72,7 +72,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
 
   @PatchMapping("/return")
   public Effect<String> returnOrder(@RequestBody ReturnOrderCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(command.orderId(), "Cannot return order without order id")
         .isNull(currentState().readyToShipAt(), "Cannot return order without shipping")
@@ -86,7 +86,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
 
   @PatchMapping("/cancel")
   public Effect<String> cancelOrder(@RequestBody CancelOrderCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(command.orderId(), "Cannot cancel order without order id")
         .onSuccess(() -> effects()
@@ -97,7 +97,7 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), "GetOrder");
+    log.info("C-EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isTrue(currentState().isEmpty(), "Order is not found")
         .onSuccess(() -> effects().reply(currentState()))
@@ -106,43 +106,43 @@ public class OrderEntity extends EventSourcedEntity<OrderEntity.State, OrderEnti
 
   @EventHandler
   public State on(CreatedOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(OrderItemUpdatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReadyToShipOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(BackOrderedOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(DeliveredOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReturnedOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(CanceledOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

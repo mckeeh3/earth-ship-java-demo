@@ -9,13 +9,13 @@
         </encoder>
     </appender>
 
-    <logger name="akka" level="WARN"/>
-
     <logger name="akka" level="INFO"/>
     <logger name="kalix" level="INFO"/>
     <logger name="akka.http" level="INFO"/>
     <logger name="io.grpc" level="INFO"/>
 
+    <logger name="io.example.map" level="DEBUG"/>
+    <logger name="io.example.map.RegionEntity" level="INFO"/>
     <logger name="io.example.order.OrderEntity" level="INFO"/>
     <logger name="io.example.shipping.OrderSkuItemEntity" level="INFO"/>
     <logger name="io.example.shipping.ShippingOrderItemEntity" level="INFO"/>

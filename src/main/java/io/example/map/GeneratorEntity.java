@@ -45,7 +45,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
 
   @PostMapping("/{generatorId}/create")
   public Effect<String> create(@RequestBody CreateGeneratorCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -53,7 +53,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
 
   @PutMapping("/{generatorId}/generate")
   public Effect<String> generate(@RequestBody GenerateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -61,7 +61,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
 
   @GetMapping("/{generatorId}")
   public Effect<GeneratorEntity.State> get(@PathVariable String generatorId) {
-    log.info("EntityId: {}\n_GeneratorId: {}\n_State: {}", entityId, generatorId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Generator: '%s', not created".formatted(generatorId));
     }
@@ -70,19 +70,19 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
 
   @EventHandler
   public State on(GeneratorCreatedEvent event) {
-    log.info("State: {}\n_Event: {}", currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeneratedEvent event) {
-    log.info("State: {}\n_Event: {}", currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeoOrdersToGenerateEvent event) {
-    log.info("State: {}\n_Event: {}", currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

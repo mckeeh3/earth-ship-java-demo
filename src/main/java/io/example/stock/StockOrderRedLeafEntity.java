@@ -143,7 +143,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
   @PutMapping("/stock-order-create")
   public Effect<String> stockOrderCreate(@RequestBody StockOrderCreateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -151,7 +151,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
   @PatchMapping("/order-item-requests-stock-sku-items")
   public Effect<String> orderItemRequestsStockSkuItems(@RequestBody OrderItemRequestsStockSkuItemsCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -159,7 +159,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
   @PatchMapping("/order-item-releases-stock-sku-items")
   public Effect<String> orderItemReleaseOrderSkuItems(@RequestBody OrderItemReleaseStockSkuItemsCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -167,7 +167,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
   @PatchMapping("/stock-order-consumed-order-sku-items")
   public Effect<String> stockOrderConsumedOrderSkuItems(@RequestBody StockOrderConsumedOrderSkuItemsCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -175,7 +175,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
   @PatchMapping("/stock-order-set-available-to-be-consumed")
   public Effect<String> stockOrderSetAvailableToBeConsumed(@RequestBody StockOrderSetAvailableToBeConsumedOnCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -183,7 +183,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isFalse(currentState().alreadyCreated(), "StockOrderRedLeaf '%s' not found".formatted(entityId))
         .onSuccess(() -> effects().reply(currentState()))
@@ -192,49 +192,49 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
 
   @EventHandler
   public State on(StockOrderCreatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(StockOrderRequestsOrderSkuItemsEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(OrderItemConsumedStockSkuItemsEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(OrderItemReleasedStockSkuItemsEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(StockOrderConsumedOrderSkuItemsEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(StockOrderReleasedOrderSkuItemsEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(StockOrderSetAvailableToBeConsumedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(StockOrderUpdatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

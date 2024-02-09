@@ -38,7 +38,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/items/add")
   public Effect<String> addLineItem(@RequestBody AddLineItemCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(command.customerId(), "Cannot add item to cart without customer id")
         .isEmpty(command.skuId(), "Cannot add item to cart without sku id")
@@ -52,7 +52,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/items/{sku_id}/change")
   public Effect<String> changeLineItem(@RequestBody ChangeLineItemCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isFalse(currentState().containsLineItem(command.skuId), "Item '%s' not found in cart".formatted(command.skuId))
         .isEmpty(currentState().lineItems, "Cannot change item in empty cart")
@@ -66,7 +66,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/items/{sku_id}/remove")
   public Effect<String> removeLineItem(@RequestBody RemoveLineItemCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(command.skuId(), "Cannot remove item from cart without sku id")
         .onSuccess(() -> effects()
@@ -77,7 +77,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @PutMapping("/checkout")
   public Effect<String> checkout(@RequestBody CheckoutCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(currentState().lineItems, "Cannot checkout empty cart")
         .onSuccess(() -> effects()
@@ -88,7 +88,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @GetMapping()
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}\n_GetShoppingCart", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isTrue(currentState().isEmpty(), "Shopping cart is not found")
         .onSuccess(() -> effects().reply(currentState()))
@@ -97,25 +97,25 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCartEntity.St
 
   @EventHandler
   public State on(AddedLineItemEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ChangedLineItemEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(RemovedLineItemEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(CheckedOutEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

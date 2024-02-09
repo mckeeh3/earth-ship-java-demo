@@ -39,7 +39,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
   @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateStockOrderCommand command) {
-    log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     if (currentState().stockOrderId() != null && !currentState().stockOrderId().isEmpty()) {
       return effects().reply("OK");
     }
@@ -57,7 +57,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
   @PutMapping("/update")
   public Effect<String> update(@RequestBody UpdateStockOrderCommand command) {
-    log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -65,7 +65,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
   @PutMapping("/generate-stock-sku-item-ids")
   public Effect<String> generateStockSkuItemIds(@RequestBody GenerateStockSkuItemIdsCommand command) {
-    log.info("EntityID: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     if (currentState().quantityCreated >= currentState().quantityTotal) {
       return effects().reply("OK");
     }
@@ -76,7 +76,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityID: {}\n_State: {}\n_GetStockOrder", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isEmpty(currentState().stockOrderId(), "StockOrder does not exist")
         .onSuccess(() -> effects().reply(currentState()))
@@ -85,19 +85,19 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
 
   @EventHandler
   public State on(CreatedStockOrderEvent event) {
-    log.info("EntityID: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedStockOrderEvent event) {
-    log.info("EntityID: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(GeneratedStockSkuItemIdsEvent event) {
-    log.info("EntityID: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

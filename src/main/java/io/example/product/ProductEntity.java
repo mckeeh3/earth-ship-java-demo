@@ -41,7 +41,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   @PutMapping("/create")
   public Effect<String> create(@RequestBody CreateProductCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return Validator
         .isEmpty(command.skuId(), "Cannot create Product without skuId")
         .onSuccess(() -> effects()
@@ -52,7 +52,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   @PutMapping("/add-stock-order")
   public Effect<String> addStockOrder(@RequestBody AddStockOrderCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -60,7 +60,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   @PutMapping("/update-stock-order")
   public Effect<String> updateStockOrder(@RequestBody UpdateStockOrderCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -68,7 +68,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   @PatchMapping("/update-back-ordered")
   public Effect<String> updateBackOrdered(@RequestBody UpdateBackOrderedCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -76,7 +76,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}\n_GetProduct", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isTrue(currentState().isEmpty(), "Product not found")
         .onSuccess(() -> effects().reply(currentState()))
@@ -85,31 +85,31 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   @EventHandler
   public State on(CreatedProductEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(AddedStockOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedStockOrderEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(CreateStockOrderRequestedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedBackOrderedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

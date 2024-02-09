@@ -39,7 +39,7 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
 
   @PutMapping("/order-item-create")
   public Effect<String> orderItemCreate(@RequestBody OrderItemCreateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
 
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -48,7 +48,7 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
 
   @PatchMapping("/order-item-sub-branch-update")
   public Effect<String> orderItemSubBranchUpdate(@RequestBody OrderItemSubBranchUpdateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
 
     return effects()
         .emitEvents(currentState().eventsFor(command))
@@ -57,7 +57,7 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isFalse(currentState().alreadyCreated(), "OrderItemRedTreeEntity '%s' not found".formatted(entityId))
         .onSuccess(() -> effects().reply(currentState()))
@@ -66,13 +66,13 @@ public class OrderItemRedTreeEntity extends EventSourcedEntity<OrderItemRedTreeE
 
   @EventHandler
   public State on(OrderItemRedTreeCreatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(OrderItemSubBranchUpdatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

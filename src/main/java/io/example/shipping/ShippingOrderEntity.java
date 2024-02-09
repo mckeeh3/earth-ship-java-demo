@@ -37,7 +37,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @PutMapping("/create")
   public Effect<String> shippingOrderCreate(@RequestBody ShippingOrderCreateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -45,7 +45,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @PatchMapping("/order-item-update")
   public Effect<String> orderItemUpdate(@RequestBody OrderItemUpdateCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -53,7 +53,7 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}\n_GetShippingOrder", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isTrue(currentState().isEmpty(), "ShippingOrder is not found")
         .onSuccess(() -> effects().reply(currentState()))
@@ -62,13 +62,13 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
 
   @EventHandler
   public State on(ShippingOrderCreatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(OrderItemUpdatedEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

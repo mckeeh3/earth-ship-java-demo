@@ -36,7 +36,7 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
 
   @PutMapping("/update")
   public Effect<String> updateSubBranch(@RequestBody UpdateSubBranchCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -44,7 +44,7 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
 
   @PutMapping("/release")
   public Effect<String> releaseToParent(@RequestBody ReleaseToParentCommand command) {
-    log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
+    log.info("C-EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -52,7 +52,7 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
 
   @GetMapping
   public Effect<State> get() {
-    log.info("EntityId: {}\n_State: {}\n_GetStockOrderRedTree", entityId, currentState());
+    log.info("EntityId: {}\n_State: {}\n_Get", entityId, currentState());
     return Validator
         .isTrue(currentState().isEmpty(), "StockOrderRedTree not found")
         .onSuccess(() -> effects().reply(currentState()))
@@ -61,19 +61,19 @@ public class StockOrderRedTreeEntity extends EventSourcedEntity<StockOrderRedTre
 
   @EventHandler
   public State on(UpdatedSubBranchEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedBranchEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReleasedToParentEvent event) {
-    log.info("EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 

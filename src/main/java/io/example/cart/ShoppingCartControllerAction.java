@@ -52,7 +52,7 @@ public class ShoppingCartControllerAction extends Action {
 
   @GetMapping()
   public Effect<ShoppingCartEntity.State> get(@PathVariable("customerId") String customerId) {
-    log.info("EntityId: {}\n_Command: {}", customerId, "GetShoppingCart");
+    log.info("EntityId: {}\n_Get", customerId);
 
     return callFor(customerId);
   }
