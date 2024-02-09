@@ -130,7 +130,7 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
     Event eventFor(GenerateStockSkuItemIdsCommand command) {
       var limit = Math.min(quantityCreated + generateBatchSize, quantityTotal);
       var stockSkuItemIds = IntStream.range(quantityCreated, limit)
-          .mapToObj(i -> StockSkuItemId.of(command.stockOrderId(), skuId))
+          .mapToObj(i -> StockSkuItemId.genId(command.stockOrderId(), skuId))
           .toList();
       return new GeneratedStockSkuItemIdsEvent(command.stockOrderId(), command.skuId(), quantityTotal, generateBatchSize, stockSkuItemIds);
     }
@@ -172,8 +172,12 @@ public class StockOrderEntity extends EventSourcedEntity<StockOrderEntity.State,
     }
   }
 
+  public static String genStockOrderId() {
+    return UUID.randomUUID().toString();
+  }
+
   public record StockSkuItemId(String stockOrderId, String skuId, UUID uuid) {
-    static StockSkuItemId of(String stockOrderId, String skuId) {
+    static StockSkuItemId genId(String stockOrderId, String skuId) {
       return new StockSkuItemId(stockOrderId, skuId, UUID.randomUUID());
     }
   }

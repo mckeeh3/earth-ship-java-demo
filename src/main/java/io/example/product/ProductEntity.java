@@ -2,7 +2,6 @@ package io.example.product;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -14,12 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import io.example.Validator;
+import io.example.stock.StockOrderEntity;
 import io.grpc.Status;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
-import kalix.javasdk.annotations.EventHandler;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 
 @Id("skuId")
 @TypeId("product")
@@ -54,7 +54,7 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
   public Effect<String> addStockOrder(@RequestBody AddStockOrderCommand command) {
     log.info("EntityId: {}\n_State: {}\n_Command: {}", entityId, currentState(), command);
     return effects()
-        .emitEvent(currentState().eventFor(command))
+        .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
   }
 
@@ -137,35 +137,47 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
       return List.of(new CreatedProductEvent(command.skuId(), command.skuName(), command.skuDescription(), command.skuPrice()));
     }
 
-    Event eventFor(AddStockOrderCommand command) {
-      return new AddedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityTotal());
+    List<Event> eventsFor(AddStockOrderCommand command) {
+      if (stockOrders.stream().anyMatch(s -> s.stockOrderId().equals(command.stockOrderId()))) {
+        return List.of();
+      }
+
+      var newStockOrder = new StockOrder(command.stockOrderId(), command.quantityTotal(), 0, command.quantityTotal());
+      var newStockOrders = Stream.concat(stockOrders.stream(), Stream.of(newStockOrder)).toList();
+      var newQuantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
+
+      return List.of(new AddedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityTotal(), newQuantityAvailable, newStockOrders));
     }
 
     List<Event> eventsFor(UpdateStockOrderCommand command) {
-      var event = new UpdatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityOrdered());
-      var newState = on(event);
-      if (newState.quantityAvailable < quantityAvailableLowThreshold) {
-        var stockOrderId = generateStockOrderId(skuId);
-        return List.of(
-            event,
-            new AddedStockOrderEvent(stockOrderId, skuId, quantityPerStockOrder),
-            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantityPerStockOrder));
-      }
-      return List.of(event);
+      var newStockOrders = stockOrders.stream()
+          .map(s -> s.stockOrderId().equals(command.stockOrderId())
+              ? new StockOrder(s.stockOrderId(), s.quantityTotal(), command.quantityOrdered(), s.quantityTotal - command.quantityOrdered())
+              : s)
+          .filter(s -> s.quantityAvailable() > 0)
+          .toList();
+      var newQuantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
+      var stockOrderId = StockOrderEntity.genStockOrderId();
+
+      var event = new UpdatedStockOrderEvent(command.stockOrderId(), command.skuId(), command.quantityOrdered(), newQuantityAvailable, newStockOrders);
+
+      return newQuantityAvailable < quantityAvailableLowThreshold
+          ? List.of(
+              event,
+              new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantityPerStockOrder))
+          : List.of(event);
     }
 
     List<Event> eventsFor(UpdateBackOrderedCommand command) {
       var event = new UpdatedBackOrderedEvent(command.skuId(), command.quantityBackOrdered());
-      var newState = on(event);
 
-      if (newState.quantityBackOrdered > newState.quantityAvailable) {
-        var stockOrderId = generateStockOrderId(skuId);
-        return List.of(
-            event,
-            new AddedStockOrderEvent(stockOrderId, skuId, quantityPerStockOrder),
-            new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantityPerStockOrder));
-      }
-      return List.of(event);
+      var stockOrderId = StockOrderEntity.genStockOrderId();
+
+      return event.quantityBackOrdered > 0 && quantityBackOrdered == 0
+          ? List.of(
+              event,
+              new CreateStockOrderRequestedEvent(stockOrderId, skuId, skuName, quantityPerStockOrder))
+          : List.of(event);
     }
 
     State on(CreatedProductEvent event) {
@@ -173,47 +185,32 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
           event.skuId(),
           event.skuName(),
           event.skuDescription(),
-          isEmpty() ? 0 : quantityAvailable,
-          isEmpty() ? 0 : quantityBackOrdered,
+          0,
+          0,
           event.skuPrice(),
-          stockOrders);
+          List.of());
     }
 
     State on(AddedStockOrderEvent event) {
-      if (stockOrders.stream().anyMatch(s -> s.stockOrderId().equals(event.stockOrderId()))) {
-        return this;
-      }
-      var addStockOrder = Stream.of(new StockOrder(event.stockOrderId(), event.quantityTotal(), 0, event.quantityTotal()));
-      var newStockOrders = Stream.concat(stockOrders.stream(), addStockOrder).toList();
-      var newQuantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
-
       return new State(
           skuId,
           skuName,
           skuDescription,
-          newQuantityAvailable,
+          event.quantityAvailable,
           quantityBackOrdered,
           skuPrice,
-          newStockOrders);
+          event.stockOrders);
     }
 
     State on(UpdatedStockOrderEvent event) {
-      var newStockOrders = stockOrders.stream()
-          .map(s -> s.stockOrderId().equals(event.stockOrderId())
-              ? new StockOrder(s.stockOrderId(), s.quantityTotal(), event.quantityOrdered(), s.quantityTotal - event.quantityOrdered())
-              : s)
-          .filter(s -> s.quantityAvailable() > 0)
-          .toList();
-      var newQuantityAvailable = newStockOrders.stream().mapToInt(StockOrder::quantityAvailable).sum();
-
       return new State(
           skuId,
           skuName,
           skuDescription,
-          newQuantityAvailable,
+          event.quantityAvailable,
           quantityBackOrdered,
           skuPrice,
-          newStockOrders);
+          event.stockOrders);
     }
 
     State on(CreateStockOrderRequestedEvent event) {
@@ -230,10 +227,6 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
           skuPrice,
           stockOrders);
     }
-
-    String generateStockOrderId(String skuId) {
-      return "%s-%s".formatted(skuId(), UUID.randomUUID().toString());
-    }
   }
 
   public record StockOrder(String stockOrderId, int quantityTotal, int quantityOrdered, int quantityAvailable) {}
@@ -246,11 +239,11 @@ public class ProductEntity extends EventSourcedEntity<ProductEntity.State, Produ
 
   public record AddStockOrderCommand(String stockOrderId, String skuId, int quantityTotal) {}
 
-  public record AddedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal) implements Event {}
+  public record AddedStockOrderEvent(String stockOrderId, String skuId, int quantityTotal, int quantityAvailable, List<StockOrder> stockOrders) implements Event {}
 
   public record UpdateStockOrderCommand(String stockOrderId, String skuId, int quantityOrdered) {}
 
-  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityOrdered) implements Event {}
+  public record UpdatedStockOrderEvent(String stockOrderId, String skuId, int quantityOrdered, int quantityAvailable, List<StockOrder> stockOrders) implements Event {}
 
   public record CreateStockOrderRequestedEvent(String stockOrderId, String skuId, String skuName, int quantityTotal) implements Event {}
 
