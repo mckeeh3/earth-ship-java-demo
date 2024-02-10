@@ -40,7 +40,7 @@ public class StockOrderRedTreeToItselfToStockOrderAction extends Action {
   }
 
   private Effect<String> callFor(StockOrderRedTreeEntity.ReleasedToParentEvent event) {
-    if (event.parentId().trunkLevel()) {
+    if (event.subBranchId().trunkLevel()) {
       return callForStockOrder(event);
     } else {
       return callForStockOrderRedTree(event);

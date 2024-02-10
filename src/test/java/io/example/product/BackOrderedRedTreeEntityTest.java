@@ -379,7 +379,7 @@ public class BackOrderedRedTreeEntityTest {
       assertFalse(levelDown.trunkLevel());
     }
 
-    {
+    { // Trunk level
       var levelDown = backOrderedRedTreeId.levelDown().levelDown().levelDown();
       assertEquals(skuId, levelDown.skuId());
       assertEquals(branchLevel - 3, levelDown.branchLevel());

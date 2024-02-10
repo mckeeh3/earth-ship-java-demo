@@ -339,7 +339,7 @@ public class StockOrderRedTreeEntityTest {
       assertFalse(levelDown.trunkLevel());
     }
 
-    {
+    { // Trunk level
       var levelDown = stockOrderRedTreeId.levelDown().levelDown().levelDown().levelDown();
       assertEquals(stockOrderId, levelDown.stockOrderId());
       assertEquals(skuId, levelDown.skuId());
