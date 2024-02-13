@@ -269,7 +269,7 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
       var alreadyConsumed = stockSkuItemsConsumed.stream()
           .filter(consumed -> consumed.orderItemRedLeafId().equals(command.orderItemRedLeafId()))
           .findFirst();
-      if (alreadyConsumed.isPresent()) { // Idempotent response - already consumed
+      if (alreadyConsumed.isPresent()) { // Idempotent response
         var consumed = alreadyConsumed.get();
         return List.of(new OrderItemConsumedStockSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId,
             availableToBeConsumed, stockSkuItemsAvailable, stockSkuItemsConsumed, consumed));

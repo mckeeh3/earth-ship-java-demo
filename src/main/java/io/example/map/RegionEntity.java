@@ -66,19 +66,19 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State, RegionE
 
   @EventHandler
   public State on(UpdatedSubRegionEvent event) {
-    log.debug("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(UpdatedRegionEvent event) {
-    log.debug("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(ReleasedCurrentStateEvent event) {
-    log.debug("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
+    log.info("E-EntityId: {}\n_State: {}\n_Event: {}", entityId, currentState(), event);
     return currentState().on(event);
   }
 
