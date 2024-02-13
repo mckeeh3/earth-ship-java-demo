@@ -266,16 +266,19 @@ public class StockOrderRedLeafEntity extends EventSourcedEntity<StockOrderRedLea
     }
 
     List<Event> eventsFor(OrderItemRequestsStockSkuItemsCommand command) {
-      if (!availableToBeConsumed) {
-        var consumed = new Consumed(command.orderItemRedLeafId, List.of());
+      var alreadyConsumed = stockSkuItemsConsumed.stream()
+          .filter(consumed -> consumed.orderItemRedLeafId().equals(command.orderItemRedLeafId()))
+          .findFirst();
+      if (alreadyConsumed.isPresent()) { // Idempotent response - already consumed
+        var consumed = alreadyConsumed.get();
         return List.of(new OrderItemConsumedStockSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId,
             availableToBeConsumed, stockSkuItemsAvailable, stockSkuItemsConsumed, consumed));
       }
 
-      var alreadyConsumed = stockSkuItemsConsumed.stream()
-          .anyMatch(consumed -> consumed.orderItemRedLeafId().equals(command.orderItemRedLeafId()));
-      if (alreadyConsumed) {
-        return List.of();
+      if (!availableToBeConsumed) {
+        var consumed = new Consumed(command.orderItemRedLeafId, List.of());
+        return List.of(new OrderItemConsumedStockSkuItemsEvent(stockOrderRedLeafId, command.orderItemRedLeafId,
+            availableToBeConsumed, stockSkuItemsAvailable, stockSkuItemsConsumed, consumed));
       }
 
       var orderSkuItemIdsQueue = new LinkedList<>(command.orderSkuItemsAvailable);

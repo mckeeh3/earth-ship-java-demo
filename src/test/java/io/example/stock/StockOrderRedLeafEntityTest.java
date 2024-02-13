@@ -201,7 +201,13 @@ class StockOrderRedLeafEntityTest {
       assertEquals("OK", result.getReply());
 
       var eventCount = result.getAllEvents().size();
-      assertEquals(0, eventCount);
+      assertEquals(1, eventCount);
+
+      var event = result.getNextEventOfType(StockOrderRedLeafEntity.OrderItemConsumedStockSkuItemsEvent.class);
+      assertEquals(stockOrderRedLeafId, event.stockOrderRedLeafId());
+      assertEquals(orderItemRedLeafId, event.orderItemRedLeafId());
+      assertEquals(1, event.stockSkuItemsConsumed().size());
+      assertEquals(quantityRequested, event.stockSkuItemsConsumed().get(0).stockSkuItemsToOrderSkuItems().size());
     }
 
     {
