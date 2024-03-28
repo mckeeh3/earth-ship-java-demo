@@ -17,6 +17,7 @@ import io.example.map.WorldMap.LatLng;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
+import kalix.javasdk.HttpResponse;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 
@@ -37,36 +38,36 @@ public class GeoOrderEntity extends EventSourcedEntity<GeoOrderEntity.State, Geo
   }
 
   @PostMapping("/create")
-  public Effect<String> create(@RequestBody CreateGeoOrderCommand command) {
+  public Effect<HttpResponse> create(@RequestBody CreateGeoOrderCommand command) {
     log.debug("EntityId: {}\n_State: {}\n_Command {}", entityId, currentState());
     if (currentState().isEmpty()) {
       return effects()
           .emitEvent(currentState().eventFor(command))
-          .thenReply(__ -> "OK");
+          .thenReply(__ -> HttpResponse.ok());
     }
-    return effects().reply("OK");
+    return effects().reply(HttpResponse.ok());
   }
 
   @PatchMapping("/ready-to-ship")
-  public Effect<String> readyToShip(@RequestBody GeoOrderReadyToShipCommand command) {
+  public Effect<HttpResponse> readyToShip(@RequestBody GeoOrderReadyToShipCommand command) {
     log.debug("EntityId: {}\n_State: {}\n_Command {}", entityId, currentState());
     if (currentState().isEmpty()) { // this can happen when orders are created with the shopping cart
-      return effects().reply("OK");
+      return effects().reply(HttpResponse.ok());
     }
     return effects()
         .emitEvent(currentState().eventFor(command))
-        .thenReply(__ -> "OK");
+        .thenReply(__ -> HttpResponse.ok());
   }
 
   @PatchMapping("/back-ordered")
-  public Effect<String> backOrdered(@RequestBody GeoOrderBackOrderedCommand command) {
+  public Effect<HttpResponse> backOrdered(@RequestBody GeoOrderBackOrderedCommand command) {
     log.debug("EntityId: {}\n_State: {}\n_Command {}", entityId, currentState());
-    if (currentState().isEmpty()) { // this can happen when orders are created with the shopping cart
-      return effects().reply("OK");
+    if (currentState().isEmpty()) {
+      return effects().reply(HttpResponse.ok());
     }
     return effects()
         .emitEvent(currentState().eventFor(command))
-        .thenReply(__ -> "OK");
+        .thenReply(__ -> HttpResponse.ok());
   }
 
   @GetMapping()

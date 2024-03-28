@@ -4,7 +4,7 @@
 version: '3'
 services:
   kalix-runtime:
-    image: gcr.io/kalix-public/kalix-runtime:1.1.31
+    image: gcr.io/kalix-public/kalix-runtime:1.1.33
     container_name: earth-ship-java-demo
     ports:
       - '9000:9000'
@@ -12,6 +12,9 @@ services:
       - 'host.docker.internal:host-gateway'
     volumes:
       - /tmp/kalix-db:/var/kalix
+      # Due to a bug in the current version of kalix-runtime, we need to use the following commands to set the DB access permissions
+      # sudo chown hxmc:hxmc /tmp/kalix-db
+      # chmod ugo+w /tmp/kalix-db
     environment:
       PERSISTENCE_ENABLED: 'true'
       JAVA_TOOL_OPTIONS: >

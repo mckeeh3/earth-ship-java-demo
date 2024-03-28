@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import io.example.LogEvent;
 import io.example.map.GeneratorEntity.GeoOrder;
 import io.example.map.GeoOrderEntity.CreateGeoOrderCommand;
+import kalix.javasdk.HttpResponse;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
@@ -23,7 +24,7 @@ public class GeneratorToGeoOrderAction extends Action {
     this.componentClient = componentClient;
   }
 
-  public Effect<String> on(GeneratorEntity.GeoOrdersToGenerateEvent event) {
+  public Effect<HttpResponse> on(GeneratorEntity.GeoOrdersToGenerateEvent event) {
     log.info("Event: {}", event);
 
     var results = event.geoOrders().stream()
@@ -39,15 +40,15 @@ public class GeneratorToGeoOrderAction extends Action {
     return new GeoOrderEntity.CreateGeoOrderCommand(geoOrder.geoOrderId(), geoOrder.position());
   }
 
-  private CompletionStage<String> callFor(CreateGeoOrderCommand command) {
+  private CompletionStage<HttpResponse> callFor(CreateGeoOrderCommand command) {
     return componentClient.forEventSourcedEntity(command.geoOrderId())
         .call(GeoOrderEntity::create)
         .params(command)
         .execute();
   }
 
-  private CompletableFuture<String> waitForCallsToFinish(List<CompletionStage<String>> results) {
+  private CompletableFuture<HttpResponse> waitForCallsToFinish(List<CompletionStage<HttpResponse>> results) {
     return CompletableFuture.allOf(results.toArray(CompletableFuture[]::new))
-        .thenApply(__ -> "OK");
+        .thenApply(__ -> HttpResponse.ok());
   }
 }

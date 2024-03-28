@@ -103,7 +103,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
       return generatorId == null;
     }
 
-    List<? extends Event> eventsFor(CreateGeneratorCommand command) {
+    List<Event> eventsFor(CreateGeneratorCommand command) {
       if (!isEmpty()) {
         return List.of(new GeneratorCreatedEvent(
             generatorId,
@@ -120,10 +120,13 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
           command.ratePerSecond,
           epochMsNow(),
           command.geoOrderCountLimit);
-      return Stream.of(List.of(generatorCreatedEvent), createGeoOrdersToGenerateEvents(command.generatorId())).flatMap(List::stream).toList();
+      return Stream.of(List.of(generatorCreatedEvent), createGeoOrdersToGenerateEvents(command.generatorId()))
+          .flatMap(List::stream)
+          .map(event -> (GeneratorEntity.Event) event)
+          .toList();
     }
 
-    List<? extends Event> eventsFor(GenerateCommand command) {
+    List<Event> eventsFor(GenerateCommand command) {
       if (geoOrderCountCurrent == geoOrderCountLimit) {
         return List.of();
       }
@@ -132,7 +135,10 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State, G
           .map(e -> e.geoOrders().size())
           .reduce(0, (a, n) -> a + n);
       var generatedEvent = new GeneratedEvent(generatorId, geoOrdersToBeGenerated, geoOrderCountCurrent + geoOrdersToBeGenerated);
-      return Stream.of(List.of(generatedEvent), geoOrderBatches).flatMap(List::stream).toList();
+      return Stream.of(List.of(generatedEvent), geoOrderBatches)
+          .flatMap(List::stream)
+          .map(event -> (GeneratorEntity.Event) event)
+          .toList();
     }
 
     List<GeoOrdersToGenerateEvent> createGeoOrdersToGenerateEvents(String generatorId) {

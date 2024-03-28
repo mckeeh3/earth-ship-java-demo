@@ -117,10 +117,6 @@ public class ShippingOrderEntity extends EventSourcedEntity<ShippingOrderEntity.
           new OrderItemUpdatedEvent(command.orderId(), command.skuId(), newReadyToShipAt, newBackOrderedAt, newOrderItems));
     }
 
-    boolean instantsChanged(Instant a, Instant b) {
-      return a == null && b != null || a != null && b == null || a != null && b != null && !a.equals(b);
-    }
-
     State on(ShippingOrderCreatedEvent event) {
       if (isEmpty()) {
         return new State(

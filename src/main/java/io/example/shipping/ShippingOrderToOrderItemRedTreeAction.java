@@ -24,10 +24,6 @@ public class ShippingOrderToOrderItemRedTreeAction extends Action {
   public Effect<String> on(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     log.info("Event: {}", event);
 
-    return callFor(event);
-  }
-
-  Effect<String> callFor(ShippingOrderEntity.ShippingOrderCreatedEvent event) {
     var results = event.orderItems().stream()
         .map(orderItem -> toCommand(event, orderItem))
         .map(command -> callFor(command))
